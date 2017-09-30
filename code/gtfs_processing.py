@@ -77,6 +77,22 @@ def plot_shape_trunk(dict_trunk_lines, line_colors, plot_name):
 
     fig.savefig(plot_name)
 
+def plot_stops_over_lines(dict_trunk_lines, line_colors, gdf_stops, plot_name):
+
+    fig, ax = plt.subplots()
+    ax.set_aspect('equal')
+    ax.axis('off')
+
+    for trunk, gdf_lines in dict_trunk_lines.iteritems():
+        print trunk, gdf_lines
+        try:
+            gdf_lines.plot(ax=ax, alpha=0.2, color=line_colors[trunk])
+        except KeyError:
+            gdf_lines.plot(ax=ax, alpha=0.2, color='#000000')
+
+    gdf_stops.plot(ax=ax, marker='*', color='black', markersize=2)
+    fig.savefig(plot_name)
+
 '''
     Read plot shape.txt
 '''
@@ -93,11 +109,11 @@ nyc_line_colors = {'1':'#ee352e', '4':'#00933c', '7':'#b933ad', 'A':'#2850ad',\
  'B':'#ff6319', 'G':'#6cbe45', 'J':'#996633', 'L':'#a7a9ac', 'N':'#fccc0a',\
  'S':'#808183'}
 
-'''
-plot_gdf(gdf_lines, result_path + 'shapes.pdf')
+
+#plot_gdf(gdf_lines, result_path + 'shapes.pdf')
 dict_trunk_lines = group_line_by_trunk(gdf_lines, nyc_trunk_names)
-plot_shape_trunk(dict_trunk_lines, nyc_line_colors, result_path + 'shapes_color.pdf')
-'''
+#plot_shape_trunk(dict_trunk_lines, nyc_line_colors, result_path + 'shapes_color.pdf')
+
 
 '''
     Read plot stop.txt
@@ -106,4 +122,10 @@ plot_shape_trunk(dict_trunk_lines, nyc_line_colors, result_path + 'shapes_color.
 df_stops = read_file_in_zip(gtfs_zip_folder, 'stops.txt')
 gdf_stops = format_points(df_stops, 'stop_lon', 'stop_lat')
 print gdf_stops
-plot_gdf(gdf_stops, result_path + 'stops.pdf')
+#plot_gdf(gdf_stops, result_path + 'stops.pdf')
+
+'''
+    Plot stops over lines
+'''
+
+plot_stops_over_lines(dict_trunk_lines, nyc_line_colors, gdf_stops, result_path + 'lines_stops.pdf')
