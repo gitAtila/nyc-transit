@@ -39,11 +39,54 @@ def plot_gdf(gdf, plot_name):
 
     fig.savefig(plot_name)
 
+def group_line_by_trunk(gdf_lines, dict_trunk_names):
+
+    dict_trunk_lines = dict()
+    for index, line in gdf_lines.iterrows():
+        try:
+            trunk_name =  dict_trunk_names[line['shape_id'].split('.')[0]]
+        except KeyError:
+            trunk_name = 'S'
+        finally:
+            dict_trunk_lines.setdefault(trunk_name, []).append(line)
+            print line['shape_id'], trunk_name
+
+    for trunk, list_lines in dict_trunk_lines.iteritems():
+        dict_trunk_lines[trunk] = gpd.GeoDataFrame(list_lines)
+
+    return dict_trunk_lines
+
+def plot_shape_trunk(dict_trunk_lines, line_colors, plot_name):
+
+    fig, ax = plt.subplots()
+    ax.set_aspect('equal')
+    ax.axis('off')
+
+    for trunk, gdf_lines in dict_trunk_lines.iteritems():
+        print trunk, gdf_lines
+        try:
+            gdf_lines.plot(ax=ax, alpha=0.2, color=line_colors[trunk])
+        except KeyError:
+            gdf_lines.plot(ax=ax, alpha=0.2, color='#000000')
+
+    fig.savefig(plot_name)
+
 df_shapes = read_file_in_zip(gtfs_zip_folder, 'shapes.txt')
 df_stops = read_file_in_zip(gtfs_zip_folder, 'stops.txt')
 # print df_shapes
 # print df_stops
 
 gdf_lines = format_shape_lines(df_shapes)
-print gdf_lines
-plot_gdf(gdf_lines, result_path + 'shapes.pdf')
+
+nyc_trunk_names = {'1':'1', '2':'1', '3':'1', '4':'4', '5':'4', '6':'4', '7':'7',\
+ 'A':'A', 'C':'A', 'E':'A', 'B':'B', 'D':'B', 'F':'B', 'M':'B', 'G':'G', 'J':'J',\
+ 'Z':'J', 'L':'L', 'N':'N','Q':'N','R':'N', 'W':'N', 'S':'S', 'SI':'SI'}
+
+nyc_line_colors = {'1':'#ee352e', '4':'#00933c', '7':'#b933ad', 'A':'#2850ad',\
+ 'B':'#ff6319', 'G':'#6cbe45', 'J':'#996633', 'L':'#a7a9ac', 'N':'#fccc0a',\
+ 'S':'#808183'}
+
+
+# plot_gdf(gdf_lines, result_path + 'shapes.pdf')
+dict_trunk_lines = group_line_by_trunk(gdf_lines, nyc_trunk_names)
+plot_shape_trunk(dict_trunk_lines, nyc_line_colors, result_path + 'shapes_color.pdf')
