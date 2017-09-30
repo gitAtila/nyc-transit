@@ -21,13 +21,19 @@ def read_file_in_zip(gtfs_zip_folder, file_name):
     df_csv = pd.read_csv(zip_file.open(file_name))
     return df_csv
 
+def format_points(df_points, lon_column, lat_column):
+    # Zip the coordinates into a point object and convert to a GeoDataFrame
+    geometry = [Point(xy) for xy in zip(df_points[lon_column], df_points[lat_column])]
+    gdf_points = gpd.GeoDataFrame(df_points, geometry=geometry)
+
+    return gdf_points
+
 def format_shape_lines(df_shapes):
     # Zip the coordinates into a point object and convert to a GeoDataFrame
-    geometry = [Point(xy) for xy in zip(df_shapes['shape_pt_lon'], df_shapes['shape_pt_lat'])]
-    gdf_shapes = gpd.GeoDataFrame(df_shapes, geometry=geometry)
+    gdf_points = format_points(df_shapes, 'shape_pt_lon', 'shape_pt_lat')
 
     # Aggregate these points into a lineString object
-    gdf_shapes = gdf_shapes.groupby(['shape_id'])['geometry'].apply(lambda x: LineString(x.tolist())).reset_index()
+    gdf_shapes = gdf_points.groupby(['shape_id'])['geometry'].apply(lambda x: LineString(x.tolist())).reset_index()
     gdf_shapes = gpd.GeoDataFrame(gdf_shapes, geometry='geometry')
 
     return gdf_shapes
@@ -98,3 +104,6 @@ plot_shape_trunk(dict_trunk_lines, nyc_line_colors, result_path + 'shapes_color.
 '''
 
 df_stops = read_file_in_zip(gtfs_zip_folder, 'stops.txt')
+gdf_stops = format_points(df_stops, 'stop_lon', 'stop_lat')
+print gdf_stops
+plot_gdf(gdf_stops, result_path + 'stops.pdf')
