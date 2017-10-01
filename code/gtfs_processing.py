@@ -92,6 +92,10 @@ def plot_stops_over_lines(dict_trunk_lines, line_colors, gdf_stops, plot_name):
     gdf_stops.plot(ax=ax, marker='*', color='black', markersize=2)
     fig.savefig(plot_name)
 
+def path_between_stops(stop_1, stop_2, gdf_shape_line):
+    # find the list of points between stops
+    print ''
+
 '''
     Read plot shape.txt
 '''
@@ -119,7 +123,7 @@ dict_trunk_lines = group_line_by_trunk(gdf_lines, nyc_trunk_names)
 
 df_stops = read_file_in_zip(gtfs_zip_folder, 'stops.txt')
 gdf_stops = format_points(df_stops, 'stop_lon', 'stop_lat')
-# print gdf_stops
+print gdf_stops
 # plot_gdf(gdf_stops, result_path + 'stops.pdf')
 
 '''
