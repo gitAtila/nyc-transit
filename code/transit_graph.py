@@ -7,6 +7,8 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
+from shapely.geometry import Point
+
 stations_path = argv[1]
 lines_path = argv[2]
 links_path = argv[3]
@@ -85,9 +87,56 @@ def create_transit_graph(graph_constructor, gdf_stations, df_links):
 
     return g_transit
 
+def path_between_stops(stop_1, stop_2, trunk_line):
+    print stop_1
+    print stop_2
+    print trunk_line
+
+
 g_transit = create_transit_graph(nx.Graph(), gdf_stations, df_links)
 #g_transit = create_transit_graph(nx.MultiGraph(), gdf_stations, df_links)
 #split_line_route(gdf_stations, gdf_lines, df_links)
+for index, link in df_links.iterrows():
+
+    stop_1 = gdf_stations[gdf_stations['objectid'] == link['node_1']]
+    stop_2 = gdf_stations[gdf_stations['objectid'] == link['node_2']]
+
+    gdf_trunk_line = gdf_lines[gdf_lines['rt_symbol'] == link['trunk']]
+
+    # find the nearest linestrings
+    min_distance_s1 = maxint
+    min_distance_s2 = maxint
+    closest_linestring_s1 = -1
+    closest_linestring_s2 = -1
+    for index, linestring in gdf_trunk_line.iterrows():
+        distance_s1 = float(stop_1.distance(linestring['geometry']))
+        distance_s2 = float(stop_2.distance(linestring['geometry']))
+        #print index, float(distance_s1), float(distance_s2)
+        if distance_s1 < min_distance_s1:
+            min_distance_s1 = distance_s1
+            closest_linestring_s1 = linestring['id']
+
+        if distance_s2 < min_distance_s2:
+            min_distance_s2 = distance_s2
+            closest_linestring_s2 = linestring['id']
+
+    print min_distance_s1, closest_linestring_s1
+    print min_distance_s2, closest_linestring_s2
+
+    gdf_trunk_line_s1 = gdf_trunk_line[gdf_trunk_line['id'] == closest_linestring_s1]
+    gdf_trunk_line_s2 = gdf_trunk_line[gdf_trunk_line['id'] == closest_linestring_s2]
+
+    fig, ax = plt.subplots()
+    ax.set_aspect('equal')
+    ax.axis('off')
+    gdf_trunk_line_s1.plot(ax=ax, alpha=0.2, color='blue')
+    if closest_linestring_s1 != closest_linestring_s2:
+        gdf_trunk_line_s2.plot(ax=ax, alpha=0.2, color='blue')
+    stop_1.plot(ax=ax, marker='*', color='black', markersize=2)
+    stop_2.plot(ax=ax, marker='*', color='black', markersize=2)
+    fig.savefig(result_folder + 'path_between_stops.pdf')
+
+    break
 
 '''
     Get the best subway path from one station to a census tract
@@ -240,17 +289,4 @@ unique_lines = list(gdf_stations['line'].unique())
 #sg_transit = sorted(nx.connected_component_subgraphs(g_transit), key = len, reverse=True)[0]
 plot_graph(g_transit, unique_lines, 'line', 'subway_trunk_all.png')
 #plot_graph(g_transit, unique_line_trunks, 'trunk', 'subway_trunk_all.pdf')
-'''
-
-'''
-plot_trunk(g_transit, '1')
-plot_trunk(g_transit, '4')
-plot_trunk(g_transit, '7')
-plot_trunk(g_transit, 'A')
-plot_trunk(g_transit, 'B')
-plot_trunk(g_transit, 'G')
-plot_trunk(g_transit, 'J')
-plot_trunk(g_transit, 'L')
-plot_trunk(g_transit, 'N')
-plot_trunk(g_transit, '0')
 '''
