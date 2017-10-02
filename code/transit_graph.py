@@ -7,7 +7,7 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
-from shapely.geometry import Point
+from shapely.geometry import Point, LineString
 
 stations_path = argv[1]
 lines_path = argv[2]
@@ -96,6 +96,36 @@ def path_between_stops(stop_1, stop_2, trunk_line):
 g_transit = create_transit_graph(nx.Graph(), gdf_stations, df_links)
 #g_transit = create_transit_graph(nx.MultiGraph(), gdf_stations, df_links)
 #split_line_route(gdf_stations, gdf_lines, df_links)
+def split_linestring(point, linestring):
+    nearest_point = -1
+    shortest_distance = maxint
+    for index in range(len(linestring.coords)):
+        distance = vincenty((point.x, point.y), linestring.coords[index]).meters
+        if distance < shortest_distance:
+            shortest_distance = distance
+            nearest_point = index
+
+    linestring = list(linestring_s1.coords)
+
+    linestring_part_1 = linestring[:nearest_point]
+    linestring_part_2 = linestring[nearest_point:]
+
+    if len(linestring_part_1) > 1:
+        linestring_part_1 = LineString(linestring_part_1)
+    elif len(linestring_part_1) == 1:
+        linestring_part_1 = Point(linestring_part_1)
+    else:
+        linestring_part_1 = []
+
+    if len(linestring_part_2) > 1:
+        linestring_part_2 = LineString(linestring_part_2)
+    elif len(linestring_part_2) == 1:
+        linestring_part_2 = Point(linestring_part_2)
+    else:
+        linestring_part_2 = []
+
+    return linestring_part_1, linestring_part_2
+
 for index, link in df_links.iterrows():
 
     stop_1 = gdf_stations[gdf_stations['objectid'] == link['node_1']]
@@ -106,35 +136,69 @@ for index, link in df_links.iterrows():
     # find the nearest linestrings
     min_distance_s1 = maxint
     min_distance_s2 = maxint
-    closest_linestring_s1 = -1
-    closest_linestring_s2 = -1
+    nearest_linestring_s1 = -1
+    nearest_linestring_s2 = -1
     for index, linestring in gdf_trunk_line.iterrows():
         distance_s1 = float(stop_1.distance(linestring['geometry']))
         distance_s2 = float(stop_2.distance(linestring['geometry']))
-        #print index, float(distance_s1), float(distance_s2)
+        print linestring['id']
+        print '\t', float(distance_s1)
+        print '\t', float(distance_s2)
+        print ''
         if distance_s1 < min_distance_s1:
             min_distance_s1 = distance_s1
-            closest_linestring_s1 = linestring['id']
+            nearest_linestring_s1 = linestring['id']
 
         if distance_s2 < min_distance_s2:
             min_distance_s2 = distance_s2
-            closest_linestring_s2 = linestring['id']
+            nearest_linestring_s2 = linestring['id']
 
-    print min_distance_s1, closest_linestring_s1
-    print min_distance_s2, closest_linestring_s2
+    print min_distance_s1, nearest_linestring_s1
+    print min_distance_s2, nearest_linestring_s2
 
-    gdf_trunk_line_s1 = gdf_trunk_line[gdf_trunk_line['id'] == closest_linestring_s1]
-    gdf_trunk_line_s2 = gdf_trunk_line[gdf_trunk_line['id'] == closest_linestring_s2]
+    # get the path between stations
+    gdf_trunk_line_s1 = gdf_trunk_line[gdf_trunk_line['id'] == nearest_linestring_s1]
+    if nearest_linestring_s1 == nearest_linestring_s2:
+        gdf_trunk_line_s2 = gdf_trunk_line_s1
+    else:
+        gdf_trunk_line_s2 = gdf_trunk_line[gdf_trunk_line['id'] == nearest_linestring_s2]
 
-    fig, ax = plt.subplots()
-    ax.set_aspect('equal')
-    ax.axis('off')
-    gdf_trunk_line_s1.plot(ax=ax, alpha=0.2, color='blue')
-    if closest_linestring_s1 != closest_linestring_s2:
-        gdf_trunk_line_s2.plot(ax=ax, alpha=0.2, color='blue')
-    stop_1.plot(ax=ax, marker='*', color='black', markersize=2)
-    stop_2.plot(ax=ax, marker='*', color='black', markersize=2)
-    fig.savefig(result_folder + 'path_between_stops.pdf')
+        linestring_s1 = gdf_trunk_line_s1['geometry']
+        linestring_s2 = gdf_trunk_line_s2['geometry']
+
+        linestring_s1 = LineString(linestring_s1.iloc[0])
+        linestring_s2 = LineString(linestring_s2.iloc[0])
+
+        point_s1 = stop_1['geometry']
+        point_s2 = stop_2['geometry']
+
+        point_s1 = Point(stop_1['geometry'].iloc[0])
+        point_s2 = Point(stop_2['geometry'].iloc[0])
+
+        linestring_s1_part_1, linestring_s1_part_2 = split_linestring(point_s1, linestring_s1)
+        linestring_s2_part_1, linestring_s2_part_2 = split_linestring(point_s2, linestring_s2)
+
+        print linestring_s1_part_1
+        print point_s1
+        print linestring_s1_part_2
+
+        print ''
+
+        print linestring_s2_part_1
+        print point_s2
+        print linestring_s2_part_2
+
+
+
+    # fig, ax = plt.subplots()
+    # ax.set_aspect('equal')
+    # ax.axis('off')
+    # gdf_trunk_line_s1.plot(ax=ax, alpha=0.2, color='blue')
+    # if nearest_linestring_s1 != nearest_linestring_s2:
+    #     gdf_trunk_line_s2.plot(ax=ax, alpha=0.2, color='red')
+    # stop_1.plot(ax=ax, marker='*', color='black', markersize=2)
+    # stop_2.plot(ax=ax, marker='*', color='black', markersize=2)
+    # fig.savefig(result_folder + 'path_between_stops.pdf')
 
     break
 
