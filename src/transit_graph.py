@@ -107,8 +107,8 @@ def split_linestring(point, linestring):
 
     linestring = list(linestring_s1.coords)
 
-    linestring_part_1 = linestring[:nearest_point]
-    linestring_part_2 = linestring[nearest_point:]
+    linestring_part_1 = linestring[nearest_point:]
+    linestring_part_2 = linestring[:nearest_point]
 
     if len(linestring_part_1) > 1:
         linestring_part_1 = LineString(linestring_part_1)
@@ -162,7 +162,7 @@ for index, link in df_links.iterrows():
         print 'both nodes lie on the same shape line'
         gdf_trunk_line_s2 = gdf_trunk_line_s1
     else:
-        print 'nodes are on different shape line'
+        print 'nodes lie on different shape lines'
         gdf_trunk_line_s2 = gdf_trunk_line[gdf_trunk_line['id'] == nearest_linestring_s2]
 
         linestring_s1 = gdf_trunk_line_s1['geometry']
