@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from shapely.geometry import Point, LineString
+from shapely.ops import unary_union, cascaded_union
 
 stations_path = argv[1]
 lines_path = argv[2]
@@ -107,8 +108,10 @@ def split_linestring(point, linestring):
 
     linestring = list(linestring_s1.coords)
 
-    linestring_part_1 = linestring[nearest_point:]
-    linestring_part_2 = linestring[:nearest_point]
+    linestring_part_1 = linestring[:nearest_point]
+    linestring_part_2 = linestring[nearest_point:]
+    print 'len left', len(linestring_part_1)
+    print 'len right', len(linestring_part_2)
 
     if len(linestring_part_1) > 1:
         linestring_part_1 = LineString(linestring_part_1)
@@ -158,18 +161,15 @@ for index, link in df_links.iterrows():
 
     # get the path between stations
     gdf_trunk_line_s1 = gdf_trunk_line[gdf_trunk_line['id'] == nearest_linestring_s1]
-    if nearest_linestring_s1 == nearest_linestring_s2:
+    if nearest_linestring_s1 == nearest_linestring_s2 or min_distance_s2 <= 4.0e-7:
+
         print 'both nodes lie on the same shape line'
         gdf_trunk_line_s2 = gdf_trunk_line_s1
-    else:
-        print 'nodes lie on different shape lines'
-        gdf_trunk_line_s2 = gdf_trunk_line[gdf_trunk_line['id'] == nearest_linestring_s2]
 
         linestring_s1 = gdf_trunk_line_s1['geometry']
-        linestring_s2 = gdf_trunk_line_s2['geometry']
-
         linestring_s1 = LineString(linestring_s1.iloc[0])
-        linestring_s2 = LineString(linestring_s2.iloc[0])
+
+        linestring_s2 = linestring_s1
 
         point_s1 = stop_1['geometry']
         point_s2 = stop_2['geometry']
@@ -180,27 +180,99 @@ for index, link in df_links.iterrows():
         linestring_s1_part_1, linestring_s1_part_2 = split_linestring(point_s1, linestring_s1)
         linestring_s2_part_1, linestring_s2_part_2 = split_linestring(point_s2, linestring_s2)
 
+        print 'part1'
+        print linestring_s1_part_1
+        print 'point1'
+        print point_s1
+        print 'part2'
+        print linestring_s1_part_2
+        print ''
+        print 'part1'
+        print linestring_s2_part_1
+        print 'point2'
+        print point_s2
+        print 'part2'
+        print linestring_s2_part_2
+
+        # union of part1 of both stops one and two
+        edge = []
+        if type(linestring_s1_part_1) == type(linestring_s2_part_1)\
+         and type(linestring_s1_part_1) != list:
+            edge = linestring_s1_part_1.union(linestring_s2_part_1)
+        elif type(linestring_s2_part_1) == list:
+            edge = linestring_s1_part_1
+        else:
+            print 'ERROR!'
+            break
+
+        print 'final edge'
+        print edge
+        
+    else:
+        print 'nodes lie on different shape lines'
+        gdf_trunk_line_s2 = gdf_trunk_line[gdf_trunk_line['id'] == nearest_linestring_s2]
+
+        linestring_s1 = gdf_trunk_line_s1['geometry']
+        linestring_s2 = gdf_trunk_line_s2['geometry']
+
+        linestring_s1 = LineString(linestring_s1.iloc[0])
+        linestring_s2 = LineString(linestring_s2.iloc[0])
+
+        print 'distance btwn lines', linestring_s1.distance(linestring_s2)
+        print 'lines touches', linestring_s1.touches(linestring_s2)
+
+
+        point_s1 = stop_1['geometry']
+        point_s2 = stop_2['geometry']
+
+        point_s1 = Point(stop_1['geometry'].iloc[0])
+        point_s2 = Point(stop_2['geometry'].iloc[0])
+        print 'point line touches', linestring_s1.touches(point_s2)
+        print 'point line touches', linestring_s2.touches(point_s2)
+
+        linestring_s1_part_1, linestring_s1_part_2 = split_linestring(point_s1, linestring_s1)
+        linestring_s2_part_1, linestring_s2_part_2 = split_linestring(point_s2, linestring_s2)
+
         print linestring_s1_part_1
         print point_s1
         print linestring_s1_part_2
-
         print ''
-
         print linestring_s2_part_1
         print point_s2
         print linestring_s2_part_2
 
+        # verify which part of linestring_s2 is nearest point_1
+        distance_p1 = point_s1.distance(linestring_s2_part_1)
+        distance_p2 = point_s1.distance(linestring_s2_part_2)
+        if distance_p1 < distance_p2:
+            print 'merge part1'
+        else:
+            print 'merge part2'
 
+        # merge part two of stop one with part one of stop two
+        if type(linestring_s2_part_1) == list:
+            edge = linestring_s1_part_2
+        else:
+            edge = linestring_s1_part_2.union(linestring_s2_part_1)
+        print type(edge)
+        print edge
 
-    # fig, ax = plt.subplots()
-    # ax.set_aspect('equal')
-    # ax.axis('off')
-    # gdf_trunk_line_s1.plot(ax=ax, alpha=0.2, color='blue')
-    # if nearest_linestring_s1 != nearest_linestring_s2:
-    #     gdf_trunk_line_s2.plot(ax=ax, alpha=0.2, color='red')
-    # stop_1.plot(ax=ax, marker='*', color='black', markersize=2)
-    # stop_2.plot(ax=ax, marker='*', color='black', markersize=2)
-    # fig.savefig(result_folder + 'path_between_stops.pdf')
+    # plot edges and points
+    fig, ax = plt.subplots()
+    ax.set_aspect('equal')
+    ax.axis('off')
+    # x, y = point_s1.xy
+    # ax.plot(x,y, color='black')
+    # x, y = point_s2.xy
+    # ax.plot(x,y, color='black')
+    # x, y = edge.xy
+    # ax.plot(x,y, color='blue')
+    stop_1.plot(ax=ax, marker='*', color='gray', markersize=2)
+    stop_2.plot(ax=ax, marker='*', color='gray', markersize=2)
+    gdf_trunk_line_s1.plot(ax=ax, alpha=0.2, color='blue')
+    if nearest_linestring_s1 != nearest_linestring_s2:
+        gdf_trunk_line_s2.plot(ax=ax, alpha=0.2, color='red')
+    fig.savefig(result_folder + 'path_between_stops.pdf')
 
     break
 
@@ -341,7 +413,7 @@ def plot_path(transit_graph, list_stations, result_file_name):
     plt.savefig(result_file_name, dpi=1000)
 
 #plot_transit_graph(g_transit, result_folder + 'transit_graph_overlapped.png')
-plot_path(g_transit, trip_path, result_folder + 'transit_graph_path.png')
+#plot_path(g_transit, trip_path, result_folder + 'transit_graph_path.png')
 
 #graph_trunk_1 = nx.Graph((u,v,attribute) for u, v, attribute in g_transit.edges_iter(data=True) if attribute['trunk']=='1')
 # graph_trunk_1 = get_subgraph_node(g_transit, )
