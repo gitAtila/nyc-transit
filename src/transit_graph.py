@@ -159,8 +159,10 @@ for index, link in df_links.iterrows():
     # get the path between stations
     gdf_trunk_line_s1 = gdf_trunk_line[gdf_trunk_line['id'] == nearest_linestring_s1]
     if nearest_linestring_s1 == nearest_linestring_s2:
+        print 'both nodes lie on the same shape line'
         gdf_trunk_line_s2 = gdf_trunk_line_s1
     else:
+        print 'nodes are on different shape line'
         gdf_trunk_line_s2 = gdf_trunk_line[gdf_trunk_line['id'] == nearest_linestring_s2]
 
         linestring_s1 = gdf_trunk_line_s1['geometry']
