@@ -7,8 +7,8 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
-from shapely.geometry import Point, LineString
-from shapely.ops import unary_union, cascaded_union
+from shapely.geometry import Point, LineString, MultiLineString
+from shapely.ops import linemerge
 
 stations_path = argv[1]
 lines_path = argv[2]
@@ -123,6 +123,25 @@ def is_between(linestring, point_1, point_2, acceptable_distance):
 
     return False
 
+def path_between_linestrings(id_linestring_s1, id_linestring_s2, gdf_trunk_line):
+    # iterate over linestrings and find the shortest path between them
+    print id_linestring_s1, id_linestring_s2
+    gdf_betweeness = gdf_trunk_line[(gdf_trunk_line['id'] > id_linestring_s1)\
+     & (gdf_trunk_line['id'] < id_linestring_s2)]
+
+    # verify if the first and the last linestring touches s1 and s2 ones
+    if len(gdf_betweeness) > 0:
+        first_linestring = gdf_betweeness['geometry'].iloc[0]
+        last_linestring = gdf_betweeness['geometry'].iloc[-1]
+
+        linestring_s1 = gdf_trunk_line[gdf_trunk_line['id'] == id_linestring_s1]['geometry'].iloc[0]
+        linestring_s2 = gdf_trunk_line[gdf_trunk_line['id'] == id_linestring_s2]['geometry'].iloc[0]
+
+        if first_linestring.touches(linestring_s1) and last_linestring.touches(linestring_s2):
+            return gdf_betweeness
+
+    return None
+
 def split_linestring(point, linestring):
     nearest_point = -1
     shortest_distance = maxint
@@ -204,11 +223,43 @@ for index, link in df_links.iterrows():
     if is_between(linestring_s1, point_s1, point_s2, 1):
         # compute the distance and save
         print 'True'
-        first_position = linestring_s1.coords
-        for index in range(len(linestring_s1.coords)):
-            distance = vincenty(point, linestring.coords[index]).meters
+
     else:
-        print link
+
+        # find linestrings between s1 and s2
+        gdf_betweeness = path_between_linestrings(nearest_linestring_s1, nearest_linestring_s2,\
+         gdf_trunk_line)
+
+        if gdf_betweeness is None:
+            print 'untreated case'
+        else:
+            # merge linestrings
+            print linestring_s1
+            merged_linestrings = []
+            merged_linestrings.append(linestring_s1)
+            for index, linestring in gdf_betweeness.iterrows():
+                merged_linestrings.append(linestring['geometry'])
+            merged_linestrings.append(linestring_s2)
+            merged_linestrings = MultiLineString(merged_linestrings)
+            merged_linestrings = linemerge(merged_linestrings)
+
+            print merged_linestrings
+
+            #print link
+            # plot edges and points
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+            ax.axis('off')
+            x, y = merged_linestrings.xy
+            ax.plot(x,y, color='green')
+            x, y = point_s1.xy
+            ax.scatter(x,y, color='black')
+            x, y = point_s2.xy
+            ax.scatter(x,y, color='black')
+            fig.savefig(result_folder + 'merged_path_between_stops.pdf')
+
+
+        #print link
         # plot edges and points
         fig, ax = plt.subplots()
         ax.set_aspect('equal')
@@ -222,7 +273,7 @@ for index, link in df_links.iterrows():
         x, y = point_s2.xy
         ax.scatter(x,y, color='black')
         fig.savefig(result_folder + 'path_between_stops.pdf')
-        break;
+        break
 
 
 '''
