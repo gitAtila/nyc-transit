@@ -88,17 +88,12 @@ def create_transit_graph(graph_constructor, gdf_stations, df_links):
 
     return g_transit
 
-def path_between_stops(stop_1, stop_2, trunk_line):
-    print stop_1
-    print stop_2
-    print trunk_line
-
 
 g_transit = create_transit_graph(nx.Graph(), gdf_stations, df_links)
 #g_transit = create_transit_graph(nx.MultiGraph(), gdf_stations, df_links)
 #split_line_route(gdf_stations, gdf_lines, df_links)
 
-def is_between(linestring, point_1, point_2, acceptable_distance):
+def is_linestring_between_points(linestring, point_1, point_2, acceptable_distance):
 
     first_point = linestring.coords[0]
     last_point = linestring.coords[-1]
@@ -109,38 +104,80 @@ def is_between(linestring, point_1, point_2, acceptable_distance):
     p2_distance_first = vincenty((point_2.x, point_2.y), first_point).meters
     p2_distance_last = vincenty((point_2.x, point_2.y), last_point).meters
 
-    print '================================'
-    print 'P1', point_1
-    print 'first_point', first_point, p1_distance_first
-    print 'last_point', last_point, p1_distance_last
-    print 'P2', point_2
-    print 'first_point', first_point, p2_distance_first
-    print 'last_point', last_point, p2_distance_last
-
     if (p1_distance_first <= acceptable_distance and p2_distance_last <= acceptable_distance)\
      or (p2_distance_first <= acceptable_distance and p1_distance_last <= acceptable_distance):
         return True
 
     return False
 
-def path_between_linestrings(id_linestring_s1, id_linestring_s2, gdf_trunk_line):
-    # iterate over linestrings and find the shortest path between them
-    print id_linestring_s1, id_linestring_s2
-    gdf_betweeness = gdf_trunk_line[(gdf_trunk_line['id'] > id_linestring_s1)\
-     & (gdf_trunk_line['id'] < id_linestring_s2)]
+def linestrings_between_linestrings(gdf_trunk_line, id_linestring_s1, id_linestring_s2):
 
-    # verify if the first and the last linestring touches s1 and s2 ones
-    if len(gdf_betweeness) > 0:
-        first_linestring = gdf_betweeness['geometry'].iloc[0]
-        last_linestring = gdf_betweeness['geometry'].iloc[-1]
+    linestring_s1 = gdf_trunk_line[gdf_trunk_line['id'] == id_linestring_s1]['geometry'].iloc[0]
+    linestring_s2 = gdf_trunk_line[gdf_trunk_line['id'] == id_linestring_s2]['geometry'].iloc[0]
 
-        linestring_s1 = gdf_trunk_line[gdf_trunk_line['id'] == id_linestring_s1]['geometry'].iloc[0]
-        linestring_s2 = gdf_trunk_line[gdf_trunk_line['id'] == id_linestring_s2]['geometry'].iloc[0]
+    if linestring_s1.touches(linestring_s2):
+        # merge linestring_s1 with linestring_s2
+        merged_linestrings = [linestring_s1, linestring_s2]
+        merged_linestrings = MultiLineString(merged_linestrings)
+        merged_linestrings = linemerge(merged_linestrings)
 
-        if first_linestring.touches(linestring_s1) and last_linestring.touches(linestring_s2):
-            return gdf_betweeness
+        return merged_linestrings
+
+    else:
+
+        # get linestrings which its id is between linestrings on the extremity
+        print id_linestring_s1, id_linestring_s2
+        gdf_betweeness = gdf_trunk_line[(gdf_trunk_line['id'] > id_linestring_s1)\
+         & (gdf_trunk_line['id'] < id_linestring_s2)]
+
+        # verify if the first and the last linestring touches s1 and s2 ones
+        if len(gdf_betweeness) > 0:
+
+            first_linestring = gdf_betweeness['geometry'].iloc[0]
+            last_linestring = gdf_betweeness['geometry'].iloc[-1]
+
+            linestring_s1 = gdf_trunk_line[gdf_trunk_line['id'] == id_linestring_s1]['geometry'].iloc[0]
+            linestring_s2 = gdf_trunk_line[gdf_trunk_line['id'] == id_linestring_s2]['geometry'].iloc[0]
+
+            if first_linestring.touches(linestring_s1) and last_linestring.touches(linestring_s2):
+
+                # merge linestrings in gdf_betweeness
+                merged_linestrings = []
+                merged_linestrings.append(linestring_s1)
+                for index, linestring in gdf_betweeness.iterrows():
+                    merged_linestrings.append(linestring['geometry'])
+                merged_linestrings.append(linestring_s2)
+                merged_linestrings = MultiLineString(merged_linestrings)
+                merged_linestrings = linemerge(merged_linestrings)
+
+                return merged_linestrings
 
     return None
+
+# get the nearest point on a linestring
+def nearest_point_linestring(linestring, point):
+    nearest_point = -1
+    shortest_distance = maxint
+    for index in range(len(linestring.coords)):
+        distance = vincenty((point.x, point.y), linestring.coords[index]).meters
+        if distance < shortest_distance:
+            shortest_distance = distance
+            nearest_point = index
+    return nearest_point
+
+
+def linestring_between_points(linestring, point_1, point_2):
+    # get the nearest_point from p1 and from p2
+    nearest_p1 = nearest_point_linestring(linestring, point_1)
+    nearest_p2 = nearest_point_linestring(linestring, point_2)
+    # get the path between stops
+    positions_between_points = list(linestring.coords)
+    positions_between_points = positions_between_points[nearest_p1:nearest_p2]
+    # put points on extremities
+    positions_between_points = [(point_1.x, point_1.y)] + positions_between_points
+    positions_between_points = positions_between_points + [(point_2.x, point_2.y)]
+
+    return LineString(positions_between_points)
 
 def split_linestring(point, linestring):
     nearest_point = -1
@@ -220,199 +257,45 @@ for index, link in df_links.iterrows():
     point_s1 = Point(stop_1['geometry'].iloc[0])
     point_s2 = Point(stop_2['geometry'].iloc[0])
 
-    if is_between(linestring_s1, point_s1, point_s2, 1):
-        # compute the distance and save
-        print 'True'
+    # if is_linestring_between_points(linestring_s1, point_s1, point_s2, 1):
+    #     # compute the distance and save
+    #     print 'True'
+    #
+    # else:
+    # find linestrings between s1 and s2
+    merged_linestrings = linestrings_between_linestrings(gdf_trunk_line, nearest_linestring_s1,\
+     nearest_linestring_s2)
 
-    else:
-
-        # find linestrings between s1 and s2
-        gdf_betweeness = path_between_linestrings(nearest_linestring_s1, nearest_linestring_s2,\
-         gdf_trunk_line)
-
-        if gdf_betweeness is None:
-            print 'untreated case'
-        else:
-            # merge linestrings
-            print linestring_s1
-            merged_linestrings = []
-            merged_linestrings.append(linestring_s1)
-            for index, linestring in gdf_betweeness.iterrows():
-                merged_linestrings.append(linestring['geometry'])
-            merged_linestrings.append(linestring_s2)
-            merged_linestrings = MultiLineString(merged_linestrings)
-            merged_linestrings = linemerge(merged_linestrings)
-
-            print merged_linestrings
-
-            #print link
-            # plot edges and points
-            fig, ax = plt.subplots()
-            ax.set_aspect('equal')
-            ax.axis('off')
-            x, y = merged_linestrings.xy
-            ax.plot(x,y, color='green')
-            x, y = point_s1.xy
-            ax.scatter(x,y, color='black')
-            x, y = point_s2.xy
-            ax.scatter(x,y, color='black')
-            fig.savefig(result_folder + 'merged_path_between_stops.pdf')
-
-
-        #print link
-        # plot edges and points
-        fig, ax = plt.subplots()
-        ax.set_aspect('equal')
-        ax.axis('off')
-        x, y = linestring_s1.xy
-        ax.plot(x,y, color='red')
-        x, y = linestring_s2.xy
-        ax.plot(x,y, color='blue')
-        x, y = point_s1.xy
-        ax.scatter(x,y, color='black')
-        x, y = point_s2.xy
-        ax.scatter(x,y, color='black')
-        fig.savefig(result_folder + 'path_between_stops.pdf')
-        break
-
-
-'''
-    # linestring is between stop 1 and stop 2
-    if nearest_linestring_s1 == nearest_linestring_s2 or min_distance_s2 <= 4.0e-7:
-
-        print 'both nodes lie on the same shape line'
-        gdf_trunk_line_s2 = gdf_trunk_line_s1
-
-        linestring_s1 = gdf_trunk_line_s1['geometry']
-        linestring_s1 = LineString(linestring_s1.iloc[0])
-
-        linestring_s2 = linestring_s1
-
-        point_s1 = stop_1['geometry']
-        point_s2 = stop_2['geometry']
-
-        point_s1 = Point(stop_1['geometry'].iloc[0])
-        point_s2 = Point(stop_2['geometry'].iloc[0])
-
-
-        first_point = linestring_s1.coords[0]
-        last_point = linestring_s1.coords[-1]
-
-        distance_first = vincenty(point, first_point).meters
-        distance_last =  vincenty(point, last_point).meters
-
-        print '================================'
-        print 'point', point
-        print 'first_point', first_point, distance_first
-        print 'last_point', last_point, distance_last
-
-        linestring_s1_part_1, linestring_s1_part_2 = split_linestring(point_s1, linestring_s1)
-        linestring_s2_part_1, linestring_s2_part_2 = split_linestring(point_s2, linestring_s2)
-
-        print 'part1'
-        print linestring_s1_part_1
-        print 'point1'
-        print point_s1
-        print 'part2'
-        print linestring_s1_part_2
-        print ''
-        print 'part1'
-        print linestring_s2_part_1
-        print 'point2'
-        print point_s2
-        print 'part2'
-        print linestring_s2_part_2
-
-        # union of part1 of both stops one and two
-        edge = []
-        # part 1 of both nodes are no empty
-        if type(linestring_s1_part_1) == type(linestring_s2_part_1)\
-         and type(linestring_s1_part_1) != list:
-            edge = linestring_s1_part_1.union(linestring_s2_part_1)
-        # part 1 of s2 is empty
-        elif type(linestring_s1_part_1) != list and type(linestring_s2_part_1) == list:
-            edge = linestring_s1_part_1
-        else:
-            print 'ERROR!'
-            break
-
-        print 'final edge'
-        print edge
+    if merged_linestrings is None:
+        print 'untreated case'
 
         # plot edges and points
         fig, ax = plt.subplots()
         ax.set_aspect('equal')
         ax.axis('off')
         x, y = edge.xy
-        ax.plot(x,y, color='red')
+        ax.plot(x,y, color='green')
         x, y = point_s1.xy
-        print x,y
         ax.scatter(x,y, color='black')
         x, y = point_s2.xy
-        print x,y
         ax.scatter(x,y, color='black')
-        fig.savefig(result_folder + 'path_between_stops.pdf')
+        fig.savefig(result_folder + 'error_path_between_stops.pdf')
 
+        break
     else:
-        print 'nodes lie on different shape lines'
-        gdf_trunk_line_s2 = gdf_trunk_line[gdf_trunk_line['id'] == nearest_linestring_s2]
 
-        linestring_s1 = gdf_trunk_line_s1['geometry']
-        linestring_s2 = gdf_trunk_line_s2['geometry']
-
-        linestring_s1 = LineString(linestring_s1.iloc[0])
-        linestring_s2 = LineString(linestring_s2.iloc[0])
-
-        print 'distance btwn lines', linestring_s1.distance(linestring_s2)
-        print 'lines touches', linestring_s1.touches(linestring_s2)
-
-
-        point_s1 = stop_1['geometry']
-        point_s2 = stop_2['geometry']
-
-        point_s1 = Point(stop_1['geometry'].iloc[0])
-        point_s2 = Point(stop_2['geometry'].iloc[0])
-        print 'point line touches', linestring_s1.touches(point_s2)
-        print 'point line touches', linestring_s2.touches(point_s2)
-
-        linestring_s1_part_1, linestring_s1_part_2 = split_linestring(point_s1, linestring_s1)
-        linestring_s2_part_1, linestring_s2_part_2 = split_linestring(point_s2, linestring_s2)
-
-        print linestring_s1_part_1
-        print point_s1
-        print linestring_s1_part_2
         print ''
-        print linestring_s2_part_1
+        print merged_linestrings
+        print ''
+        print point_s1
+        print ''
         print point_s2
-        print linestring_s2_part_2
 
-        # merge part one of stop one with part one of stop two
-        if type(linestring_s2_part_1) == list:
-            edge = linestring_s1_part_2
-        else:
-            edge = linestring_s1_part_2.union(linestring_s2_part_1)
-        print type(edge)
+        # split linestrings given stops
+        edge = linestring_between_points(merged_linestrings, point_s1, point_s2)
+        print ''
         print edge
 
-        # plot edges and points
-        fig, ax = plt.subplots()
-        ax.set_aspect('equal')
-        ax.axis('off')
-        # x, y = point_s1.xy
-        # ax.plot(x,y, color='black')
-        # x, y = point_s2.xy
-        # ax.plot(x,y, color='black')
-        # x, y = edge.xy
-        # ax.plot(x,y, color='blue')
-        stop_1.plot(ax=ax, marker='*', color='gray', markersize=2)
-        stop_2.plot(ax=ax, marker='*', color='gray', markersize=2)
-        gdf_trunk_line_s1.plot(ax=ax, alpha=0.2, color='blue')
-        if nearest_linestring_s1 != nearest_linestring_s2:
-            gdf_trunk_line_s2.plot(ax=ax, alpha=0.2, color='red')
-        fig.savefig(result_folder + 'path_between_stops.pdf')
-
-    break
-'''
 
 '''
     Get the best subway path from one station to a census tract
