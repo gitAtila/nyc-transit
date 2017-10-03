@@ -92,9 +92,34 @@ g_transit = create_transit_graph(nx.Graph(), gdf_stations, df_links)
 #g_transit = create_transit_graph(nx.MultiGraph(), gdf_stations, df_links)
 #split_line_route(gdf_stations, gdf_lines, df_links)
 
+def touches_extremity(linestring_1, linestring_2):
+    left_1 = Point(linestring_1.coords[0])
+    right_1 = Point(linestring_1.coords[-1])
+
+    left_2 = Point(linestring_2.coords[0])
+    right_2 = Point(linestring_2.coords[-1])
+
+    if left_1.touches(right_2) or left_1.touches(left_2) or right_1.touches(right_2) or right_1.touches(left_2):
+        return True
+
+    return False
+
+
 # create a graph connecting each linestring of the same trunk that touches each other
 def create_line_graph(gdf_lines):
-    print gdf_trunk_line
+    g_trunk_lines = nx.Graph()
+    list_unique_trunks = gdf_lines['rt_symbol'].unique()
+    for trunk in list_unique_trunks:
+        gdf_trunk_line = gdf_lines[gdf_lines['rt_symbol'] == trunk]
+        for index_1 ,line_1 in gdf_trunk_line.iterrows():
+            for index_2 ,line_2 in gdf_trunk_line.iterrows():
+                # There are not loops
+                if index_1 != index_2 and touches_extremity(line_1['geometry'], line_2['geometry']):
+                    g_trunk_lines.add_edge(index_1, index_2, trunk=trunk)
+    return g_trunk_lines
+
+g_trunk_lines = create_line_graph(gdf_lines)
+print get_subgraph_edge(g_trunk_lines, trunk, '1')
 
 def is_linestring_between_points(linestring, point_1, point_2, acceptable_distance):
 
@@ -232,6 +257,7 @@ def split_linestring(point, linestring):
 
     return linestring_part_1, linestring_part_2
 
+# get the path between stations
 for index, link in df_links.iterrows():
 
     stop_1 = gdf_stations[gdf_stations['objectid'] == link['node_1']]
@@ -246,7 +272,7 @@ for index, link in df_links.iterrows():
     print nearest_linestring_s1
     print nearest_linestring_s2
 
-    # get the path between stations
+    # get linestrings near stations point
     gdf_trunk_line_s1 = gdf_trunk_line[gdf_trunk_line['id'] == nearest_linestring_s1]
     gdf_trunk_line_s2 = gdf_trunk_line[gdf_trunk_line['id'] == nearest_linestring_s2]
 
@@ -256,12 +282,14 @@ for index, link in df_links.iterrows():
     linestring_s1 = LineString(linestring_s1.iloc[0])
     linestring_s2 = LineString(linestring_s2.iloc[0])
 
+    # get coordinates of station
     point_s1 = stop_1['geometry']
     point_s2 = stop_2['geometry']
 
     point_s1 = Point(stop_1['geometry'].iloc[0])
     point_s2 = Point(stop_2['geometry'].iloc[0])
 
+    # get merged set of linestrings that pass through poits s1 and s2
     merged_linestrings = linestring_through_points(gdf_trunk_line, nearest_linestring_s1,\
      nearest_linestring_s2)
 
