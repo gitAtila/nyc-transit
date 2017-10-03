@@ -88,10 +88,13 @@ def create_transit_graph(graph_constructor, gdf_stations, df_links):
 
     return g_transit
 
-
 g_transit = create_transit_graph(nx.Graph(), gdf_stations, df_links)
 #g_transit = create_transit_graph(nx.MultiGraph(), gdf_stations, df_links)
 #split_line_route(gdf_stations, gdf_lines, df_links)
+
+# create a graph connecting each linestring of the same trunk that touches each other
+def create_line_graph(gdf_lines):
+    print gdf_trunk_line
 
 def is_linestring_between_points(linestring, point_1, point_2, acceptable_distance):
 
@@ -110,19 +113,23 @@ def is_linestring_between_points(linestring, point_1, point_2, acceptable_distan
 
     return False
 
-def linestrings_between_linestrings(gdf_trunk_line, id_linestring_s1, id_linestring_s2):
+def linestring_through_points(gdf_trunk_line, id_linestring_s1, id_linestring_s2):
 
     linestring_s1 = gdf_trunk_line[gdf_trunk_line['id'] == id_linestring_s1]['geometry'].iloc[0]
     linestring_s2 = gdf_trunk_line[gdf_trunk_line['id'] == id_linestring_s2]['geometry'].iloc[0]
 
+    # if points lie on the same linestring
+    if id_linestring_s1 == id_linestring_s2:
+        return  linestring_s1
+
+    # linestring_s1 and linestring_s2 touches each other
     if linestring_s1.touches(linestring_s2):
-        # merge linestring_s1 with linestring_s2
         merged_linestrings = [linestring_s1, linestring_s2]
         merged_linestrings = MultiLineString(merged_linestrings)
         merged_linestrings = linemerge(merged_linestrings)
-
         return merged_linestrings
 
+    # if there are one or more linestrings between linestring_s1 and linestring_s2
     else:
 
         # get linestrings which its id is between linestrings on the extremity
@@ -165,6 +172,15 @@ def nearest_point_linestring(linestring, point):
             nearest_point = index
     return nearest_point
 
+def nearest_linestring_point(gdf_trunk_line, point):
+    min_distance = maxint
+    nearest_linestring_id = -1
+    for index, linestring in gdf_trunk_line.iterrows():
+        distance = float(point.distance(linestring['geometry']))
+        if distance < min_distance:
+            min_distance = distance
+            nearest_linestring_id = linestring['id']
+    return nearest_linestring_id
 
 def linestring_between_points(linestring, point_1, point_2):
     # get the nearest_point from p1 and from p2
@@ -223,28 +239,12 @@ for index, link in df_links.iterrows():
 
     gdf_trunk_line = gdf_lines[gdf_lines['rt_symbol'] == link['trunk']]
 
-    # find the nearest linestrings
-    min_distance_s1 = maxint
-    min_distance_s2 = maxint
-    nearest_linestring_s1 = -1
-    nearest_linestring_s2 = -1
-    for index, linestring in gdf_trunk_line.iterrows():
-        distance_s1 = float(stop_1.distance(linestring['geometry']))
-        distance_s2 = float(stop_2.distance(linestring['geometry']))
-        # print linestring['id']
-        # print '\t', float(distance_s1)
-        # print '\t', float(distance_s2)
-        # print ''
-        if distance_s1 < min_distance_s1:
-            min_distance_s1 = distance_s1
-            nearest_linestring_s1 = linestring['id']
+    # find the nearest linestrings on point
+    nearest_linestring_s1 = nearest_linestring_point(gdf_trunk_line, stop_1)
+    nearest_linestring_s2 = nearest_linestring_point(gdf_trunk_line, stop_2)
 
-        if distance_s2 < min_distance_s2:
-            min_distance_s2 = distance_s2
-            nearest_linestring_s2 = linestring['id']
-
-    print min_distance_s1, nearest_linestring_s1
-    print min_distance_s2, nearest_linestring_s2
+    print nearest_linestring_s1
+    print nearest_linestring_s2
 
     # get the path between stations
     gdf_trunk_line_s1 = gdf_trunk_line[gdf_trunk_line['id'] == nearest_linestring_s1]
@@ -262,15 +262,10 @@ for index, link in df_links.iterrows():
     point_s1 = Point(stop_1['geometry'].iloc[0])
     point_s2 = Point(stop_2['geometry'].iloc[0])
 
-    # if is_linestring_between_points(linestring_s1, point_s1, point_s2, 1):
-    #     # compute the distance and save
-    #     print 'True'
-    #
-    # else:
-    # find linestrings between s1 and s2
-    merged_linestrings = linestrings_between_linestrings(gdf_trunk_line, nearest_linestring_s1,\
+    merged_linestrings = linestring_through_points(gdf_trunk_line, nearest_linestring_s1,\
      nearest_linestring_s2)
 
+    break
     if merged_linestrings is None:
         print 'untreated case'
 
@@ -289,6 +284,7 @@ for index, link in df_links.iterrows():
         fig.savefig(result_folder + 'error_path_between_stops.pdf')
 
         break
+
     else:
 
         print ''
