@@ -170,12 +170,17 @@ def linestring_between_points(linestring, point_1, point_2):
     # get the nearest_point from p1 and from p2
     nearest_p1 = nearest_point_linestring(linestring, point_1)
     nearest_p2 = nearest_point_linestring(linestring, point_2)
+
     # get the path between stops
-    positions_between_points = list(linestring.coords)
-    positions_between_points = positions_between_points[nearest_p1:nearest_p2]
+    positions_through_points = list(linestring.coords)
+    positions_between_points = positions_through_points[nearest_p1:nearest_p2]
+
     # put points on extremities
-    positions_between_points = [(point_1.x, point_1.y)] + positions_between_points
-    positions_between_points = positions_between_points + [(point_2.x, point_2.y)]
+    left_extremity = linestring.interpolate(linestring.project(point_1))
+    right_extremity = linestring.interpolate(linestring.project(point_2))
+    print left_extremity, right_extremity
+    positions_between_points = [left_extremity] + positions_between_points
+    positions_between_points = positions_between_points + [right_extremity]
 
     return LineString(positions_between_points)
 
@@ -273,8 +278,10 @@ for index, link in df_links.iterrows():
         fig, ax = plt.subplots()
         ax.set_aspect('equal')
         ax.axis('off')
-        x, y = edge.xy
-        ax.plot(x,y, color='green')
+        x, y = linestring_s1.xy
+        ax.plot(x,y, color='blue')
+        x, y = linestring_s2.xy
+        ax.plot(x,y, color='red')
         x, y = point_s1.xy
         ax.scatter(x,y, color='black')
         x, y = point_s2.xy
@@ -295,6 +302,20 @@ for index, link in df_links.iterrows():
         edge = linestring_between_points(merged_linestrings, point_s1, point_s2)
         print ''
         print edge
+
+        # # plot edges and points
+        # fig, ax = plt.subplots()
+        # ax.set_aspect('equal')
+        # ax.axis('off')
+        # x, y = edge.xy
+        # ax.plot(x,y, color='green')
+        # x, y = point_s1.xy
+        # ax.scatter(x,y, color='black')
+        # x, y = point_s2.xy
+        # ax.scatter(x,y, color='black')
+        # fig.savefig(result_folder + 'path_between_stops.pdf')
+        #
+        # break
 
 
 '''
