@@ -99,15 +99,14 @@ def touches_extremity(linestring_1, linestring_2):
     left_2 = Point(linestring_2.coords[0])
     right_2 = Point(linestring_2.coords[-1])
 
-    if left_1.touches(right_2) or left_1.touches(left_2) or right_1.touches(right_2) or right_1.touches(left_2):
+    if left_1 == right_2 or left_1 == left_2 or right_1 == right_2 or right_1 == left_2:
         return True
 
     return False
 
-
 # create a graph connecting each linestring of the same trunk that touches each other
 def create_line_graph(gdf_lines):
-    g_trunk_lines = nx.Graph()
+    g_lines = nx.Graph()
     list_unique_trunks = gdf_lines['rt_symbol'].unique()
     for trunk in list_unique_trunks:
         gdf_trunk_line = gdf_lines[gdf_lines['rt_symbol'] == trunk]
@@ -115,11 +114,10 @@ def create_line_graph(gdf_lines):
             for index_2 ,line_2 in gdf_trunk_line.iterrows():
                 # There are not loops
                 if index_1 != index_2 and touches_extremity(line_1['geometry'], line_2['geometry']):
-                    g_trunk_lines.add_edge(index_1, index_2, trunk=trunk)
-    return g_trunk_lines
+                    g_lines.add_edge(index_1, index_2, trunk=trunk)
+    return g_lines
 
-g_trunk_lines = create_line_graph(gdf_lines)
-print get_subgraph_edge(g_trunk_lines, trunk, '1')
+g_lines = create_line_graph(gdf_lines)
 
 def is_linestring_between_points(linestring, point_1, point_2, acceptable_distance):
 
@@ -138,7 +136,7 @@ def is_linestring_between_points(linestring, point_1, point_2, acceptable_distan
 
     return False
 
-def linestring_through_points(gdf_trunk_line, id_linestring_s1, id_linestring_s2):
+def linestring_through_points(gdf_trunk_line, g_trunk_line, id_linestring_s1, id_linestring_s2):
 
     linestring_s1 = gdf_trunk_line[gdf_trunk_line['id'] == id_linestring_s1]['geometry'].iloc[0]
     linestring_s2 = gdf_trunk_line[gdf_trunk_line['id'] == id_linestring_s2]['geometry'].iloc[0]
@@ -156,33 +154,26 @@ def linestring_through_points(gdf_trunk_line, id_linestring_s1, id_linestring_s2
 
     # if there are one or more linestrings between linestring_s1 and linestring_s2
     else:
+        # indexes of linestrings of origin and destination
+        index_gdf_1 = gdf_trunk_line.index[gdf_trunk_line['id'] == id_linestring_s1][0]
+        index_gdf_2 = gdf_trunk_line.index[gdf_trunk_line['id'] == id_linestring_s2][0]
 
-        # get linestrings which its id is between linestrings on the extremity
-        print id_linestring_s1, id_linestring_s2
-        gdf_betweeness = gdf_trunk_line[(gdf_trunk_line['id'] > id_linestring_s1)\
-         & (gdf_trunk_line['id'] < id_linestring_s2)]
+        # path of linestrings
+        try:
+            linestrings_path = nx.dijkstra_path(g_trunk_line, index_gdf_1, index_gdf_2)
+        except:
+            return None
+        # linestrings of respective indexes
+        list_betweeness = []
+        for index in linestrings_path:
+            list_betweeness.append(gdf_trunk_line.loc[index])
+        gdf_betweeness = gpd.GeoDataFrame(list_betweeness, geometry='geometry')
 
-        # verify if the first and the last linestring touches s1 and s2 ones
-        if len(gdf_betweeness) > 0:
-
-            first_linestring = gdf_betweeness['geometry'].iloc[0]
-            last_linestring = gdf_betweeness['geometry'].iloc[-1]
-
-            linestring_s1 = gdf_trunk_line[gdf_trunk_line['id'] == id_linestring_s1]['geometry'].iloc[0]
-            linestring_s2 = gdf_trunk_line[gdf_trunk_line['id'] == id_linestring_s2]['geometry'].iloc[0]
-
-            if first_linestring.touches(linestring_s1) and last_linestring.touches(linestring_s2):
-
-                # merge linestrings in gdf_betweeness
-                merged_linestrings = []
-                merged_linestrings.append(linestring_s1)
-                for index, linestring in gdf_betweeness.iterrows():
-                    merged_linestrings.append(linestring['geometry'])
-                merged_linestrings.append(linestring_s2)
-                merged_linestrings = MultiLineString(merged_linestrings)
-                merged_linestrings = linemerge(merged_linestrings)
-
-                return merged_linestrings
+        # merge linestrings
+        merged_linestrings = gdf_betweeness['geometry'].tolist()
+        merged_linestrings = MultiLineString(merged_linestrings)
+        merged_linestrings = linemerge(merged_linestrings)
+        return merged_linestrings
 
     return None
 
@@ -264,6 +255,7 @@ for index, link in df_links.iterrows():
     stop_2 = gdf_stations[gdf_stations['objectid'] == link['node_2']]
 
     gdf_trunk_line = gdf_lines[gdf_lines['rt_symbol'] == link['trunk']]
+    g_trunk_line = get_subgraph_edge(g_lines, 'trunk', link['trunk'])
 
     # find the nearest linestrings on point
     nearest_linestring_s1 = nearest_linestring_point(gdf_trunk_line, stop_1)
@@ -290,10 +282,10 @@ for index, link in df_links.iterrows():
     point_s2 = Point(stop_2['geometry'].iloc[0])
 
     # get merged set of linestrings that pass through poits s1 and s2
-    merged_linestrings = linestring_through_points(gdf_trunk_line, nearest_linestring_s1,\
-     nearest_linestring_s2)
+    merged_linestrings = linestring_through_points(gdf_trunk_line, g_trunk_line,\
+     nearest_linestring_s1, nearest_linestring_s2)
 
-    break
+    #break
     if merged_linestrings is None:
         print 'untreated case'
 
