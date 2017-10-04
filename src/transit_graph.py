@@ -93,13 +93,25 @@ g_transit = create_transit_graph(nx.Graph(), gdf_stations, df_links)
 #split_line_route(gdf_stations, gdf_lines, df_links)
 
 def touches_extremity(linestring_1, linestring_2):
+    tolerance = 1.5 #meters
     left_1 = Point(linestring_1.coords[0])
     right_1 = Point(linestring_1.coords[-1])
 
     left_2 = Point(linestring_2.coords[0])
     right_2 = Point(linestring_2.coords[-1])
 
-    if left_1 == right_2 or left_1 == left_2 or right_1 == right_2 or right_1 == left_2:
+    distance_ll = vincenty((left_1.x, left_1.y), (left_2.x, left_2.y)).meters
+    distance_lr = vincenty((left_1.x, left_1.y), (right_2.x, right_2.y)).meters
+    distance_rl = vincenty((right_1.x, right_1.y), (left_2.x, left_2.y)).meters
+    distance_rr = vincenty((right_1.x, right_1.y), (right_2.x, right_2.y)).meters
+
+    print distance_ll
+    print distance_lr
+    print distance_rl
+    print distance_rr
+
+    if distance_lr <= tolerance or distance_lr <= tolerance or distance_ll <= tolerance\
+     or distance_rr <= tolerance:
         return True
 
     return False
@@ -136,6 +148,22 @@ def is_linestring_between_points(linestring, point_1, point_2, acceptable_distan
 
     return False
 
+def linemerge_sequential(multilinestring):
+    first_linestring = multilinestring[0]
+    list_linestrings = []
+    print list(first_linestring.coords)
+    for tuple_lat_lon in list(first_linestring.coords):
+        list_linestrings.append(tuple_lat_lon)
+    #list_linestrings = list(first_linestring.coords)
+    for index in range(1,len(multilinestring)):
+        print list(multilinestring[index].coords)
+        for tuple_lat_lon in list(multilinestring[index].coords):
+            list_linestrings.append(tuple_lat_lon)
+         #list_linestrings = list_linestrings + multilinestring[index].coords
+
+    print list_linestrings
+    return LineString(list_linestrings)
+
 def linestring_through_points(gdf_trunk_line, g_trunk_line, id_linestring_s1, id_linestring_s2):
 
     linestring_s1 = gdf_trunk_line[gdf_trunk_line['id'] == id_linestring_s1]['geometry'].iloc[0]
@@ -146,7 +174,7 @@ def linestring_through_points(gdf_trunk_line, g_trunk_line, id_linestring_s1, id
         return  linestring_s1
 
     # linestring_s1 and linestring_s2 touches each other
-    if linestring_s1.touches(linestring_s2):
+    if touches_extremity(linestring_s1, linestring_s2):
         merged_linestrings = [linestring_s1, linestring_s2]
         merged_linestrings = MultiLineString(merged_linestrings)
         merged_linestrings = linemerge(merged_linestrings)
@@ -162,6 +190,8 @@ def linestring_through_points(gdf_trunk_line, g_trunk_line, id_linestring_s1, id
         try:
             linestrings_path = nx.dijkstra_path(g_trunk_line, index_gdf_1, index_gdf_2)
         except:
+            print
+            print 'There is no path between', index_gdf_1, 'and', index_gdf_2
             return None
         # linestrings of respective indexes
         list_betweeness = []
@@ -173,6 +203,9 @@ def linestring_through_points(gdf_trunk_line, g_trunk_line, id_linestring_s1, id
         merged_linestrings = gdf_betweeness['geometry'].tolist()
         merged_linestrings = MultiLineString(merged_linestrings)
         merged_linestrings = linemerge(merged_linestrings)
+        #print type(merged_linestrings)
+        if type(merged_linestrings) == MultiLineString:
+            merged_linestrings = linemerge_sequential(merged_linestrings)
         return merged_linestrings
 
     return None
@@ -199,7 +232,7 @@ def nearest_linestring_point(gdf_trunk_line, point):
     return nearest_linestring_id
 
 def linestring_between_points(linestring, point_1, point_2):
-    # get the nearest_point from p1 and from p2
+    # get the nearest point from p1 and from p2
     nearest_p1 = nearest_point_linestring(linestring, point_1)
     nearest_p2 = nearest_point_linestring(linestring, point_2)
 
