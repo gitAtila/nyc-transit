@@ -93,7 +93,7 @@ g_transit = create_transit_graph(nx.Graph(), gdf_stations, df_links)
 #split_line_route(gdf_stations, gdf_lines, df_links)
 
 def touches_extremity(linestring_1, linestring_2):
-    tolerance = 1.5 #meters
+    tolerance = 2 #meters
     left_1 = Point(linestring_1.coords[0])
     right_1 = Point(linestring_1.coords[-1])
 
@@ -105,10 +105,10 @@ def touches_extremity(linestring_1, linestring_2):
     distance_rl = vincenty((right_1.x, right_1.y), (left_2.x, left_2.y)).meters
     distance_rr = vincenty((right_1.x, right_1.y), (right_2.x, right_2.y)).meters
 
-    print distance_ll
-    print distance_lr
-    print distance_rl
-    print distance_rr
+    # print distance_ll
+    # print distance_lr
+    # print distance_rl
+    # print distance_rr
 
     if distance_lr <= tolerance or distance_lr <= tolerance or distance_ll <= tolerance\
      or distance_rr <= tolerance:
@@ -178,6 +178,8 @@ def linestring_through_points(gdf_trunk_line, g_trunk_line, id_linestring_s1, id
         merged_linestrings = [linestring_s1, linestring_s2]
         merged_linestrings = MultiLineString(merged_linestrings)
         merged_linestrings = linemerge(merged_linestrings)
+        if type(merged_linestrings) == MultiLineString:
+            merged_linestrings = linemerge_sequential(merged_linestrings)
         return merged_linestrings
 
     # if there are one or more linestrings between linestring_s1 and linestring_s2
@@ -190,9 +192,15 @@ def linestring_through_points(gdf_trunk_line, g_trunk_line, id_linestring_s1, id
         try:
             linestrings_path = nx.dijkstra_path(g_trunk_line, index_gdf_1, index_gdf_2)
         except:
-            print
+            for u, v , dict_trunk in g_trunk_line.edges_iter(data=True):
+                print gdf_trunk_line.loc[u]['id'], '-->', gdf_trunk_line.loc[v]['id']
+            last_point = gdf_trunk_line.loc[index_gdf_1]['geometry'].coords[-1]
+            first_point = gdf_trunk_line.loc[index_gdf_2]['geometry'].coords[0]
+            #first_point = gdf_trunk_line[gdf_trunk_line['id'] == 2000058.0]['geometry'].iloc[0].coords[0]
+            print vincenty(last_point, first_point).meters
             print 'There is no path between', index_gdf_1, 'and', index_gdf_2
             return None
+
         # linestrings of respective indexes
         list_betweeness = []
         for index in linestrings_path:
@@ -203,7 +211,6 @@ def linestring_through_points(gdf_trunk_line, g_trunk_line, id_linestring_s1, id
         merged_linestrings = gdf_betweeness['geometry'].tolist()
         merged_linestrings = MultiLineString(merged_linestrings)
         merged_linestrings = linemerge(merged_linestrings)
-        #print type(merged_linestrings)
         if type(merged_linestrings) == MultiLineString:
             merged_linestrings = linemerge_sequential(merged_linestrings)
         return merged_linestrings
