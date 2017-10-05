@@ -129,8 +129,6 @@ def create_line_graph(gdf_lines):
                     g_lines.add_edge(index_1, index_2, trunk=trunk)
     return g_lines
 
-g_lines = create_line_graph(gdf_lines)
-
 def is_linestring_between_points(linestring, point_1, point_2, acceptable_distance):
 
     first_point = linestring.coords[0]
@@ -288,92 +286,112 @@ def split_linestring(point, linestring):
 
     return linestring_part_1, linestring_part_2
 
-# get the path between stations
-for index, link in df_links.iterrows():
+def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
+    list_geolinks = []
+    # get the path between stations
+    for index, link in df_links.iterrows():
 
-    stop_1 = gdf_stations[gdf_stations['objectid'] == link['node_1']]
-    stop_2 = gdf_stations[gdf_stations['objectid'] == link['node_2']]
+        stop_1 = gdf_stations[gdf_stations['objectid'] == link['node_1']]
+        stop_2 = gdf_stations[gdf_stations['objectid'] == link['node_2']]
 
-    gdf_trunk_line = gdf_lines[gdf_lines['rt_symbol'] == link['trunk']]
-    g_trunk_line = get_subgraph_edge(g_lines, 'trunk', link['trunk'])
+        gdf_trunk_line = gdf_lines[gdf_lines['rt_symbol'] == link['trunk']]
+        g_trunk_line = get_subgraph_edge(g_lines, 'trunk', link['trunk'])
 
-    # find the nearest linestrings on point
-    nearest_linestring_s1 = nearest_linestring_point(gdf_trunk_line, stop_1)
-    nearest_linestring_s2 = nearest_linestring_point(gdf_trunk_line, stop_2)
+        if link['trunk'] != '1':
+            break
 
-    print nearest_linestring_s1
-    print nearest_linestring_s2
+        # find the nearest linestrings on point
+        nearest_linestring_s1 = nearest_linestring_point(gdf_trunk_line, stop_1)
+        nearest_linestring_s2 = nearest_linestring_point(gdf_trunk_line, stop_2)
 
-    # get linestrings near stations point
-    gdf_trunk_line_s1 = gdf_trunk_line[gdf_trunk_line['id'] == nearest_linestring_s1]
-    gdf_trunk_line_s2 = gdf_trunk_line[gdf_trunk_line['id'] == nearest_linestring_s2]
+        print stop_1
+        print stop_2
 
-    linestring_s1 = gdf_trunk_line_s1['geometry']
-    linestring_s2 = gdf_trunk_line_s2['geometry']
+        print nearest_linestring_s1
+        print nearest_linestring_s2
 
-    linestring_s1 = LineString(linestring_s1.iloc[0])
-    linestring_s2 = LineString(linestring_s2.iloc[0])
+        # get linestrings near stations point
+        gdf_trunk_line_s1 = gdf_trunk_line[gdf_trunk_line['id'] == nearest_linestring_s1]
+        gdf_trunk_line_s2 = gdf_trunk_line[gdf_trunk_line['id'] == nearest_linestring_s2]
 
-    # get coordinates of station
-    point_s1 = stop_1['geometry']
-    point_s2 = stop_2['geometry']
+        linestring_s1 = gdf_trunk_line_s1['geometry']
+        linestring_s2 = gdf_trunk_line_s2['geometry']
 
-    point_s1 = Point(stop_1['geometry'].iloc[0])
-    point_s2 = Point(stop_2['geometry'].iloc[0])
+        linestring_s1 = LineString(linestring_s1.iloc[0])
+        linestring_s2 = LineString(linestring_s2.iloc[0])
 
-    # get merged set of linestrings that pass through poits s1 and s2
-    merged_linestrings = linestring_through_points(gdf_trunk_line, g_trunk_line,\
-     nearest_linestring_s1, nearest_linestring_s2)
+        # get coordinates of station
+        point_s1 = stop_1['geometry']
+        point_s2 = stop_2['geometry']
 
-    #break
-    if merged_linestrings is None:
-        print 'untreated case'
+        point_s1 = Point(stop_1['geometry'].iloc[0])
+        point_s2 = Point(stop_2['geometry'].iloc[0])
 
-        # plot edges and points
-        fig, ax = plt.subplots()
-        ax.set_aspect('equal')
-        ax.axis('off')
-        x, y = linestring_s1.xy
-        ax.plot(x,y, color='blue')
-        x, y = linestring_s2.xy
-        ax.plot(x,y, color='red')
-        x, y = point_s1.xy
-        ax.scatter(x,y, color='black')
-        x, y = point_s2.xy
-        ax.scatter(x,y, color='black')
-        fig.savefig(result_folder + 'error_path_between_stops.pdf')
+        # get merged set of linestrings that pass through poits s1 and s2
+        merged_linestrings = linestring_through_points(gdf_trunk_line, g_trunk_line,\
+         nearest_linestring_s1, nearest_linestring_s2)
 
-        break
+        #break
+        if merged_linestrings is None:
+            print 'untreated case'
 
-    else:
+            # plot edges and points
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+            ax.axis('off')
+            x, y = linestring_s1.xy
+            ax.plot(x,y, color='blue')
+            x, y = linestring_s2.xy
+            ax.plot(x,y, color='red')
+            x, y = point_s1.xy
+            ax.scatter(x,y, color='black')
+            x, y = point_s2.xy
+            ax.scatter(x,y, color='black')
+            fig.savefig(result_folder + 'error_path_between_stops.pdf')
 
-        print ''
-        print merged_linestrings
-        print ''
-        print point_s1
-        print ''
-        print point_s2
+            print stop_1['objectid']
+            if stop_1['objectid'].iloc[0] == 469.0:
+                print 'jump'
+            else:
+                break
 
-        # split linestrings given stops
-        edge = linestring_between_points(merged_linestrings, point_s1, point_s2)
-        print ''
-        print edge
+        else:
 
-        # # plot edges and points
-        # fig, ax = plt.subplots()
-        # ax.set_aspect('equal')
-        # ax.axis('off')
-        # x, y = edge.xy
-        # ax.plot(x,y, color='green')
-        # x, y = point_s1.xy
-        # ax.scatter(x,y, color='black')
-        # x, y = point_s2.xy
-        # ax.scatter(x,y, color='black')
-        # fig.savefig(result_folder + 'path_between_stops.pdf')
-        #
-        # break
+            # print ''
+            # print merged_linestrings
+            # print ''
+            # #print stop_1
+            # print ''
+            #print stop_2
 
+            # split linestrings given stops
+            edge = linestring_between_points(merged_linestrings, point_s1, point_s2)
+            geo_link = link.to_dict()
+            geo_link['geometry'] = edge
+            list_geolinks.append(geo_link)
+            #break
 
+            # # plot edges and points
+            # fig, ax = plt.subplots()
+            # ax.set_aspect('equal')
+            # ax.axis('off')
+            # x, y = edge.xy
+            # ax.plot(x,y, color='green')
+            # x, y = point_s1.xy
+            # ax.scatter(x,y, color='black')
+            # x, y = point_s2.xy
+            # ax.scatter(x,y, color='black')
+            # fig.savefig(result_folder + 'path_between_stops.pdf')
+            #
+            # break
+
+    gdf_geolinks = gpd.GeoDataFrame(list_geolinks, geometry='geometry')
+    return gdf_geolinks
+
+g_lines = create_line_graph(gdf_lines)
+gdf_geolinks = path_between_stops(df_links, gdf_stations, gdf_lines, g_lines)
+
+print gdf_geolinks
 '''
     Get the best subway path from one station to a census tract
 '''
