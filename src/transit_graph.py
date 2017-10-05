@@ -88,10 +88,6 @@ def create_transit_graph(graph_constructor, gdf_stations, df_links):
 
     return g_transit
 
-g_transit = create_transit_graph(nx.Graph(), gdf_stations, df_links)
-#g_transit = create_transit_graph(nx.MultiGraph(), gdf_stations, df_links)
-#split_line_route(gdf_stations, gdf_lines, df_links)
-
 def touches_extremity(linestring_1, linestring_2):
     tolerance = 2 #meters
     left_1 = Point(linestring_1.coords[0])
@@ -388,10 +384,6 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
     gdf_geolinks = gpd.GeoDataFrame(list_geolinks, geometry='geometry')
     return gdf_geolinks
 
-g_lines = create_line_graph(gdf_lines)
-gdf_geolinks = path_between_stops(df_links, gdf_stations, gdf_lines, g_lines)
-
-print gdf_geolinks
 '''
     Get the best subway path from one station to a census tract
 '''
@@ -432,38 +424,16 @@ def best_route_shortest_walk_distance(dict_trip_trunks):
 
     return best_destination
 
-gdf_census_tract = gpd.GeoDataFrame.from_file(census_tract_path)
-first_subway_boarding = 49
-ct_origin = '012600'
-ct_destination = '024100'
-boro_destination = '2'
-
-# discover which was the alight station
-## get the centroid of the census tract
-gs_destination = gdf_census_tract[gdf_census_tract['ct2010'] == ct_destination]
-gs_destination = gs_destination[gs_destination['boro_code'] == boro_destination]
-destination_centroid = gs_destination.centroid
-
-## get the stations nearby centroid
-dict_trunk_stations_near_destination = stations_near_point_per_trunk(g_transit, destination_centroid)
-
-# construct probable trips
-dict_best_trunk_station = best_route_shortest_walk_distance(dict_trunk_stations_near_destination)
-trip_path = nx.dijkstra_path(g_transit, first_subway_boarding, dict_best_trunk_station['station'],\
- weight='distance')
-
-# dict_trip_trunks = dict()
-# for trunk, destination_station in trunk_stations.iteritems():
-#     print trunk, destination_station
-#     trip_path = nx.dijkstra_path(g_transit, first_subway_boarding, destination_station['station'],\
-#      weight='distance')
-#     dict_trip_trunks[trunk] = trip_path
-#     print trip_path
-#     print ''
-
 '''
     Plot graph
 '''
+
+def plot_gdf(gdf, plot_name):
+    fig, ax = plt.subplots()
+    ax.set_aspect('equal')
+    gdf.plot(ax=ax)
+
+    fig.savefig(plot_name)
 
 def plot_graph(graph, unique_keys, color_field,  file_name):
     print unique_keys
@@ -528,19 +498,48 @@ def plot_path(transit_graph, list_stations, result_file_name):
 
     plt.savefig(result_file_name, dpi=1000)
 
-#plot_transit_graph(g_transit, result_folder + 'transit_graph_overlapped.png')
-#plot_path(g_transit, trip_path, result_folder + 'transit_graph_path.png')
-
-#graph_trunk_1 = nx.Graph((u,v,attribute) for u, v, attribute in g_transit.edges_iter(data=True) if attribute['trunk']=='1')
-# graph_trunk_1 = get_subgraph_node(g_transit, )
-# for node in graph_trunk_1.nodes():
-#     print graph_trunk_1[node]
-# plot_transit_graph(graph_trunk_1, result_folder + 'transit_graph_1.png')
 '''
-unique_line_trunks = list(set([g_transit.node[index]['trunk'] for index in g_transit]))
-unique_lines = list(gdf_stations['line'].unique())
+    Test area
+'''
 
-#sg_transit = sorted(nx.connected_component_subgraphs(g_transit), key = len, reverse=True)[0]
-plot_graph(g_transit, unique_lines, 'line', 'subway_trunk_all.png')
-#plot_graph(g_transit, unique_line_trunks, 'trunk', 'subway_trunk_all.pdf')
+print 'Creating line graph'
+g_lines = create_line_graph(gdf_lines)
+print 'Finding out links between subway stops'
+gdf_geolinks = path_between_stops(df_links, gdf_stations, gdf_lines, g_lines)
+
+print gdf_geolinks
+
+'''
+g_transit = create_transit_graph(nx.Graph(), gdf_stations, df_links)
+#g_transit = create_transit_graph(nx.MultiGraph(), gdf_stations, df_links)
+#split_line_route(gdf_stations, gdf_lines, df_links)
+
+gdf_census_tract = gpd.GeoDataFrame.from_file(census_tract_path)
+first_subway_boarding = 49
+ct_origin = '012600'
+ct_destination = '024100'
+boro_destination = '2'
+
+# discover which was the alight station
+## get the centroid of the census tract
+gs_destination = gdf_census_tract[gdf_census_tract['ct2010'] == ct_destination]
+gs_destination = gs_destination[gs_destination['boro_code'] == boro_destination]
+destination_centroid = gs_destination.centroid
+
+## get the stations nearby centroid
+dict_trunk_stations_near_destination = stations_near_point_per_trunk(g_transit, destination_centroid)
+
+# construct probable trips
+dict_best_trunk_station = best_route_shortest_walk_distance(dict_trunk_stations_near_destination)
+trip_path = nx.dijkstra_path(g_transit, first_subway_boarding, dict_best_trunk_station['station'],\
+ weight='distance')
+
+# dict_trip_trunks = dict()
+# for trunk, destination_station in trunk_stations.iteritems():
+#     print trunk, destination_station
+#     trip_path = nx.dijkstra_path(g_transit, first_subway_boarding, destination_station['station'],\
+#      weight='distance')
+#     dict_trip_trunks[trunk] = trip_path
+#     print trip_path
+#     print ''
 '''
