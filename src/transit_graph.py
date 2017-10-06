@@ -128,29 +128,23 @@ def create_line_graph(gdf_lines):
 def linemerge_sequential(multilinestring):
 
     first_linestring = multilinestring[0]
-    list_linestrings = []
-
-    for tuple_lat_lon in list(first_linestring.coords):
-        list_linestrings.append(tuple_lat_lon)
+    list_linestrings = list(first_linestring.coords)
 
     last_position = first_linestring.coords[-1]
-    print last_position
+    first_position = first_linestring.coords[0]
+
+    #print last_position
     for index in range(1,len(multilinestring)):
         linestring = multilinestring[index]
-        for position in range(0, len(linestring.coords)):
-            list_linestrings.append(linestring.coords[position])
 
-        # dist_left = vincenty(last_position, linestring.coords[0])
-        # dist_right = vincenty(last_position, linestring.coords[-1])
-        #
-        # if dist_left < dist_right:
-        #     for position in range(0, len(linestring.coords)):
-        #         list_linestrings.append(linestring.coords[position])
-        # # rotate linestring
-        # else:
-        #     for position in range(len(linestring.coords)-1, -1, -1):
-        #         list_linestrings.append(linestring.coords[position])
+        dist_last = vincenty(last_position, linestring.coords[0])
+        dist_first = vincenty(first_position, linestring.coords[0])
 
+        # append on the end
+        if dist_last < dist_first:
+            list_linestrings = list_linestrings + list(linestring.coords)
+        else: # append on the begining
+            list_linestrings = list(linestring.coords) + list_linestrings
 
     return LineString(list_linestrings)
 
@@ -236,19 +230,20 @@ def linestring_between_points(linestring, point_1, point_2):
     nearest_p2 = nearest_point_linestring(linestring, point_2)
     print nearest_p1, nearest_p2
 
-    # get the path between stops
     positions_through_points = list(linestring.coords)
+    # p1 is on the left side
     if nearest_p1 < nearest_p2:
         positions_between_points = positions_through_points[nearest_p1:nearest_p2]
         left_extremity = linestring.interpolate(linestring.project(point_1))
         right_extremity = linestring.interpolate(linestring.project(point_2))
+    # p1 is on the right side
     else:
         positions_between_points = positions_through_points[nearest_p2:nearest_p1]
         left_extremity = linestring.interpolate(linestring.project(point_2))
         right_extremity = linestring.interpolate(linestring.project(point_1))
 
     positions_between_points = [(left_extremity.x, left_extremity.y)] + positions_between_points
-    positions_between_points = positions_between_points + [(right_extremity.x, right_extremity.x)]
+    positions_between_points = positions_between_points + [(right_extremity.x, right_extremity.y)]
 
     return LineString(positions_between_points)
 
@@ -369,12 +364,18 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
                 fig, ax = plt.subplots()
                 ax.set_aspect('equal')
                 ax.axis('off')
-                x, y = merged_linestrings.xy
-                ax.plot(x,y, color='red')
+
+                # x, y = merged_linestrings.xy
+                # ax.plot(x,y, color='red')
+
                 x, y = edge.xy
                 ax.plot(x,y, color='green')
+
                 # x, y = linestring_s1.xy
                 # ax.plot(x,y, color='blue')
+                # x, y = linestring_s2.xy
+                # ax.plot(x,y, color='red')
+
                 x, y = point_s1.xy
                 ax.scatter(x,y, color='black')
                 x, y = point_s2.xy
@@ -507,6 +508,7 @@ def plot_path(transit_graph, list_stations, result_file_name):
 print 'Creating line graph'
 trunk = '4'
 gdf_lines = gdf_lines[gdf_lines['rt_symbol'] == trunk]
+#plot_gdf(gdf_lines, result_folder + 'test.pdf')
 g_lines = create_line_graph(gdf_lines)
 print 'Finding out links between subway stops'
 df_links = df_links[df_links['trunk'] == trunk]
