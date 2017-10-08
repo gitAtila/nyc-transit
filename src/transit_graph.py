@@ -138,7 +138,7 @@ def touches_extremity_line(linestring_1, linestring_2, tolerance):
     return False
 
 # create a graph connecting each linestring of the same trunk that touches each other
-def create_line_graph(gdf_lines):
+def create_line_graph(gdf_lines, list_addictional_edges):
     g_lines = nx.Graph()
     list_unique_trunks = gdf_lines['rt_symbol'].unique()
     for trunk in list_unique_trunks:
@@ -148,7 +148,23 @@ def create_line_graph(gdf_lines):
                 # There are not loops
                 if index_1 != index_2 and touches(line_1['geometry'], line_2['geometry'], tolerance):
                     g_lines.add_edge(index_1, index_2, trunk=trunk)
+
+        # insert addictional_edges
+        for edge in list_addictional_edges:
+            print
+            g_lines.add_edge(gdf_lines[gdf_lines['id'] == edge[0]].index.values[0],\
+             gdf_lines[gdf_lines['id'] == edge[1]].index.values[0],\
+             trunk=edge[2])
     return g_lines
+
+def distance_linestring(linestring):
+    total_distance = []
+    previous_position = linestring.coords[0]
+    for index in range(1, len(linestring.coords)):
+        actual_position = linestring.coords[index]
+        total_distance = vincenty(previous_position, actual_position).meters
+        previous_position = actual_position
+    return total_distance
 
 def linemerge_sequential(multilinestring):
 
@@ -234,9 +250,9 @@ def linestring_through_points(gdf_trunk_line, g_trunk_line, id_linestring_s1, id
         merged_linestrings = gdf_betweeness['geometry'].tolist()
         merged_linestrings = MultiLineString(merged_linestrings)
         merged_linestrings = linemerge(merged_linestrings)
-        #print merged_linestrings
         if type(merged_linestrings) == MultiLineString:
             merged_linestrings = linemerge_sequential(merged_linestrings)
+        #print distance_linestring(merged_linestrings)
         return merged_linestrings
 
     return None
@@ -400,7 +416,7 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
             # Exceptions
             # 10 299
             # 237 238
-            if stop_1['objectid'].iloc[0] == 469  and stop_2['objectid'].iloc[0] == 335:
+            if stop_1['objectid'].iloc[0] == 237  and stop_2['objectid'].iloc[0] == 238:
 
                 # plot edges and points
                 fig, ax = plt.subplots()
@@ -413,10 +429,10 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
                 x, y = edge.xy
                 ax.plot(x,y, color='green')
 
-                # x, y = linestring_s1.xy
-                # ax.plot(x,y, color='blue')
-                # x, y = linestring_s2.xy
-                # ax.plot(x,y, color='red')
+                x, y = linestring_s1.xy
+                ax.plot(x,y, color='blue')
+                x, y = linestring_s2.xy
+                ax.plot(x,y, color='red')
 
                 x, y = point_s1.xy
                 ax.scatter(x,y, color='black')
@@ -424,6 +440,9 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
                 ax.scatter(x,y, color='black')
                 fig.savefig(result_folder + 'path_between_stops.pdf')
                 #break
+
+    for u, v , dict_trunk in g_trunk_line.edges_iter(data=True):
+        print gdf_trunk_line.loc[u]['id'], '-->', gdf_trunk_line.loc[v]['id']
 
     gdf_geolinks = gpd.GeoDataFrame(list_geolinks, geometry='geometry')
     return gdf_geolinks
@@ -550,16 +569,20 @@ def plot_path(transit_graph, list_stations, result_file_name):
 print 'Creating line graph'
 trunk = 'B'
 gdf_lines = gdf_lines[gdf_lines['rt_symbol'] == trunk]
+gdf_lines = gdf_lines[gdf_lines['id'] != 2000293]
 #plot_gdf(gdf_lines, result_folder + 'test.pdf')
-g_lines = create_line_graph(gdf_lines)
+list_addictional_edges = []
+list_addictional_edges.append((2000292, 2000294, 'B'))
+#list_addictional_edges.append((2000296, 2000297, 'B'))
+g_lines = create_line_graph(gdf_lines, list_addictional_edges)
 
 print 'Finding out links between subway stops'
 df_links = df_links[df_links['trunk'] == trunk]
 gdf_geolinks = path_between_stops(df_links, gdf_stations, gdf_lines, g_lines)
-
+print gdf_geolinks
 plot_gdf(gdf_geolinks, result_folder + 'geolinks_' + trunk + '.pdf')
 
-print gdf_geolinks
+
 
 '''
 g_transit = create_transit_graph(nx.Graph(), gdf_stations, df_links)
