@@ -15,6 +15,7 @@ lines_path = argv[2]
 links_path = argv[3]
 census_tract_path = argv[4]
 result_folder = argv[5]
+tolerance = 11 # meters
 
 def get_subgraph_node(graph, node_key, node_value):
     list_node = []
@@ -145,7 +146,7 @@ def create_line_graph(gdf_lines):
         for index_1 ,line_1 in gdf_trunk_line.iterrows():
             for index_2 ,line_2 in gdf_trunk_line.iterrows():
                 # There are not loops
-                if index_1 != index_2 and touches(line_1['geometry'], line_2['geometry'], 2):
+                if index_1 != index_2 and touches(line_1['geometry'], line_2['geometry'], tolerance):
                     g_lines.add_edge(index_1, index_2, trunk=trunk)
     return g_lines
 
@@ -197,7 +198,7 @@ def linestring_through_points(gdf_trunk_line, g_trunk_line, id_linestring_s1, id
         return  linestring_s1
 
     # linestring_s1 and linestring_s2 touches each other
-    if touches(linestring_s1, linestring_s2, 2):
+    if touches(linestring_s1, linestring_s2, tolerance):
         merged_linestrings = [linestring_s1, linestring_s2]
         merged_linestrings = MultiLineString(merged_linestrings)
         merged_linestrings = linemerge(merged_linestrings)
@@ -396,7 +397,10 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
             geo_link['geometry'] = edge
             list_geolinks.append(geo_link)
 
-            if stop_1['objectid'].iloc[0] == 346  and stop_2['objectid'].iloc[0] == 10:
+            # Exceptions
+            # 10 299
+            # 237 238
+            if stop_1['objectid'].iloc[0] == 469  and stop_2['objectid'].iloc[0] == 335:
 
                 # plot edges and points
                 fig, ax = plt.subplots()
