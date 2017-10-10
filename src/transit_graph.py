@@ -149,7 +149,6 @@ def create_line_graph(gdf_lines):
                 if index_1 != index_2 and touches(line_1['geometry'], line_2['geometry'], tolerance):
                     g_lines.add_edge(index_1, index_2, trunk=trunk,\
                      weight = line_1['shape_len'] + line_2['shape_len'])
-                    print line_1['id'], '-->', line_2['id']
     return g_lines
 
 def linemerge_sequential(multilinestring):
@@ -403,33 +402,30 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
             geo_link['geometry'] = edge
             list_geolinks.append(geo_link)
 
-            # Exceptions
-            # 10 299
-            # 237 238
-            if stop_1['objectid'].iloc[0] == 357  and stop_2['objectid'].iloc[0] == 103:
-
-                # plot edges and points
-                fig, ax = plt.subplots()
-                ax.set_aspect('equal')
-                ax.axis('off')
-
-                x, y = merged_linestrings.xy
-                ax.plot(x,y, color='purple')
-
-                # x, y = edge.xy
-                # ax.plot(x,y, color='green')
-
-                x, y = linestring_s1.xy
-                ax.plot(x,y, color='blue')
-                x, y = linestring_s2.xy
-                ax.plot(x,y, color='red')
-
-                x, y = point_s1.xy
-                ax.scatter(x,y, color='black')
-                x, y = point_s2.xy
-                ax.scatter(x,y, color='black')
-                fig.savefig(result_folder + 'path_between_stops.pdf')
-                #break
+            # if stop_1['objectid'].iloc[0] == 357  and stop_2['objectid'].iloc[0] == 103:
+            #
+            #     # plot edges and points
+            #     fig, ax = plt.subplots()
+            #     ax.set_aspect('equal')
+            #     ax.axis('off')
+            #
+            #     x, y = merged_linestrings.xy
+            #     ax.plot(x,y, color='purple')
+            #
+            #     # x, y = edge.xy
+            #     # ax.plot(x,y, color='green')
+            #
+            #     x, y = linestring_s1.xy
+            #     ax.plot(x,y, color='blue')
+            #     x, y = linestring_s2.xy
+            #     ax.plot(x,y, color='red')
+            #
+            #     x, y = point_s1.xy
+            #     ax.scatter(x,y, color='black')
+            #     x, y = point_s2.xy
+            #     ax.scatter(x,y, color='black')
+            #     fig.savefig(result_folder + 'path_between_stops.pdf')
+            #     #break
 
     gdf_geolinks = gpd.GeoDataFrame(list_geolinks, geometry='geometry')
     return gdf_geolinks
@@ -552,30 +548,38 @@ def plot_path(transit_graph, list_stations, result_file_name):
 '''
     Test area
 '''
+# get links between stations for each subway trunk
+list_unique_trunks = gdf_lines['rt_symbol'].unique()
+for trunk in list_unique_trunks:
+    print 'Trunk:', trunk
+    if trunk == 'B':
+        # delete unnecessary edge
+        gdf_lines_trunk = gdf_lines[gdf_lines['id'] != 2000293]
 
-print 'Creating line graph'
-trunk = 'N'
-gdf_lines = gdf_lines[gdf_lines['rt_symbol'] == trunk]
+        # create a graph with subway lines
+        g_lines = create_line_graph(gdf_lines_trunk)
 
-if trunk == 'B':
-    gdf_lines = gdf_lines[gdf_lines['id'] != 2000293 ]
+        # add edge where lines are too far each other
+        index_1 = gdf_lines[gdf_lines['id'] == 2000292].index.values.tolist()[0]
+        index_2 = gdf_lines[gdf_lines['id'] == 2000294].index.values.tolist()[0]
+        g_lines.add_edge(index_1, index_2, trunk=trunk)
 
-    g_lines = create_line_graph(gdf_lines)
+    else:
+        # create a graph with subway lines
+        g_lines = create_line_graph(gdf_lines)
 
-    index_1 = gdf_lines[gdf_lines['id'] == 2000292].index.values.tolist()[0]
-    index_2 = gdf_lines[gdf_lines['id'] == 2000294].index.values.tolist()[0]
-    g_lines.add_edge(index_1, index_2, trunk=trunk)
+    print 'Finding out links between subway stops'
 
-else:
-    g_lines = create_line_graph(gdf_lines)
+    # get subway links between stations
+    df_links = df_links[df_links['trunk'] == trunk]
+    gdf_geolinks = path_between_stops(df_links, gdf_stations, gdf_lines, g_lines)
 
-print 'Finding out links between subway stops'
-df_links = df_links[df_links['trunk'] == trunk]
-gdf_geolinks = path_between_stops(df_links, gdf_stations, gdf_lines, g_lines)
+    print gdf_geolinks
 
-plot_gdf(gdf_geolinks, result_folder + 'geolinks_' + trunk + '.pdf')
+    #plot_gdf(gdf_geolinks, result_folder + 'geolinks_' + trunk + '.pdf')
+    # save links as shapefile
+    gdf_geolinks.to_file(result_folder+'links.shp')
 
-print gdf_geolinks
 
 '''
 g_transit = create_transit_graph(nx.Graph(), gdf_stations, df_links)
