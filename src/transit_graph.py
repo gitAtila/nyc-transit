@@ -152,12 +152,13 @@ def create_line_graph(gdf_lines):
     return g_lines
 
 def linemerge_sequential(multilinestring):
-
+    # initialize list_linestring with the first one
     first_linestring = multilinestring[0]
     list_linestrings = list(first_linestring.coords)
 
-    right_pos_first_line = first_linestring.coords[-1]
-    left_pos_first_line = first_linestring.coords[0]
+    # get extremity values
+    right_pos_line = first_linestring.coords[-1]
+    left_pos_line = first_linestring.coords[0]
 
     #print last_position
     for index in range(1,len(multilinestring)):
@@ -165,10 +166,10 @@ def linemerge_sequential(multilinestring):
         dict_dist = dict()
 
         # compute the distance between linestring extremities
-        dict_dist['dist_rr'] = vincenty(right_pos_first_line, linestring[-1])
-        dict_dist['dist_rl'] = vincenty(right_pos_first_line, linestring[0])
-        dict_dist['dist_lr'] = vincenty(left_pos_first_line, linestring[-1])
-        dict_dist['dist_ll'] = vincenty(left_pos_first_line, linestring[0])
+        dict_dist['dist_rr'] = vincenty(right_pos_line, linestring[-1])
+        dict_dist['dist_rl'] = vincenty(right_pos_line, linestring[0])
+        dict_dist['dist_lr'] = vincenty(left_pos_line, linestring[-1])
+        dict_dist['dist_ll'] = vincenty(left_pos_line, linestring[0])
 
         # get the shortest distance
         min_dist = min(dict_dist, key=dict_dist.get)
@@ -186,6 +187,10 @@ def linemerge_sequential(multilinestring):
         else: # min_dist =='dist_ll'
             print min_dist
             list_linestrings = list_linestrings[::-1] + linestring
+
+        # update extremities
+        right_pos_line = list_linestrings[-1]
+        left_pos_line = list_linestrings[0]
 
     return LineString(list_linestrings)
 
@@ -235,7 +240,6 @@ def linestring_through_points(gdf_trunk_line, g_trunk_line, id_linestring_s1, id
         merged_linestrings = gdf_betweeness['geometry'].tolist()
         merged_linestrings = MultiLineString(merged_linestrings)
         merged_linestrings = linemerge(merged_linestrings)
-        #print merged_linestrings
         if type(merged_linestrings) == MultiLineString:
             merged_linestrings = linemerge_sequential(merged_linestrings)
         return merged_linestrings
@@ -401,7 +405,7 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
             # Exceptions
             # 10 299
             # 237 238
-            if stop_1['objectid'].iloc[0] == 237  and stop_2['objectid'].iloc[0] == 238:
+            if stop_1['objectid'].iloc[0] == 100  and stop_2['objectid'].iloc[0] == 198:
 
                 # plot edges and points
                 fig, ax = plt.subplots()
@@ -414,17 +418,17 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
                 # x, y = edge.xy
                 # ax.plot(x,y, color='green')
 
-                # x, y = linestring_s1.xy
-                # ax.plot(x,y, color='blue')
-                # x, y = linestring_s2.xy
-                # ax.plot(x,y, color='red')
+                x, y = linestring_s1.xy
+                ax.plot(x,y, color='blue')
+                x, y = linestring_s2.xy
+                ax.plot(x,y, color='red')
 
                 x, y = point_s1.xy
                 ax.scatter(x,y, color='black')
                 x, y = point_s2.xy
                 ax.scatter(x,y, color='black')
                 fig.savefig(result_folder + 'path_between_stops.pdf')
-                break
+                #break
 
     gdf_geolinks = gpd.GeoDataFrame(list_geolinks, geometry='geometry')
     return gdf_geolinks
@@ -549,9 +553,8 @@ def plot_path(transit_graph, list_stations, result_file_name):
 '''
 
 print 'Creating line graph'
-trunk = 'B'
+trunk = 'N'
 gdf_lines = gdf_lines[gdf_lines['rt_symbol'] == trunk]
-
 gdf_lines = gdf_lines[gdf_lines['id'] != 2000293 ]
 
 g_lines = create_line_graph(gdf_lines)
@@ -559,7 +562,6 @@ if trunk == 'B':
     index_1 = gdf_lines[gdf_lines['id'] == 2000292].index.values.tolist()[0]
     index_2 = gdf_lines[gdf_lines['id'] == 2000294].index.values.tolist()[0]
     g_lines.add_edge(index_1, index_2, trunk=trunk)
-
 
 print 'Finding out links between subway stops'
 df_links = df_links[df_links['trunk'] == trunk]
