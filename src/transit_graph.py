@@ -148,6 +148,7 @@ def create_line_graph(gdf_lines):
                 # There are not loops
                 if index_1 != index_2 and touches(line_1['geometry'], line_2['geometry'], tolerance):
                     g_lines.add_edge(index_1, index_2, trunk=trunk)
+                    print line_1['id'], '-->', line_2['id']
     return g_lines
 
 def linemerge_sequential(multilinestring):
@@ -400,18 +401,18 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
             # Exceptions
             # 10 299
             # 237 238
-            if stop_1['objectid'].iloc[0] == 469  and stop_2['objectid'].iloc[0] == 335:
+            if stop_1['objectid'].iloc[0] == 237  and stop_2['objectid'].iloc[0] == 238:
 
                 # plot edges and points
                 fig, ax = plt.subplots()
                 ax.set_aspect('equal')
                 ax.axis('off')
 
-                # x, y = merged_linestrings.xy
-                # ax.plot(x,y, color='red')
+                x, y = merged_linestrings.xy
+                ax.plot(x,y, color='purple')
 
-                x, y = edge.xy
-                ax.plot(x,y, color='green')
+                # x, y = edge.xy
+                # ax.plot(x,y, color='green')
 
                 # x, y = linestring_s1.xy
                 # ax.plot(x,y, color='blue')
@@ -423,7 +424,7 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
                 x, y = point_s2.xy
                 ax.scatter(x,y, color='black')
                 fig.savefig(result_folder + 'path_between_stops.pdf')
-                #break
+                break
 
     gdf_geolinks = gpd.GeoDataFrame(list_geolinks, geometry='geometry')
     return gdf_geolinks
@@ -550,8 +551,15 @@ def plot_path(transit_graph, list_stations, result_file_name):
 print 'Creating line graph'
 trunk = 'B'
 gdf_lines = gdf_lines[gdf_lines['rt_symbol'] == trunk]
-#plot_gdf(gdf_lines, result_folder + 'test.pdf')
+
+gdf_lines = gdf_lines[gdf_lines['id'] != 2000293 ]
+
 g_lines = create_line_graph(gdf_lines)
+if trunk == 'B':
+    index_1 = gdf_lines[gdf_lines['id'] == 2000292].index.values.tolist()[0]
+    index_2 = gdf_lines[gdf_lines['id'] == 2000294].index.values.tolist()[0]
+    g_lines.add_edge(index_1, index_2, trunk=trunk)
+
 
 print 'Finding out links between subway stops'
 df_links = df_links[df_links['trunk'] == trunk]
