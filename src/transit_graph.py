@@ -352,8 +352,8 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
         linestring_s1 = gdf_trunk_line_s1['geometry']
         linestring_s2 = gdf_trunk_line_s2['geometry']
 
-        print linestring_s1
-        print linestring_s2
+        # print linestring_s1
+        # print linestring_s2
 
         linestring_s1 = LineString(linestring_s1)
         linestring_s2 = LineString(linestring_s2)
@@ -427,6 +427,7 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
             #     fig.savefig(result_folder + 'path_between_stops.pdf')
             #     #break
 
+    print len(list_geolinks[0])
     gdf_geolinks = gpd.GeoDataFrame(list_geolinks, geometry='geometry')
     return gdf_geolinks
 
@@ -549,36 +550,42 @@ def plot_path(transit_graph, list_stations, result_file_name):
     Test area
 '''
 # get links between stations for each subway trunk
+list_geolinks = []
 list_unique_trunks = gdf_lines['rt_symbol'].unique()
 for trunk in list_unique_trunks:
+    gdf_lines_trunk = gdf_lines[gdf_lines['rt_symbol'] == trunk]
     print 'Trunk:', trunk
     if trunk == 'B':
         # delete unnecessary edge
-        gdf_lines_trunk = gdf_lines[gdf_lines['id'] != 2000293]
+        gdf_lines_trunk = gdf_lines_trunk[gdf_lines_trunk['id'] != 2000293]
 
         # create a graph with subway lines
         g_lines = create_line_graph(gdf_lines_trunk)
 
-        # add edge where lines are too far each other
-        index_1 = gdf_lines[gdf_lines['id'] == 2000292].index.values.tolist()[0]
-        index_2 = gdf_lines[gdf_lines['id'] == 2000294].index.values.tolist()[0]
+        # add necessary edge where lines are too far each other
+        index_1 = gdf_lines_trunk[gdf_lines_trunk['id'] == 2000292].index.values.tolist()[0]
+        index_2 = gdf_lines_trunk[gdf_lines_trunk['id'] == 2000294].index.values.tolist()[0]
         g_lines.add_edge(index_1, index_2, trunk=trunk)
 
     else:
         # create a graph with subway lines
-        g_lines = create_line_graph(gdf_lines)
-
-    print 'Finding out links between subway stops'
+        g_lines = create_line_graph(gdf_lines_trunk)
 
     # get subway links between stations
-    df_links = df_links[df_links['trunk'] == trunk]
-    gdf_geolinks = path_between_stops(df_links, gdf_stations, gdf_lines, g_lines)
+    df_links_trunk = df_links[df_links['trunk'] == trunk]
+    print 'df_links', len(df_links_trunk)
+    print 'gdf_stations', len(gdf_stations)
+    print 'gdf_lines', len(gdf_lines)
+    print 'g_lines', len(g_lines)
+    gdf_geolinks_trunk = path_between_stops(df_links_trunk, gdf_stations, gdf_lines_trunk, g_lines)
 
-    print gdf_geolinks
+    print gdf_geolinks_trunk
 
+    list_geolinks.append(gdf_geolinks_trunk)
     #plot_gdf(gdf_geolinks, result_folder + 'geolinks_' + trunk + '.pdf')
     # save links as shapefile
-    gdf_geolinks.to_file(result_folder+'links.shp')
+gdf_geolinks = gpd.GeoDataFrame(pd.concat(list_geolinks, ignore_index=True))
+gdf_geolinks.to_file(result_folder+'links.shp')
 
 
 '''
