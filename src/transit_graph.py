@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from shapely.geometry import Point, LineString, MultiLineString
-from shapely.ops import linemerge
+from shapely.ops import linemerge, unary_union
 
 stations_path = argv[1]
 lines_path = argv[2]
@@ -267,28 +267,45 @@ def nearest_linestring_point(gdf_trunk_line, point):
             nearest_linestring_id = index
     return nearest_linestring_id
 
+def cut_line_at_points(line, points):
+    # First coords of line
+    coords = list(line.coords)
+
+    # Keep list coords where to cut (cuts = 1)
+    cuts = [0] * len(coords)
+    cuts[0] = 1
+    cuts[-1] = 1
+
+    # Add the coords from the points
+    coords += [list(p.coords)[0] for p in points]
+    cuts += [1] * len(points)
+
+    # Calculate the distance along the line for each point
+    dists = [line.project(Point(p)) for p in coords]
+
+    # sort the coords/cuts based on the distances
+    coords = [p for (d, p) in sorted(zip(dists, coords))]
+    cuts = [p for (d, p) in sorted(zip(dists, cuts))]
+
+    # generate the Lines
+    lines = []
+    for i in range(len(coords)-1):
+        if cuts[i] == 1:
+            # find next element in cuts == 1 starting from index i + 1
+            j = cuts.index(1, i + 1)
+            lines.append(LineString(coords[i:j+1]))
+
+    return lines
+
 def linestring_between_points(linestring, point_1, point_2):
-    # get the nearest point from p1 and from p2
-    nearest_p1 = nearest_point_linestring(linestring, point_1)
-    nearest_p2 = nearest_point_linestring(linestring, point_2)
-    print nearest_p1, nearest_p2
+    # get cut points
+    proj_point1 = linestring.interpolate(linestring.project(point_1))
+    proj_point2 = linestring.interpolate(linestring.project(point_2))
 
-    positions_through_points = list(linestring.coords)
-    # p1 is on the left side
-    if nearest_p1 < nearest_p2:
-        positions_between_points = positions_through_points[nearest_p1:nearest_p2]
-        left_extremity = linestring.interpolate(linestring.project(point_1))
-        right_extremity = linestring.interpolate(linestring.project(point_2))
-    # p1 is on the right side
-    else:
-        positions_between_points = positions_through_points[nearest_p2:nearest_p1]
-        left_extremity = linestring.interpolate(linestring.project(point_2))
-        right_extremity = linestring.interpolate(linestring.project(point_1))
+    # cut linestring given projection point
+    inline = cut_line_at_points(linestring, [proj_point1, proj_point2])[1]
 
-    positions_between_points = [(left_extremity.x, left_extremity.y)] + positions_between_points
-    positions_between_points = positions_between_points + [(right_extremity.x, right_extremity.y)]
-
-    return LineString(positions_between_points)
+    return inline
 
 def split_linestring(point, linestring):
     nearest_point = -1
@@ -402,30 +419,30 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
             geo_link['geometry'] = edge
             list_geolinks.append(geo_link)
 
-            # if stop_1['objectid'].iloc[0] == 357  and stop_2['objectid'].iloc[0] == 103:
-            #
-            #     # plot edges and points
-            #     fig, ax = plt.subplots()
-            #     ax.set_aspect('equal')
-            #     ax.axis('off')
-            #
-            #     x, y = merged_linestrings.xy
-            #     ax.plot(x,y, color='purple')
-            #
-            #     # x, y = edge.xy
-            #     # ax.plot(x,y, color='green')
-            #
-            #     x, y = linestring_s1.xy
-            #     ax.plot(x,y, color='blue')
-            #     x, y = linestring_s2.xy
-            #     ax.plot(x,y, color='red')
-            #
-            #     x, y = point_s1.xy
-            #     ax.scatter(x,y, color='black')
-            #     x, y = point_s2.xy
-            #     ax.scatter(x,y, color='black')
-            #     fig.savefig(result_folder + 'path_between_stops.pdf')
-            #     #break
+            if stop_1['objectid'].iloc[0] == 435  and stop_2['objectid'].iloc[0] == 15:
+
+                # plot edges and points
+                fig, ax = plt.subplots()
+                ax.set_aspect('equal')
+                ax.axis('off')
+
+                x, y = merged_linestrings.xy
+                ax.plot(x,y, color='purple')
+
+                x, y = linestring_s1.xy
+                ax.plot(x,y, color='blue')
+                x, y = linestring_s2.xy
+                ax.plot(x,y, color='red')
+
+                x, y = edge.xy
+                ax.plot(x,y, color='green')
+
+                x, y = point_s1.xy
+                ax.scatter(x,y, color='black')
+                x, y = point_s2.xy
+                ax.scatter(x,y, color='black')
+                fig.savefig(result_folder + 'path_between_stops.pdf')
+                #break
 
     print len(list_geolinks[0])
     gdf_geolinks = gpd.GeoDataFrame(list_geolinks, geometry='geometry')
@@ -549,9 +566,11 @@ def plot_path(transit_graph, list_stations, result_file_name):
 '''
     Test area
 '''
-# get links between stations for each subway trunk
+
+# get links between stations for all subway trunks
 list_geolinks = []
 list_unique_trunks = gdf_lines['rt_symbol'].unique()
+#list_unique_trunks = ['N']
 for trunk in list_unique_trunks:
     gdf_lines_trunk = gdf_lines[gdf_lines['rt_symbol'] == trunk]
     print 'Trunk:', trunk
