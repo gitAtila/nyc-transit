@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from shapely.geometry import Point, LineString, MultiLineString
-from shapely.ops import linemerge
+from shapely.ops import linemerge, unary_union
 
 stations_path = argv[1]
 lines_path = argv[2]
@@ -90,10 +90,13 @@ def create_transit_graph(graph_constructor, gdf_stations, df_links):
     return g_transit
 
 def touches(linestring_1, linestring_2, tolerance):
-    if touches_extremities(linestring_1, linestring_2, tolerance)\
-     or touches_extremity_line(linestring_1, linestring_2, tolerance):
-        return True
-    return False
+    if touches_extremities(linestring_1, linestring_2, tolerance):
+        return 0
+    else:
+        touches_value = touches_extremity_line(linestring_1, linestring_2, tolerance)
+        if touches_value != -1:
+            return touches_value
+    return -1
 
 def touches_extremities(linestring_1, linestring_2, tolerance):
     #tolerance = 2 #meters
@@ -127,25 +130,36 @@ def touches_extremity_line(linestring_1, linestring_2, tolerance):
     left_2 = Point(linestring_2.coords[0])
     right_2 = Point(linestring_2.coords[-1])
 
-    distance_left1_line2 = distance_point_line(left_1, linestring_2)
-    distance_right1_line2 = distance_point_line(right_1, linestring_2)
-    distance_left2_line1 = distance_point_line(left_2, linestring_1)
-    distance_right2_line1 = distance_point_line(right_2, linestring_1)
+    # distance_left1_line2 = distance_point_line(left_1, linestring_2)
+    # distance_right1_line2 = distance_point_line(right_1, linestring_2)
+    # distance_left2_line1 = distance_point_line(left_2, linestring_1)
+    # distance_right2_line1 = distance_point_line(right_2, linestring_1)
+    dict_dist = dict()
+    # compute the distance between linestring extremities
+    dict_dist['l2'] = distance_point_line(left_1, linestring_2)
+    dict_dist['r2'] = distance_point_line(right_1, linestring_2)
+    dict_dist['l1'] = distance_point_line(left_2, linestring_1)
+    dict_dist['r1'] = distance_point_line(right_2, linestring_1)
 
-    if distance_left1_line2 <= tolerance or distance_right1_line2 <= tolerance\
-     or distance_left2_line1 <= tolerance or distance_right2_line1 <= tolerance:
-        return True
-    return False
+    # get the shortest distance
+    min_dist_key = min(dict_dist, key=dict_dist.get)
+
+    if dict_dist[min_dist_key] <= tolerance:
+        return min_dist_key
+    else:
+        return -1
 
 # create a graph connecting each linestring of the same trunk that touches each other
 def create_line_graph(gdf_lines, list_addictional_edges):
     g_lines = nx.Graph()
+    list_splited_lines = []
     list_unique_trunks = gdf_lines['rt_symbol'].unique()
     for trunk in list_unique_trunks:
         gdf_trunk_line = gdf_lines[gdf_lines['rt_symbol'] == trunk]
         for index_1 ,line_1 in gdf_trunk_line.iterrows():
             for index_2 ,line_2 in gdf_trunk_line.iterrows():
                 # There are not loops
+<<<<<<< HEAD
                 if index_1 != index_2 and touches(line_1['geometry'], line_2['geometry'], tolerance):
                     g_lines.add_edge(index_1, index_2, trunk=trunk)
 
@@ -155,6 +169,21 @@ def create_line_graph(gdf_lines, list_addictional_edges):
             g_lines.add_edge(gdf_lines[gdf_lines['id'] == edge[0]].index.values[0],\
              gdf_lines[gdf_lines['id'] == edge[1]].index.values[0],\
              trunk=edge[2])
+=======
+                if index_1 != index_2:
+                    touch_way = touches(line_1['geometry'], line_2['geometry'], tolerance)
+                    if touch_way != -1:
+                        if touch_way == 0: # linestrings touches on the extremities
+                            g_lines.add_edge(index_1, index_2, trunk=trunk,\
+                             weight = line_1['shape_len'] + line_2['shape_len'])
+                        else: # extremity touches line
+                            g_lines.add_edge(index_1, index_2, trunk=trunk,\
+                             weight = line_1['shape_len'] + line_2['shape_len'])
+                            # split linestring where the extremity touches
+                            # add edge part1 to part2
+                            # add edge part1 to extremity line
+                            # add edge part2 to extremity line
+>>>>>>> ff6e83d4015b9204dbb639604056a882226d0e3a
     return g_lines
 
 def distance_linestring(linestring):
@@ -167,12 +196,13 @@ def distance_linestring(linestring):
     return total_distance
 
 def linemerge_sequential(multilinestring):
-
+    # initialize list_linestring with the first one
     first_linestring = multilinestring[0]
     list_linestrings = list(first_linestring.coords)
 
-    right_pos_first_line = first_linestring.coords[-1]
-    left_pos_first_line = first_linestring.coords[0]
+    # get extremity values
+    right_pos_line = first_linestring.coords[-1]
+    left_pos_line = first_linestring.coords[0]
 
     #print last_position
     for index in range(1,len(multilinestring)):
@@ -180,10 +210,10 @@ def linemerge_sequential(multilinestring):
         dict_dist = dict()
 
         # compute the distance between linestring extremities
-        dict_dist['dist_rr'] = vincenty(right_pos_first_line, linestring[-1])
-        dict_dist['dist_rl'] = vincenty(right_pos_first_line, linestring[0])
-        dict_dist['dist_lr'] = vincenty(left_pos_first_line, linestring[-1])
-        dict_dist['dist_ll'] = vincenty(left_pos_first_line, linestring[0])
+        dict_dist['dist_rr'] = vincenty(right_pos_line, linestring[-1])
+        dict_dist['dist_rl'] = vincenty(right_pos_line, linestring[0])
+        dict_dist['dist_lr'] = vincenty(left_pos_line, linestring[-1])
+        dict_dist['dist_ll'] = vincenty(left_pos_line, linestring[0])
 
         # get the shortest distance
         min_dist = min(dict_dist, key=dict_dist.get)
@@ -202,6 +232,10 @@ def linemerge_sequential(multilinestring):
             print min_dist
             list_linestrings = list_linestrings[::-1] + linestring
 
+        # update extremities
+        right_pos_line = list_linestrings[-1]
+        left_pos_line = list_linestrings[0]
+
     return LineString(list_linestrings)
 
 def linestring_through_points(gdf_trunk_line, g_trunk_line, id_linestring_s1, id_linestring_s2):
@@ -214,7 +248,10 @@ def linestring_through_points(gdf_trunk_line, g_trunk_line, id_linestring_s1, id
         return  linestring_s1
 
     # linestring_s1 and linestring_s2 touches each other
-    if touches(linestring_s1, linestring_s2, tolerance):
+    touch_way = touches(linestring_s1, linestring_s2, tolerance)
+    if touch_way != -1:
+        if touch_way == 1:
+            cut
         merged_linestrings = [linestring_s1, linestring_s2]
         merged_linestrings = MultiLineString(merged_linestrings)
         merged_linestrings = linemerge(merged_linestrings)
@@ -226,7 +263,7 @@ def linestring_through_points(gdf_trunk_line, g_trunk_line, id_linestring_s1, id
     else:
         # path of linestrings
         try:
-            linestrings_path = nx.dijkstra_path(g_trunk_line, id_linestring_s1, id_linestring_s2)
+            linestrings_path = nx.dijkstra_path(g_trunk_line, id_linestring_s1, id_linestring_s2, weight='weight')
 
         # there is no path between stations
         except:
@@ -278,28 +315,45 @@ def nearest_linestring_point(gdf_trunk_line, point):
             nearest_linestring_id = index
     return nearest_linestring_id
 
+def cut_line_at_points(line, points):
+    # First coords of line
+    coords = list(line.coords)
+
+    # Keep list coords where to cut (cuts = 1)
+    cuts = [0] * len(coords)
+    cuts[0] = 1
+    cuts[-1] = 1
+
+    # Add the coords from the points
+    coords += [list(p.coords)[0] for p in points]
+    cuts += [1] * len(points)
+
+    # Calculate the distance along the line for each point
+    dists = [line.project(Point(p)) for p in coords]
+
+    # sort the coords/cuts based on the distances
+    coords = [p for (d, p) in sorted(zip(dists, coords))]
+    cuts = [p for (d, p) in sorted(zip(dists, cuts))]
+
+    # generate the Lines
+    lines = []
+    for i in range(len(coords)-1):
+        if cuts[i] == 1:
+            # find next element in cuts == 1 starting from index i + 1
+            j = cuts.index(1, i + 1)
+            lines.append(LineString(coords[i:j+1]))
+
+    return lines
+
 def linestring_between_points(linestring, point_1, point_2):
-    # get the nearest point from p1 and from p2
-    nearest_p1 = nearest_point_linestring(linestring, point_1)
-    nearest_p2 = nearest_point_linestring(linestring, point_2)
-    print nearest_p1, nearest_p2
+    # get cut points
+    proj_point1 = linestring.interpolate(linestring.project(point_1))
+    proj_point2 = linestring.interpolate(linestring.project(point_2))
 
-    positions_through_points = list(linestring.coords)
-    # p1 is on the left side
-    if nearest_p1 < nearest_p2:
-        positions_between_points = positions_through_points[nearest_p1:nearest_p2]
-        left_extremity = linestring.interpolate(linestring.project(point_1))
-        right_extremity = linestring.interpolate(linestring.project(point_2))
-    # p1 is on the right side
-    else:
-        positions_between_points = positions_through_points[nearest_p2:nearest_p1]
-        left_extremity = linestring.interpolate(linestring.project(point_2))
-        right_extremity = linestring.interpolate(linestring.project(point_1))
+    # cut linestring given projection point
+    inline = cut_line_at_points(linestring, [proj_point1, proj_point2])[1]
 
-    positions_between_points = [(left_extremity.x, left_extremity.y)] + positions_between_points
-    positions_between_points = positions_between_points + [(right_extremity.x, right_extremity.y)]
-
-    return LineString(positions_between_points)
+    return inline
 
 def split_linestring(point, linestring):
     nearest_point = -1
@@ -363,8 +417,8 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
         linestring_s1 = gdf_trunk_line_s1['geometry']
         linestring_s2 = gdf_trunk_line_s2['geometry']
 
-        print linestring_s1
-        print linestring_s2
+        # print linestring_s1
+        # print linestring_s2
 
         linestring_s1 = LineString(linestring_s1)
         linestring_s2 = LineString(linestring_s2)
@@ -400,12 +454,6 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
             ax.scatter(x,y, color='black')
             fig.savefig(result_folder + 'error_path_between_stops.pdf')
 
-            print stop_1['objectid']
-            if stop_1['objectid'].iloc[0] == 469.0:
-                print 'jump'
-            else:
-                break
-
         else:
             # split linestrings given stops
             edge = linestring_between_points(merged_linestrings, point_s1, point_s2)
@@ -413,37 +461,53 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
             geo_link['geometry'] = edge
             list_geolinks.append(geo_link)
 
+<<<<<<< HEAD
             # Exceptions
             # 10 299
             # 237 238
             if stop_1['objectid'].iloc[0] == 237  and stop_2['objectid'].iloc[0] == 238:
+=======
+            if stop_1['objectid'].iloc[0] == 122  and stop_2['objectid'].iloc[0] == 15:
+>>>>>>> ff6e83d4015b9204dbb639604056a882226d0e3a
 
                 # plot edges and points
                 fig, ax = plt.subplots()
                 ax.set_aspect('equal')
                 ax.axis('off')
 
-                # x, y = merged_linestrings.xy
-                # ax.plot(x,y, color='red')
-
-                x, y = edge.xy
-                ax.plot(x,y, color='green')
+                x, y = merged_linestrings.xy
+                ax.plot(x,y, color='purple')
 
                 x, y = linestring_s1.xy
                 ax.plot(x,y, color='blue')
                 x, y = linestring_s2.xy
                 ax.plot(x,y, color='red')
 
+                x, y = edge.xy
+                ax.plot(x,y, color='green')
+
+<<<<<<< HEAD
+                x, y = linestring_s1.xy
+                ax.plot(x,y, color='blue')
+                x, y = linestring_s2.xy
+                ax.plot(x,y, color='red')
+
+=======
+>>>>>>> ff6e83d4015b9204dbb639604056a882226d0e3a
                 x, y = point_s1.xy
                 ax.scatter(x,y, color='black')
                 x, y = point_s2.xy
                 ax.scatter(x,y, color='black')
                 fig.savefig(result_folder + 'path_between_stops.pdf')
-                #break
+                break
 
+<<<<<<< HEAD
     for u, v , dict_trunk in g_trunk_line.edges_iter(data=True):
         print gdf_trunk_line.loc[u]['id'], '-->', gdf_trunk_line.loc[v]['id']
 
+=======
+    print len(list_geolinks[0])
+>>>>>>> ff6e83d4015b9204dbb639604056a882226d0e3a
     gdf_geolinks = gpd.GeoDataFrame(list_geolinks, geometry='geometry')
     return gdf_geolinks
 
@@ -566,6 +630,7 @@ def plot_path(transit_graph, list_stations, result_file_name):
     Test area
 '''
 
+<<<<<<< HEAD
 print 'Creating line graph'
 trunk = 'B'
 gdf_lines = gdf_lines[gdf_lines['rt_symbol'] == trunk]
@@ -583,6 +648,47 @@ print gdf_geolinks
 plot_gdf(gdf_geolinks, result_folder + 'geolinks_' + trunk + '.pdf')
 
 
+=======
+# get links between stations for all subway trunks
+list_geolinks = []
+list_unique_trunks = gdf_lines['rt_symbol'].unique()
+list_unique_trunks = ['N']
+for trunk in list_unique_trunks:
+    gdf_lines_trunk = gdf_lines[gdf_lines['rt_symbol'] == trunk]
+    print 'Trunk:', trunk
+    if trunk == 'B':
+        # delete unnecessary edge
+        gdf_lines_trunk = gdf_lines_trunk[gdf_lines_trunk['id'] != 2000293]
+
+        # create a graph with subway lines
+        g_lines = create_line_graph(gdf_lines_trunk)
+
+        # add necessary edge where lines are too far each other
+        index_1 = gdf_lines_trunk[gdf_lines_trunk['id'] == 2000292].index.values.tolist()[0]
+        index_2 = gdf_lines_trunk[gdf_lines_trunk['id'] == 2000294].index.values.tolist()[0]
+        g_lines.add_edge(index_1, index_2, trunk=trunk)
+
+    else:
+        # create a graph with subway lines
+        g_lines = create_line_graph(gdf_lines_trunk)
+
+    # get subway links between stations
+    df_links_trunk = df_links[df_links['trunk'] == trunk]
+    print 'df_links', len(df_links_trunk)
+    print 'gdf_stations', len(gdf_stations)
+    print 'gdf_lines', len(gdf_lines)
+    print 'g_lines', len(g_lines)
+    gdf_geolinks_trunk = path_between_stops(df_links_trunk, gdf_stations, gdf_lines_trunk, g_lines)
+
+    print gdf_geolinks_trunk
+
+    list_geolinks.append(gdf_geolinks_trunk)
+    #plot_gdf(gdf_geolinks, result_folder + 'geolinks_' + trunk + '.pdf')
+    # save links as shapefile
+gdf_geolinks = gpd.GeoDataFrame(pd.concat(list_geolinks, ignore_index=True))
+gdf_geolinks.to_file(result_folder+'links.shp')
+
+>>>>>>> ff6e83d4015b9204dbb639604056a882226d0e3a
 
 '''
 g_transit = create_transit_graph(nx.Graph(), gdf_stations, df_links)
