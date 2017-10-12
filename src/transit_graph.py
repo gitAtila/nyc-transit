@@ -123,25 +123,16 @@ def cut_line_at_points(line, points):
 def split_intersection(linestring_1, linestring_2, touch_way):
     extremity = touch_way[0]
     touched_line = touch_way[1]
-    print linestring_1
-    print linestring_2
+    # print linestring_1
+    # print linestring_2
     if touched_line == '1':
         if extremity == 'r':
             point = Point(linestring_2.coords[-1])
         else:
             point = Point(linestring_2.coords[0])
 
-        projection = projection = linestring_1.interpolate(linestring_1.project(point))
-        lines = cut_line_at_points(linestring_1, [point, projection])
-
-        # fig, ax = plt.subplots()
-        # ax.set_aspect('equal')
-        # ax.axis('off')
-        # x, y = linestring_1.xy
-        # ax.plot(x,y, color='blue')
-        # x, y = LineString([point,projection]).xy
-        # ax.plot(x,y, color='red')
-        # fig.savefig(result_folder + 'cut_test.pdf')
+        projection = linestring_1.interpolate(linestring_1.project(point))
+        lines = cut_line_at_points(linestring_1, [projection, projection])
 
     else:
         if extremity == 'r':
@@ -149,23 +140,15 @@ def split_intersection(linestring_1, linestring_2, touch_way):
         else:
             point = Point(linestring_1.coords[0])
 
-        projection = projection = linestring_2.interpolate(linestring_2.project(point))
-        lines = cut_line_at_points(linestring_2, [point, projection])
+        projection = linestring_2.interpolate(linestring_2.project(point))
+        lines = cut_line_at_points(linestring_2, [projection, projection])
 
-        # fig, ax = plt.subplots()
-        # ax.set_aspect('equal')
-        # ax.axis('off')
-        # x, y = linestring_2.xy
-        # ax.plot(x,y, color='blue')
-        # x, y = LineString([point,projection]).xy
-        # ax.plot(x,y, color='red')
-        # fig.savefig(result_folder + 'cut_test.pdf')
-
-    # print '======'
+    # print projection
+    # # print '======'
     # print lines[0], lines[0].length
     # print lines[1], lines[1].length
     # print lines[2], lines[2].length
-
+    # print nothing
     if (lines[1].length < lines[0].length and lines[1].length < lines[2].length) == False:
         print nothing
     # fig, ax = plt.subplots()
@@ -197,46 +180,59 @@ def preprocess_lines(gdf_lines):
                 if index_1 != index_2:
                     touch_way = touches(line_1['geometry'], line_2['geometry'], tolerance)
                     if type(touch_way) == str:
-                        print line_1['objectid'], '-->', line_2['objectid']
+
                         # split linestring where the extremity touches
                         slice_1, slice_2 = split_intersection(line_1['geometry'], line_2['geometry'],touch_way)
                         # delete splitted linestring
                         if touch_way[1] == '1' and index_1 not in deletion_list:
+                            print line_1['objectid'], '-->', line_2['objectid']
+                            print '\t', line_1['objectid']
                             deletion_list.append(index_1)
                             # get attributes from original line
                             dict_slice_1 = gdf_trunk_line.loc[index_1].to_dict()
                             dict_slice_2 = gdf_trunk_line.loc[index_1].to_dict()
 
+                            # update geometrical attributes
+                            dict_slice_1['geometry'] = slice_1
+                            dict_slice_1['shape_len'] = slice_1.length
+
+                            dict_slice_2['geometry'] = slice_2
+                            dict_slice_2['shape_len'] = slice_2.length
+
+                            # append new slices
+                            insertion_list.append(dict_slice_1)
+                            insertion_list.append(dict_slice_2)
+
                         elif touch_way[1] == '2' and index_2 not in deletion_list:
+                            print line_1['objectid'], '-->', line_2['objectid']
+                            print '\t', line_2['objectid']
                             deletion_list.append(index_2)
                             # get attributes from original line
                             dict_slice_1 = gdf_trunk_line.loc[index_2].to_dict()
                             dict_slice_2 = gdf_trunk_line.loc[index_2].to_dict()
 
-                        # update the geometrical attributes
-                        dict_slice_1['geometry'] = slice_1
-                        dict_slice_1['shape_len'] = slice_1.length
+                            # update geometrical attributes
+                            dict_slice_1['geometry'] = slice_1
+                            dict_slice_1['shape_len'] = slice_1.length
 
-                        dict_slice_2['geometry'] = slice_2
-                        dict_slice_2['shape_len'] = slice_2.length
+                            dict_slice_2['geometry'] = slice_2
+                            dict_slice_2['shape_len'] = slice_2.length
 
-                        # append new slices
-                        insertion_list.append(dict_slice_1)
-                        insertion_list.append(dict_slice_2)
+                            # append new slices
+                            insertion_list.append(dict_slice_1)
+                            insertion_list.append(dict_slice_2)
 
     # delete splitted lines
-    print len(gdf_lines)
-    print len(deletion_list)
     for del_index in deletion_list:
         print del_index
         gdf_lines.drop(del_index, inplace=True)
-    print len(gdf_lines)
 
     # insert slices
     gdf_splitted = gpd.GeoDataFrame(insertion_list, geometry='geometry')
+    print gdf_splitted
     gdf_lines = pd.concat([gdf_lines, gdf_splitted])
     gdf_lines.reset_index()
-    return gdf_lines
+    return gpd.GeoDataFrame(gdf_lines, geometry='geometry')
 
 
 def touches(linestring_1, linestring_2, tolerance):
@@ -705,9 +701,7 @@ def plot_path(transit_graph, list_stations, result_file_name):
     Test area
 '''
 gdf_lines = preprocess_lines(gdf_lines)
-print len(gdf_lines)
-print gdf_lines
-print len(gdf_lines)
+gdf_lines.to_file(result_folder + 'splitted_links.shp')
 print nothing
 # get links between stations for all subway trunks
 list_geolinks = []
