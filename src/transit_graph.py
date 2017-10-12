@@ -183,10 +183,11 @@ def preprocess_lines(gdf_lines):
 
                         # split linestring where the extremity touches
                         slice_1, slice_2 = split_intersection(line_1['geometry'], line_2['geometry'],touch_way)
+
                         # delete splitted linestring
                         if touch_way[1] == '1' and index_1 not in deletion_list:
                             print line_1['objectid'], '-->', line_2['objectid']
-                            print '\t', line_1['objectid']
+
                             deletion_list.append(index_1)
                             # get attributes from original line
                             dict_slice_1 = gdf_trunk_line.loc[index_1].to_dict()
@@ -205,7 +206,7 @@ def preprocess_lines(gdf_lines):
 
                         elif touch_way[1] == '2' and index_2 not in deletion_list:
                             print line_1['objectid'], '-->', line_2['objectid']
-                            print '\t', line_2['objectid']
+
                             deletion_list.append(index_2)
                             # get attributes from original line
                             dict_slice_1 = gdf_trunk_line.loc[index_2].to_dict()
@@ -229,9 +230,11 @@ def preprocess_lines(gdf_lines):
 
     # insert slices
     gdf_splitted = gpd.GeoDataFrame(insertion_list, geometry='geometry')
-    print gdf_splitted
+    print gdf_splitted.columns.values
+    print gdf_lines.columns.values
     gdf_lines = pd.concat([gdf_lines, gdf_splitted])
-    gdf_lines.reset_index()
+    gdf_lines = gdf_lines.reset_index()
+
     return gpd.GeoDataFrame(gdf_lines, geometry='geometry')
 
 
@@ -700,9 +703,11 @@ def plot_path(transit_graph, list_stations, result_file_name):
 '''
     Test area
 '''
+# preprocessing lines
 gdf_lines = preprocess_lines(gdf_lines)
+print gdf_lines
 gdf_lines.to_file(result_folder + 'splitted_links.shp')
-print nothing
+print unknown
 # get links between stations for all subway trunks
 list_geolinks = []
 list_unique_trunks = gdf_lines['rt_symbol'].unique()
