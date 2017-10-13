@@ -7,11 +7,8 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
-from geopy import distance
 from shapely.geometry import Point, LineString, MultiLineString
 from shapely.ops import linemerge, unary_union
-
-distance.VincentyDistance.ELLIPSOID = 'WGS-84'
 
 stations_path = argv[1]
 lines_path = argv[2]
@@ -694,7 +691,6 @@ gdf_lines.to_file(result_folder + 'splitted_links.shp')
 # get links between stations for all subway trunks
 list_geolinks = []
 list_unique_trunks = gdf_lines['rt_symbol'].unique()
-#list_unique_trunks = ['G']
 for trunk in list_unique_trunks:
     gdf_lines_trunk = gdf_lines[gdf_lines['rt_symbol'] == trunk]
     #gdf_lines_trunk = preprocess_lines(gdf_lines_trunk)
