@@ -16,8 +16,7 @@ from shapely.ops import linemerge, unary_union
 stations_path = argv[1]
 lines_path = argv[2]
 links_path = argv[3]
-census_tract_path = argv[4]
-result_folder = argv[5]
+result_folder = argv[4]
 tolerance = 11 # meters
 
 '''
@@ -527,6 +526,22 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
     gdf_geolinks = gpd.GeoDataFrame(list_geolinks, geometry='geometry')
     return gdf_geolinks
 
+def path_between_transitions(df_transition_links, gdf_stations):
+    list_geolinks = []
+    for index, link in df_transition_links.iterrows():
+        # get node position
+        stop_1 = gdf_stations[gdf_stations['objectid'] == link['node_1']]
+        stop_2 = gdf_stations[gdf_stations['objectid'] == link['node_2']]
+        
+        # create linestring from stop position
+        geo_link = link.to_dict()
+        geo_link['geometry'] = LineString([stop_1['geometry'].iloc[0], stop_2['geometry'].iloc[0]])
+        geo_link['shape_len'] = distance_linestring(geo_link['geometry'])
+        list_geolinks.append(geo_link)
+
+    gdf_geolinks = gpd.GeoDataFrame(list_geolinks, geometry='geometry')
+    return gdf_geolinks
+
 '''
     Test area
 '''
@@ -537,6 +552,12 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
 
 # get links between stations for all subway trunks
 list_geolinks = []
+
+# transition links
+df_transition_links = df_links[df_links['trunk'] == 'T']
+gdf_geolinks_transitions = path_between_transitions(df_transition_links, gdf_stations)
+list_geolinks.append(gdf_geolinks_transitions)
+
 list_unique_trunks = gdf_lines['rt_symbol'].unique()
 for trunk in list_unique_trunks:
     gdf_lines_trunk = gdf_lines[gdf_lines['rt_symbol'] == trunk]
@@ -592,6 +613,7 @@ for trunk in list_unique_trunks:
 
     list_geolinks.append(gdf_geolinks_trunk)
     #plot_gdf(gdf_geolinks, result_folder + 'geolinks_' + trunk + '.pdf')
-    # save links as shapefile
+
+# save links as shapefile
 gdf_geolinks = gpd.GeoDataFrame(pd.concat(list_geolinks, ignore_index=True))
 gdf_geolinks.to_file(result_folder+'links.shp')
