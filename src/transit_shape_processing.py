@@ -1,4 +1,7 @@
-#read edges and build a graph of the transit system
+'''
+    Read lines and stops and get the paths between stops
+'''
+
 from sys import argv, maxint
 from geopy.distance import vincenty
 import pandas as pd
@@ -471,9 +474,6 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
         merged_linestrings = linestring_through_points(gdf_trunk_line, g_trunk_line,\
          nearest_linestring_s1, nearest_linestring_s2)
 
-        #print merged_linestrings
-
-        #break
         if merged_linestrings is None:
             print 'untreated case'
 
@@ -499,28 +499,28 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
             geo_link['shape_len'] = distance_linestring(edge)
             list_geolinks.append(geo_link)
 
-            if stop_1['objectid'].iloc[0] == 375  and stop_2['objectid'].iloc[0] == 394:
-
-                # plot edges and points
-                fig, ax = plt.subplots()
-                ax.set_aspect('equal')
-                ax.axis('off')
-
-                x, y = merged_linestrings.xy
-                ax.plot(x,y, color='purple')
-
-                x, y = linestring_s1.xy
-                ax.plot(x,y, color='blue')
-                x, y = linestring_s2.xy
-                ax.plot(x,y, color='red')
-
-                x, y = edge.xy
-                ax.plot(x,y, color='green')
-
-                x, y = point_s1.xy
-                ax.scatter(x,y, color='black')
-                x, y = point_s2.xy
-                ax.scatter(x,y, color='black')
+            # if stop_1['objectid'].iloc[0] == 375  and stop_2['objectid'].iloc[0] == 394:
+            #
+            #     # plot edges and points
+            #     fig, ax = plt.subplots()
+            #     ax.set_aspect('equal')
+            #     ax.axis('off')
+            #
+            #     x, y = merged_linestrings.xy
+            #     ax.plot(x,y, color='purple')
+            #
+            #     x, y = linestring_s1.xy
+            #     ax.plot(x,y, color='blue')
+            #     x, y = linestring_s2.xy
+            #     ax.plot(x,y, color='red')
+            #
+            #     x, y = edge.xy
+            #     ax.plot(x,y, color='green')
+            #
+            #     x, y = point_s1.xy
+            #     ax.scatter(x,y, color='black')
+            #     x, y = point_s2.xy
+            #     ax.scatter(x,y, color='black')
                 #fig.savefig(result_folder + 'path_between_stops.pdf')
                 #break
 
@@ -542,6 +542,8 @@ for trunk in list_unique_trunks:
     gdf_lines_trunk = gdf_lines[gdf_lines['rt_symbol'] == trunk]
     gdf_lines_trunk = preprocess_lines(gdf_lines_trunk)
     print 'Trunk:', trunk
+
+    # treat cases when paths intersect others of the same line
     if trunk == 'B':
         # delete unnecessary edge
         gdf_lines_trunk = gdf_lines_trunk[gdf_lines_trunk['id'] != 2000293]
