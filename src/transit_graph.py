@@ -7,8 +7,11 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
+from geopy import distance
 from shapely.geometry import Point, LineString, MultiLineString
 from shapely.ops import linemerge, unary_union
+
+distance.VincentyDistance.ELLIPSOID = 'WGS-84'
 
 stations_path = argv[1]
 lines_path = argv[2]
@@ -195,10 +198,10 @@ def preprocess_lines(gdf_lines):
 
                             # update geometrical attributes
                             dict_slice_1['geometry'] = slice_1
-                            dict_slice_1['shape_len'] = slice_1.length
+                            dict_slice_1['shape_len'] = distance_linestring(slice_1)
 
                             dict_slice_2['geometry'] = slice_2
-                            dict_slice_2['shape_len'] = slice_2.length
+                            dict_slice_2['shape_len'] = distance_linestring(slice_2)
 
                             # append new slices
                             insertion_list.append(dict_slice_1)
@@ -214,33 +217,35 @@ def preprocess_lines(gdf_lines):
 
                             # update geometrical attributes
                             dict_slice_1['geometry'] = slice_1
-                            dict_slice_1['shape_len'] = slice_1.length
+                            dict_slice_1['shape_len'] = distance_linestring(slice_1)
 
                             dict_slice_2['geometry'] = slice_2
-                            dict_slice_2['shape_len'] = slice_2.length
+                            dict_slice_2['shape_len'] = distance_linestring(slice_2)
 
                             # append new slices
                             insertion_list.append(dict_slice_1)
                             insertion_list.append(dict_slice_2)
 
-    # delete splitted lines
-    for del_index in deletion_list:
-        print del_index
-        gdf_lines.drop(del_index, inplace=True)
+    if len(deletion_list) > 0:
+        # delete splitted lines
+        for del_index in deletion_list:
+            print del_index
+            gdf_lines.drop(del_index, inplace=True)
 
-    # insert slices
-    gdf_splitted = gpd.GeoDataFrame(insertion_list, geometry='geometry')
-    print gdf_splitted.columns.values
-    print gdf_lines.columns.values
-    gdf_lines = pd.concat([gdf_lines, gdf_splitted])
-    gdf_lines = gdf_lines.reset_index()
+        # insert slices
+        gdf_splitted = gpd.GeoDataFrame(insertion_list, geometry='geometry')
+        gdf_lines = pd.concat([gdf_lines, gdf_splitted])
+        gdf_lines = gdf_lines.reset_index()
+        print gdf_lines
 
-    return gpd.GeoDataFrame(gdf_lines, geometry='geometry')
+        return gpd.GeoDataFrame(gdf_lines, geometry='geometry')
+
+    return gdf_lines
 
 
 def touches(linestring_1, linestring_2, tolerance):
     if touches_extremities(linestring_1, linestring_2, tolerance):
-        return 0
+        return 1
     else:
         touches_value = touches_extremity_line(linestring_1, linestring_2, tolerance)
         if touches_value != -1:
@@ -306,7 +311,8 @@ def create_line_graph(gdf_lines):
         for index_1 ,line_1 in gdf_trunk_line.iterrows():
             for index_2 ,line_2 in gdf_trunk_line.iterrows():
                 # There are not loops
-                if index_1 != index_2 and touches(line_1['geometry'], line_2['geometry'], tolerance) != -1:
+                if index_1 != index_2\
+                 and touches(line_1['geometry'], line_2['geometry'], tolerance) == 1:
                     g_lines.add_edge(index_1, index_2, trunk=trunk,\
                      weight = line_1['shape_len'] + line_2['shape_len'])
     return g_lines
@@ -373,10 +379,7 @@ def linestring_through_points(gdf_trunk_line, g_trunk_line, id_linestring_s1, id
         return  linestring_s1
 
     # linestring_s1 and linestring_s2 touches each other
-    touch_way = touches(linestring_s1, linestring_s2, tolerance)
-    if touch_way != -1:
-        if touch_way == 1:
-            cut
+    if touches(linestring_s1, linestring_s2, tolerance) == 1:
         merged_linestrings = [linestring_s1, linestring_s2]
         merged_linestrings = MultiLineString(merged_linestrings)
         merged_linestrings = linemerge(merged_linestrings)
@@ -389,11 +392,10 @@ def linestring_through_points(gdf_trunk_line, g_trunk_line, id_linestring_s1, id
         # path of linestrings
         try:
             linestrings_path = nx.dijkstra_path(g_trunk_line, id_linestring_s1, id_linestring_s2, weight='weight')
-
-        # there is no path between stations
+# there is no path between stations
         except:
             for u, v , dict_trunk in g_trunk_line.edges_iter(data=True):
-                print gdf_trunk_line.loc[u]['id'], '-->', gdf_trunk_line.loc[v]['id']
+                print gdf_trunk_line.loc[u]['objectid'], '-->', gdf_trunk_line.loc[v]['objectid']
             last_point = gdf_trunk_line.loc[id_linestring_s1]['geometry'].coords[-1]
             first_point = gdf_trunk_line.loc[id_linestring_s2]['geometry'].coords[0]
             #first_point = gdf_trunk_line[gdf_trunk_line['id'] == 2000058.0]['geometry'].iloc[0].coords[0]
@@ -405,7 +407,7 @@ def linestring_through_points(gdf_trunk_line, g_trunk_line, id_linestring_s1, id
         list_betweeness = []
         for index in linestrings_path:
             list_betweeness.append(gdf_trunk_line.loc[index])
-            print gdf_trunk_line.loc[index]['id']
+            print gdf_trunk_line.loc[index]['objectid']
         gdf_betweeness = gpd.GeoDataFrame(list_betweeness, geometry='geometry')
 
         # merge linestrings
@@ -450,6 +452,7 @@ def linestring_between_points(linestring, point_1, point_2):
 
     return inline
 
+# split linestring on its point which is the nearest the given point
 def split_linestring(point, linestring):
     nearest_point = -1
     shortest_distance = maxint
@@ -502,8 +505,8 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
         print 'stop_1', stop_1['objectid'].iloc[0]
         print 'stop_2', stop_2['objectid'].iloc[0]
 
-        print 'nearest_linestring_s1', gdf_trunk_line.loc[nearest_linestring_s1]['id']
-        print 'nearest_linestring_s2', gdf_trunk_line.loc[nearest_linestring_s2]['id']
+        print 'nearest_linestring_s1', gdf_trunk_line.loc[nearest_linestring_s1]['objectid']
+        print 'nearest_linestring_s2', gdf_trunk_line.loc[nearest_linestring_s2]['objectid']
 
         # get linestrings near stations point
         gdf_trunk_line_s1 = gdf_trunk_line.loc[nearest_linestring_s1]
@@ -556,7 +559,7 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
             geo_link['geometry'] = edge
             list_geolinks.append(geo_link)
 
-            if stop_1['objectid'].iloc[0] == 122  and stop_2['objectid'].iloc[0] == 15:
+            if stop_1['objectid'].iloc[0] == 375  and stop_2['objectid'].iloc[0] == 394:
 
                 # plot edges and points
                 fig, ax = plt.subplots()
@@ -703,17 +706,18 @@ def plot_path(transit_graph, list_stations, result_file_name):
 '''
     Test area
 '''
-# preprocessing lines
-gdf_lines = preprocess_lines(gdf_lines)
-print gdf_lines
-gdf_lines.to_file(result_folder + 'splitted_links.shp')
-print unknown
+# # preprocessing lines
+# gdf_lines = preprocess_lines(gdf_lines)
+# print gdf_lines
+# gdf_lines.to_file(result_folder + 'splitted_links.shp')
+#print unknown
 # get links between stations for all subway trunks
 list_geolinks = []
 list_unique_trunks = gdf_lines['rt_symbol'].unique()
-list_unique_trunks = ['N']
+list_unique_trunks = ['G']
 for trunk in list_unique_trunks:
     gdf_lines_trunk = gdf_lines[gdf_lines['rt_symbol'] == trunk]
+    gdf_lines_trunk = preprocess_lines(gdf_lines_trunk)
     print 'Trunk:', trunk
     if trunk == 'B':
         # delete unnecessary edge
@@ -727,6 +731,26 @@ for trunk in list_unique_trunks:
         index_2 = gdf_lines_trunk[gdf_lines_trunk['id'] == 2000294].index.values.tolist()[0]
         g_lines.add_edge(index_1, index_2, trunk=trunk)
 
+        list_index_1 = gdf_lines_trunk[gdf_lines_trunk['objectid'] == 1281].index.values.tolist()
+        index_2 = gdf_lines_trunk[gdf_lines_trunk['objectid'] == 969].index.values.tolist()[0]
+        index_3 = gdf_lines_trunk[gdf_lines_trunk['objectid'] == 1349].index.values.tolist()[0]
+        for index_1 in list_index_1:
+            g_lines.remove_edge(index_1, index_2)
+            g_lines.remove_edge(index_1, index_3)
+
+    elif trunk == 'N':
+        gdf_lines_trunk = gdf_lines_trunk[gdf_lines_trunk['objectid'] != 1094]
+
+        # create a graph with subway lines
+        g_lines = create_line_graph(gdf_lines_trunk)
+
+        index_1 = gdf_lines_trunk[gdf_lines_trunk['objectid'] == 873].index.values.tolist()[0]
+        # get edges from index_1
+        list_neighbors = g_lines.neighbors(index_1)
+        neighbors_tobe_removed = []
+        for neighbor in list_neighbors:
+            if gdf_lines_trunk.loc[neighbor]['objectid'] == 1809:
+                g_lines.remove_edge(index_1, neighbor)
     else:
         # create a graph with subway lines
         g_lines = create_line_graph(gdf_lines_trunk)
