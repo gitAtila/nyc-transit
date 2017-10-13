@@ -126,8 +126,7 @@ def cut_line_at_points(line, points):
 def split_intersection(linestring_1, linestring_2, touch_way):
     extremity = touch_way[0]
     touched_line = touch_way[1]
-    # print linestring_1
-    # print linestring_2
+
     if touched_line == '1':
         if extremity == 'r':
             point = Point(linestring_2.coords[-1])
@@ -145,25 +144,6 @@ def split_intersection(linestring_1, linestring_2, touch_way):
 
         projection = linestring_2.interpolate(linestring_2.project(point))
         lines = cut_line_at_points(linestring_2, [projection, projection])
-
-    # print projection
-    # # print '======'
-    # print lines[0], lines[0].length
-    # print lines[1], lines[1].length
-    # print lines[2], lines[2].length
-    # print nothing
-    if (lines[1].length < lines[0].length and lines[1].length < lines[2].length) == False:
-        print nothing
-    # fig, ax = plt.subplots()
-    # ax.set_aspect('equal')
-    # ax.axis('off')
-    # x, y = lines[0].xy
-    # ax.plot(x,y, color='blue')
-    # # x, y = lines[1].xy
-    # # ax.plot(x,y, color='red')
-    # x, y = lines[2].xy
-    # ax.plot(x,y, color='green')
-    # fig.savefig(result_folder + 'cut_test2.pdf')
 
     # print nothing
     return lines[0], lines[2]
@@ -557,6 +537,7 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
             edge = linestring_between_points(merged_linestrings, point_s1, point_s2)
             geo_link = link.to_dict()
             geo_link['geometry'] = edge
+            geo_link['shape_len'] = distance_linestring(edge)
             list_geolinks.append(geo_link)
 
             if stop_1['objectid'].iloc[0] == 375  and stop_2['objectid'].iloc[0] == 394:
@@ -581,10 +562,9 @@ def path_between_stops(df_links, gdf_stations, gdf_lines, g_lines):
                 ax.scatter(x,y, color='black')
                 x, y = point_s2.xy
                 ax.scatter(x,y, color='black')
-                fig.savefig(result_folder + 'path_between_stops.pdf')
-                break
+                #fig.savefig(result_folder + 'path_between_stops.pdf')
+                #break
 
-    print len(list_geolinks[0])
     gdf_geolinks = gpd.GeoDataFrame(list_geolinks, geometry='geometry')
     return gdf_geolinks
 
@@ -706,18 +686,18 @@ def plot_path(transit_graph, list_stations, result_file_name):
 '''
     Test area
 '''
-# # preprocessing lines
-# gdf_lines = preprocess_lines(gdf_lines)
-# print gdf_lines
-# gdf_lines.to_file(result_folder + 'splitted_links.shp')
-#print unknown
+# preprocessing lines
+gdf_lines = preprocess_lines(gdf_lines)
+print gdf_lines
+gdf_lines.to_file(result_folder + 'splitted_links.shp')
+
 # get links between stations for all subway trunks
 list_geolinks = []
 list_unique_trunks = gdf_lines['rt_symbol'].unique()
-list_unique_trunks = ['G']
+#list_unique_trunks = ['G']
 for trunk in list_unique_trunks:
     gdf_lines_trunk = gdf_lines[gdf_lines['rt_symbol'] == trunk]
-    gdf_lines_trunk = preprocess_lines(gdf_lines_trunk)
+    #gdf_lines_trunk = preprocess_lines(gdf_lines_trunk)
     print 'Trunk:', trunk
     if trunk == 'B':
         # delete unnecessary edge
