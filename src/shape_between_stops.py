@@ -262,12 +262,12 @@ def create_line_graph(gdf_lines):
     return g_lines
 
 def distance_linestring(linestring):
-    total_distance = []
+    total_distance = 0
     previous_position = linestring.coords[0]
     for index in range(1, len(linestring.coords)):
-        actual_position = linestring.coords[index]
-        total_distance = vincenty(previous_position, actual_position).meters
-        previous_position = actual_position
+        current_position = linestring.coords[index]
+        total_distance += vincenty(previous_position, current_position).meters
+        previous_position = current_position
     return total_distance
 
 def linemerge_sequential(multilinestring):
@@ -532,7 +532,7 @@ def path_between_transitions(df_transition_links, gdf_stations):
         # get node position
         stop_1 = gdf_stations[gdf_stations['objectid'] == link['node_1']]
         stop_2 = gdf_stations[gdf_stations['objectid'] == link['node_2']]
-        
+
         # create linestring from stop position
         geo_link = link.to_dict()
         geo_link['geometry'] = LineString([stop_1['geometry'].iloc[0], stop_2['geometry'].iloc[0]])
