@@ -14,7 +14,6 @@ from shapely.geometry import Point, LineString, MultiLineString
 from shapely.ops import linemerge, unary_union
 
 stations_path = argv[1]
-lines_path = argv[2]
 links_path = argv[3]
 census_tract_path = argv[4]
 result_folder = argv[5]
@@ -24,8 +23,7 @@ result_folder = argv[5]
 '''
 
 gdf_stations = gpd.GeoDataFrame.from_file(stations_path)
-gdf_lines = gpd.GeoDataFrame.from_file(lines_path)
-df_links = pd.read_csv(links_path)
+gdf_links = gpd.GeoDataFrame.from_file(links_path)
 
 '''
     Get subway lines and trunks
@@ -77,7 +75,7 @@ def distance_points(point_lon_lat_A, point_lon_lat_B):
     Create subway graph
 '''
 
-def create_transit_graph(graph_constructor, gdf_stations, df_links):
+def create_transit_graph(graph_constructor, gdf_stations, gdf_links):
     g_transit = graph_constructor
     # add stations to subway graph
     for index, station in gdf_stations.iterrows():
@@ -85,11 +83,10 @@ def create_transit_graph(graph_constructor, gdf_stations, df_links):
          notes=station['notes'], posxy=(station['geometry'].x, station['geometry'].y))
 
     # add links to subway graph
-    for index, link in df_links.iterrows():
+    for index, link in gdf_links.iterrows():
         if link['node_1'] in g_transit.nodes() and link['node_2'] in g_transit.nodes():
             # compute link distance
-            distance = distance_points(g_transit.node[link['node_1']]['posxy'], g_transit.node[link['node_2']]['posxy'])
-            g_transit.add_edge(link['node_1'], link['node_2'], trunk=link['trunk'], distance=distance)
+            g_transit.add_edge(link['node_1'], link['node_2'], trunk=link['trunk'], distance=link['shape_len'])
         else:
         	print link['node_1'] + 'and' + link['node_2'] + 'are not present in graph'
 
