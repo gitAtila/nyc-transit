@@ -11,6 +11,8 @@ from shapely.geometry import Point
 
 gtfs_zip_folder = argv[1]
 shapefile_stops_path = argv[2]
+result_path = argv[3]
+max_distance = 0.002 #euclidean 
 
 def read_file_in_zip(gtfs_zip_folder, file_name):
     zip_file = zipfile.ZipFile(gtfs_zip_folder)
@@ -49,5 +51,8 @@ gdf_gtfs_stops = gdf_gtfs_stops[['stop_id', 'stop_name', 'geometry']]
 gdf_shape_stops = gpd.GeoDataFrame.from_file(shapefile_stops_path)
 
 df_equivalence = find_equivalence(gdf_gtfs_stops, gdf_shape_stops)
+# It do not consider lage distances
+df_equivalence.ix[df_equivalence['distance'] > max_distance, 'objectid'] = None
+df_equivalence = df_equivalence.drop(['distance'], axis=1)
 
-print df_equivalence['distance']
+df_equivalence.to_csv(result_path+'equivalence_gtfs_shape_stops.csv')
