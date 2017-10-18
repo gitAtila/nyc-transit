@@ -132,6 +132,37 @@ def best_route_shortest_walk_distance(dict_trip_trunks):
 
     return best_destination
 
+def station_location_shortest_walk_distance(station_origin, destination_location, g_transit):
+    ## get the stations nearby centroid
+    dict_trunk_stations_near_destination = stations_near_point_per_trunk(g_transit, destination_location)
+
+    # construct probable trips
+    dict_best_trunk_station = best_route_shortest_walk_distance(dict_trunk_stations_near_destination)
+    trip_path = nx.dijkstra_path(g_transit, first_subway_boarding, dict_best_trunk_station['station'],\
+     weight='distance')
+
+    # dict_travel = {'boarding_station': ,'alight_station':, 'transit_distance':, \
+    # 'transit_time':, 'walking_distance': , 'walking_time':}
+
+    return trip_path
+
+def location_location_shortest_walk_distance(origin_location, destination_location, g_transit):
+    ## get the stations nearby centroid
+    dict_trunk_stations_near_origin = stations_near_point_per_trunk(g_transit, origin_location)
+    dict_trunk_stations_near_destination = stations_near_point_per_trunk(g_transit, destination_location)
+
+    # construct probable trips
+    dict_best_trunk_station_origin = best_route_shortest_walk_distance(dict_trunk_stations_near_origin)
+    dict_best_trunk_station_destination = best_route_shortest_walk_distance(dict_trunk_stations_near_destination)
+
+    trip_path = nx.dijkstra_path(g_transit, dict_best_trunk_station_origin['station'],\
+     dict_best_trunk_station_destination['station'], weight='distance')
+
+    # dict_travel = {'boarding_station': ,'alight_station':, 'transit_distance':, \
+    # 'transit_time':, 'walking_distance': , 'walking_time':}
+
+    return trip_path
+
 '''
     Plot graph
 '''
@@ -249,24 +280,17 @@ gs_destination = gdf_census_tract[gdf_census_tract['ct2010'] == ct_destination]
 gs_destination = gs_destination[gs_destination['boro_code'] == boro_destination]
 destination_centroid = gs_destination.centroid
 
-## get the stations nearby centroid
-dict_trunk_stations_near_destination = stations_near_point_per_trunk(g_transit, destination_centroid)
+trip_station_location = station_location_shortest_walk_distance(first_subway_boarding,\
+ destination_centroid, g_transit)
+print trip_station_location
 
-# construct probable trips
-dict_best_trunk_station = best_route_shortest_walk_distance(dict_trunk_stations_near_destination)
-trip_path = nx.dijkstra_path(g_transit, first_subway_boarding, dict_best_trunk_station['station'],\
- weight='distance')
+trip_location_location = location_location_shortest_walk_distance(origin_centroid,\
+ destination_centroid, g_transit)
+print trip_location_location
 
-print trip_path
+for station in trip_station_location:
+    print station, '\t' + gdf_stations[gdf_stations['objectid'] == station]['notes'].iloc[0]
+    #print station
 #plot_path(g_transit, trip_path, result_path+'passenger_path.pdf')
-plot_complete_route(gs_origin, gs_destination, trip_path, g_transit,\
- trunk_colors, gdf_census_tract, result_path+'ct_od.png')
-
-# dict_trip_trunks = dict()
-# for trunk, destination_station in trunk_stations.iteritems():
-#     print trunk, destination_station
-#     trip_path = nx.dijkstra_path(g_transit, first_subway_boarding, destination_station['station'],\
-#      weight='distance')
-#     dict_trip_trunks[trunk] = trip_path
-#     print trip_path
-#     print ''
+# plot_complete_route(gs_origin, gs_destination, trip_path, g_transit,\
+#  trunk_colors, gdf_census_tract, result_path+'ct_od.png')
