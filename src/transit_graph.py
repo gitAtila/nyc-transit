@@ -15,6 +15,9 @@ links_path = argv[2]
 census_tract_path = argv[3]
 result_path = argv[4]
 
+__walking_speed = 1.4 # m/s
+__subway_speed = 7.59968 # m/s it is 17mph
+
 trunk_colors = {'1':'#ee352e', '4':'#00933c', '7':'#b933ad', 'A':'#2850ad', 'B':'#ff6319',\
  'G':'#6cbe45', 'J':'#996633', 'L':'#a7a9ac', 'N':'#fccc0a', 'T':'#000000'}
 
@@ -132,6 +135,12 @@ def best_route_shortest_walk_distance(dict_trip_trunks):
 
     return best_destination
 
+def walking_distance_duration(origin, destination):
+    distance = vincenty(origin, destination).meters
+    duration = distance/__walking_speed
+    return {'distance': distance, 'duration': duration}
+
+
 def station_location_shortest_walk_distance(station_origin, destination_location, g_transit):
     ## get the stations nearby centroid
     dict_trunk_stations_near_destination = stations_near_point_per_trunk(g_transit, destination_location)
@@ -140,6 +149,15 @@ def station_location_shortest_walk_distance(station_origin, destination_location
     dict_best_trunk_station = best_route_shortest_walk_distance(dict_trunk_stations_near_destination)
     trip_path = nx.dijkstra_path(g_transit, first_subway_boarding, dict_best_trunk_station['station'],\
      weight='distance')
+
+    last_station_location = nx.get_node_attributes(g_transit, 'posxy')[trip_path[-1]]
+    destination_location = destination_location.iloc[0]
+    destination_location = (destination_location.x, destination_location.y)
+
+    dict_walking_distance_duration = walking_distance_duration(destination_location,\
+     last_station_location)
+
+    print dict_walking_distance_duration
 
     # dict_travel = {'boarding_station': ,'alight_station':, 'transit_distance':, \
     # 'transit_time':, 'walking_distance': , 'walking_time':}
@@ -283,13 +301,15 @@ destination_centroid = gs_destination.centroid
 trip_station_location = station_location_shortest_walk_distance(first_subway_boarding,\
  destination_centroid, g_transit)
 print trip_station_location
+for station in trip_station_location:
+    print station, '\t' + gdf_stations[gdf_stations['objectid'] == station]['line'].iloc[0]
 
 trip_location_location = location_location_shortest_walk_distance(origin_centroid,\
  destination_centroid, g_transit)
 print trip_location_location
 
-for station in trip_station_location:
-    print station, '\t' + gdf_stations[gdf_stations['objectid'] == station]['notes'].iloc[0]
+for station in trip_location_location:
+    print station, '\t' + gdf_stations[gdf_stations['objectid'] == station]['line'].iloc[0]
     #print station
 #plot_path(g_transit, trip_path, result_path+'passenger_path.pdf')
 # plot_complete_route(gs_origin, gs_destination, trip_path, g_transit,\
