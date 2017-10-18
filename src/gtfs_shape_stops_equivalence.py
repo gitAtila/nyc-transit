@@ -50,4 +50,4 @@ gdf_shape_stops = gpd.GeoDataFrame.from_file(shapefile_stops_path)
 
 df_equivalence = find_equivalence(gdf_gtfs_stops, gdf_shape_stops)
 
-print df_equivalence
+print df_equivalence['distance']
