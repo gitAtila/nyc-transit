@@ -10,13 +10,13 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
-from shapely.geometry import Point, LineString, MultiLineString
-from shapely.ops import linemerge, unary_union
-
 stations_path = argv[1]
-links_path = argv[3]
-census_tract_path = argv[4]
-result_folder = argv[5]
+links_path = argv[2]
+census_tract_path = argv[3]
+result_path = argv[4]
+
+trunk_colors = {'1':'#ee352e', '4':'#00933c', '7':'#b933ad', 'A':'#2850ad', 'B':'#ff6319',\
+ 'G':'#6cbe45', 'J':'#996633', 'L':'#a7a9ac', 'N':'#fccc0a', 'T':'#000000'}
 
 '''
     Read stations, subay lines and links between stations
@@ -30,11 +30,11 @@ gdf_links = gpd.GeoDataFrame.from_file(links_path)
 '''
 
 # get subway trunks
-dict_line_trunk = dict()
-dict_trunk_lines = dict()
-for index, line in gdf_lines.iterrows():
-    dict_line_trunk[line['name']] = line['rt_symbol']
-    dict_trunk_lines.setdefault(line['rt_symbol'],[]).append(line['name'])
+# dict_line_trunk = dict()
+# dict_trunk_lines = dict()
+# for index, line in gdf_lines.iterrows():
+#     dict_line_trunk[line['name']] = line['rt_symbol']
+#     dict_trunk_lines.setdefault(line['rt_symbol'],[]).append(line['name'])
 
 '''
     Graph operations
@@ -93,13 +93,13 @@ def create_transit_graph(graph_constructor, gdf_stations, gdf_links):
     return g_transit
 
 '''
-    Get the best subway path from one station to a census tract
+    Get the best subway path from a station to a census tract
 '''
 
 def stations_near_point_per_trunk(g_transit, gs_point):
     list_trunk_stations = list()
     list_unique_trunks = unique_edge_values(g_transit, 'trunk')
-    print list_unique_trunks
+    #print list_unique_trunks
     # Find out the nearest station from point for each line trunk
     dict_stations_trunk = dict()
     for trunk in list_unique_trunks:
@@ -207,20 +207,41 @@ def plot_path(transit_graph, list_stations, result_file_name):
 
     plt.savefig(result_file_name, dpi=1000)
 
+def plot_complete_route(gs_origin, gs_destination, list_stations, transit_graph,\
+ trunk_colors, gdf_census_tract, plot_name):
+    # plot census tracts of origin and destination
+
+    fig, ax = plt.subplots()
+    ax.set_aspect('equal')
+    ax.axis('off')
+    gs_origin.plot(ax=ax)
+    gs_destination.plot(ax=ax)
+
+    # plot stations path
+    for station in list_stations:
+        posxy = nx.get_node_attributes(transit_graph, 'posxy')[station]
+        # print posxy
+        # x, y = linestring_s1.xy
+        ax.scatter(posxy[0],posxy[1], color='black')
+
+    fig.savefig(plot_name)
 '''
     Test area
 '''
-
-
-g_transit = create_transit_graph(nx.Graph(), gdf_stations, df_links)
+g_transit = create_transit_graph(nx.Graph(), gdf_stations, gdf_links)
 #g_transit = create_transit_graph(nx.MultiGraph(), gdf_stations, df_links)
 #split_line_route(gdf_stations, gdf_lines, df_links)
 
 gdf_census_tract = gpd.GeoDataFrame.from_file(census_tract_path)
 first_subway_boarding = 49
 ct_origin = '012600'
+boro_origin = '1'
 ct_destination = '024100'
 boro_destination = '2'
+
+gs_origin = gdf_census_tract[gdf_census_tract['ct2010'] == ct_origin]
+gs_origin = gs_origin[gs_origin['boro_code'] == boro_origin]
+origin_centroid = gs_origin.centroid
 
 # discover which was the alight station
 ## get the centroid of the census tract
@@ -235,6 +256,11 @@ dict_trunk_stations_near_destination = stations_near_point_per_trunk(g_transit, 
 dict_best_trunk_station = best_route_shortest_walk_distance(dict_trunk_stations_near_destination)
 trip_path = nx.dijkstra_path(g_transit, first_subway_boarding, dict_best_trunk_station['station'],\
  weight='distance')
+
+print trip_path
+#plot_path(g_transit, trip_path, result_path+'passenger_path.pdf')
+plot_complete_route(gs_origin, gs_destination, trip_path, g_transit,\
+ trunk_colors, gdf_census_tract, result_path+'ct_od.png')
 
 # dict_trip_trunks = dict()
 # for trunk, destination_station in trunk_stations.iteritems():
