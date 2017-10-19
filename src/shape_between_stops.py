@@ -20,7 +20,7 @@ result_folder = argv[4]
 tolerance = 11 # meters
 
 '''
-    Read stations, subay lines and links between stations
+    Read stations, subway lines and links between stations
 '''
 
 gdf_stations = gpd.GeoDataFrame.from_file(stations_path)
