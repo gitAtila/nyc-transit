@@ -252,14 +252,14 @@ def best_route_shortest_walk_distance(dict_trip_trunks):
 
 def station_location_shortest_walk_distance(g_transit, origin_station, destination_location):
     ## get the stations nearby destination point
-    dict_trunk_stations_near_destination = stations_near_point_per_trunk(g_transit, destination_centroid)
+    dict_trunk_stations_near_destination = stations_near_point_per_trunk(g_transit, destination_location)
 
     # construct probable trips
     dict_best_trunk_station = best_route_shortest_walk_distance(dict_trunk_stations_near_destination)
-    path_stations = nx.shortest_path(g_transit, first_subway_boarding, dict_best_trunk_station['station'],\
+    path_stations = nx.shortest_path(g_transit, origin_station, dict_best_trunk_station['station'],\
      weight='distance')
 
-    path_length = nx.shortest_path_length(g_transit, first_subway_boarding, dict_best_trunk_station['station'],\
+    path_length = nx.shortest_path_length(g_transit, origin_station, dict_best_trunk_station['station'],\
      weight='distance')
 
     print path_stations
@@ -268,21 +268,47 @@ def station_location_shortest_walk_distance(g_transit, origin_station, destinati
 
     return path_stations
 
-def station_location_all(g_transit, origin_station, destination_location):
+def station_location_all_lines(g_transit, origin_station, destination_location):
     ## get the stations nearby destination point
     #dict_trunk_stations_near_destination = stations_near_point_per_trunk(g_transit, destination_centroid)
-    dict_line_stations_near_destination = stations_near_point_per_line(g_transit, destination_centroid)
+    dict_line_stations_near_destination = stations_near_point_per_line(g_transit, destination_location)
 
     # construct probable trips
     for line, dict_station in dict_line_stations_near_destination.iteritems():
-        path_stations = nx.shortest_path(g_transit, first_subway_boarding, dict_station['station'],\
+        path_stations = nx.shortest_path(g_transit, origin_station, dict_station['station'],\
          weight='distance')
-        path_length = nx.shortest_path_length(g_transit, first_subway_boarding, dict_station['station'],\
+        path_length = nx.shortest_path_length(g_transit, origin_station, dict_station['station'],\
          weight='distance')
 
-        print path_stations
-        print line, dict_station
-        print path_length
+        # stations of integration
+        list_distinct_lines = []
+        previous_lines = sorted(g_transit.node[origin_station]['line'])
+        list_distinct_lines.append({'station': origin_station, 'lines': previous_lines})
+
+        for index in range(1, len(path_stations)):
+            station = path_stations[index]
+            previous_lines = list_distinct_lines[-1]['lines']
+            current_lines = sorted(g_transit.node[station]['line'])
+            intersection_lines = sorted(list(set(previous_lines) & set(current_lines)))
+
+            # there is an itegration
+            if len(intersection_lines) == 0:
+                list_distinct_lines.append({'station': station, 'lines': current_lines})
+
+            # remove from the previous lines the ones that is not in the current lines
+            elif current_lines != previous_lines and previous_lines != intersection_lines:
+                previous_lines = intersection_lines
+                previous_station = list_distinct_lines[-1]['station']
+                del list_distinct_lines[-1]
+                list_distinct_lines.append({'station': previous_station, 'lines': previous_lines})
+
+        #print path_stations
+        print 'last line', line
+        print 'subway distance', path_length
+        print 'walking distance', dict_station['distance']
+        print 'last station', dict_station['station']
+        print 'boardings', list_distinct_lines
+        print ''
 
     return path_stations
 
@@ -311,7 +337,7 @@ gs_destination = gs_destination[gs_destination['boro_code'] == boro_destination]
 destination_centroid = gs_destination.centroid
 
 station_location_shortest_walk_distance(g_transit, first_subway_boarding, destination_centroid)
-station_location_all(g_transit, first_subway_boarding, destination_centroid)
+station_location_all_lines(g_transit, first_subway_boarding, destination_centroid)
 
 #plot_path(g_transit, trip_path, result_path+'passenger_path.pdf')
 # plot_complete_route(gs_origin, gs_destination, trip_path, g_transit,\
