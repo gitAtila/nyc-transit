@@ -120,13 +120,38 @@ def plot_complete_route(gs_origin, gs_destination, list_stations, transit_graph,
     fig.savefig(plot_name)
 
 '''
+    Create subway graph
+'''
+
+def create_transit_graph(graph_constructor, gdf_stations, gdf_links):
+    g_transit = graph_constructor
+    # add stations to subway graph
+    for index, station in gdf_stations.iterrows():
+        lines = station['line'].split('-')
+        g_transit.add_node(station['objectid'], name=station['name'], line=lines,\
+         notes=station['notes'], posxy=(station['geometry'].x, station['geometry'].y))
+
+    # add links to subway graph
+    for index, link in gdf_links.iterrows():
+        if link['node_1'] in g_transit.nodes() and link['node_2'] in g_transit.nodes():
+            # compute link distance
+            g_transit.add_edge(link['node_1'], link['node_2'], trunk=link['trunk'], distance=link['shape_len'])
+        else:
+        	print link['node_1'] + 'and' + link['node_2'] + 'are not present in graph'
+
+    return g_transit
+
+'''
     Graph operations
 '''
 
 def get_subgraph_node(graph, node_key, node_value):
     list_node = []
     for key, dict_attribute in graph.nodes_iter(data=True):
-        if dict_attribute[node_key] == node_value:
+        if type(dict_attribute[node_key]) == list:
+            if node_value in dict_attribute[node_key]:
+                list_node.append(key)
+        elif dict_attribute[node_key] == node_value:
             list_node.append(key)
     subgraph = graph.subgraph(list_node)
     return subgraph
@@ -142,7 +167,16 @@ def get_subgraph_edge(graph, edge_key, edge_value):
     return graph.subgraph(list_node)
 
 def unique_node_values(graph, node_key):
-    return list(set([graph.node[index][node_key] for index in graph]))
+    list_values = []
+    for index in graph:
+        value = graph.node[index][node_key]
+        if type(value) != list:
+            list_values.append(value)
+        else:
+            for item in value:
+                list_values.append(item)
+
+    return set(list_values)
 
 def unique_edge_values(graph, edge_key):
     list_attribute = []
@@ -153,27 +187,6 @@ def unique_edge_values(graph, edge_key):
 def distance_points(point_lon_lat_A, point_lon_lat_B):
     return vincenty((point_lon_lat_A[1], point_lon_lat_A[0]),\
      (point_lon_lat_B[1], point_lon_lat_B[0])).meters
-
-'''
-    Create subway graph
-'''
-
-def create_transit_graph(graph_constructor, gdf_stations, gdf_links):
-    g_transit = graph_constructor
-    # add stations to subway graph
-    for index, station in gdf_stations.iterrows():
-        g_transit.add_node(station['objectid'], name=station['name'], line=station['line'],\
-         notes=station['notes'], posxy=(station['geometry'].x, station['geometry'].y))
-
-    # add links to subway graph
-    for index, link in gdf_links.iterrows():
-        if link['node_1'] in g_transit.nodes() and link['node_2'] in g_transit.nodes():
-            # compute link distance
-            g_transit.add_edge(link['node_1'], link['node_2'], trunk=link['trunk'], distance=link['shape_len'])
-        else:
-        	print link['node_1'] + 'and' + link['node_2'] + 'are not present in graph'
-
-    return g_transit
 
 '''
     Get the best subway path from a station to a census tract
@@ -201,6 +214,28 @@ def stations_near_point_per_trunk(g_transit, gs_point):
     del dict_stations_trunk['T']
 
     return dict_stations_trunk
+
+def stations_near_point_per_line(g_transit, gs_point):
+    list_trunk_stations = list()
+    list_unique_lines = unique_node_values(g_transit, 'line')
+    print list_unique_lines
+
+    # Find the nearest station from point for each line
+    dict_stations_line = dict()
+    for line in list_unique_lines:
+        g_line = get_subgraph_node(g_transit, 'line', line)
+
+        # get the nearest station
+        shortest_distance = maxint
+        best_station = -1
+        for node_key, dict_attribute in g_line.nodes_iter(data=True):
+            distance =  distance_points(dict_attribute['posxy'], (gs_point.iloc[0].x, gs_point.iloc[0].y))
+            if distance < shortest_distance:
+                shortest_distance = distance
+                best_station = node_key
+        dict_stations_line[line] = {'station':best_station ,'distance': shortest_distance}
+
+    return dict_stations_line
 
 def best_route_shortest_walk_distance(dict_trip_trunks):
     shortest_distance = maxint
@@ -235,18 +270,18 @@ def station_location_shortest_walk_distance(g_transit, origin_station, destinati
 
 def station_location_all(g_transit, origin_station, destination_location):
     ## get the stations nearby destination point
-    dict_trunk_stations_near_destination = stations_near_point_per_trunk(g_transit, destination_centroid)
+    #dict_trunk_stations_near_destination = stations_near_point_per_trunk(g_transit, destination_centroid)
+    dict_line_stations_near_destination = stations_near_point_per_line(g_transit, destination_centroid)
 
     # construct probable trips
-    #dict_best_trunk_station = best_route_shortest_walk_distance(dict_trunk_stations_near_destination)
-    for trunk, dict_station in dict_trunk_stations_near_destination.iteritems():
+    for line, dict_station in dict_line_stations_near_destination.iteritems():
         path_stations = nx.shortest_path(g_transit, first_subway_boarding, dict_station['station'],\
          weight='distance')
         path_length = nx.shortest_path_length(g_transit, first_subway_boarding, dict_station['station'],\
          weight='distance')
 
         print path_stations
-        print trunk, dict_station
+        print line, dict_station
         print path_length
 
     return path_stations
