@@ -293,11 +293,6 @@ class TransitGraph:
                 list_distinct_lines.append({'station': previous_station, 'lines': previous_lines})
 
         list_distinct_lines.append({'station': dict_last_station['station'], 'lines': ''})
-        #print path_stations
-        # print 'stations', list_distinct_lines
-        # print 'subway_distance', path_length
-        # print 'alight_destination_distance', dict_last_station['distance']
-        # print ''
 
         return {'subway_distance': path_length, 'alight_destination_distance': dict_last_station['distance'],\
          'stations': list_distinct_lines}
@@ -337,11 +332,6 @@ class TransitGraph:
                     list_distinct_lines.append({'station': previous_station, 'lines': previous_lines})
 
             list_distinct_lines.append({'station': dict_last_station['station'], 'lines': ''})
-            #print path_stations
-            # print 'stations', list_distinct_lines
-            # print 'subway_distance', path_length
-            # print 'walking_distance', dict_last_station['distance']
-            # print ''
 
             list_routes.append({'subway_distance': path_length, 'walking_distance': dict_last_station['distance'],\
              'stations': list_distinct_lines})
@@ -387,18 +377,6 @@ class TransitGraph:
                         previous_station = list_distinct_lines[-1]['station']
                         del list_distinct_lines[-1]
                         list_distinct_lines.append({'station': previous_station, 'lines': previous_lines})
-
-                #print path_stations
-                print 'walking_distance_origin', dict_station_origin['distance']
-                print 'first_station', dict_station_origin['station']
-                print 'first_line', line_origin
-                print 'boardings', list_distinct_lines
-                print 'subway_distance', path_length
-                print 'walking_distance_destination', dict_station_destination['distance']
-                print 'last_station', dict_station_destination['station']
-                print 'last line', line_destination
-
-                print ''
 
                 list_routes.append({'walking_distance_origin': dict_station_origin['distance'],\
                  'first_station': dict_station_origin['station'],\

@@ -5,6 +5,7 @@ import math
 import geopandas as gpd
 
 import matplotlib.pyplot as plt
+import transit_graph
 
 shapefile_census_tract_base_path = argv[1]
 shapefile_stations = argv[2]
@@ -124,16 +125,19 @@ for index, sbwy_trip in df_subway_trips.iterrows():
 
 		gdf_ct_destination = gdf_census_tract[gdf_census_tract['ct2010'] == ct_destination]
 		gdf_ct_destination = gdf_ct_destination[gdf_ct_destination['boro_code'] == borough_survey_shape[borough_destination]]
+
+		
+
 	except KeyError:
 		print 'Census tract out of NYC area'
 
-	fig, ax = plt.subplots()
-	ax.set_aspect('equal')
-	gdf_census_tract.plot(ax=ax, color='white', linewidth=0.5, edgecolor='0.5')
-	gdf_ct_origin.plot(ax=ax, color='blue', linewidth=0.5, edgecolor='0.5')
-	gdf_ct_destination.plot(ax=ax, color='red', linewidth=0.5, edgecolor='0.5')
-	gdf_boarding_station.plot(ax=ax, color='green', markersize=5)
-	fig.savefig(results_folder + 'test_ct_' + trip_id + '.pdf')
+	# fig, ax = plt.subplots()
+	# ax.set_aspect('equal')
+	# gdf_census_tract.plot(ax=ax, color='white', linewidth=0.5, edgecolor='0.5')
+	# gdf_ct_origin.plot(ax=ax, color='blue', linewidth=0.5, edgecolor='0.5')
+	# gdf_ct_destination.plot(ax=ax, color='red', linewidth=0.5, edgecolor='0.5')
+	# gdf_boarding_station.plot(ax=ax, color='green', markersize=5)
+	# fig.savefig(results_folder + 'test_ct_' + trip_id + '.pdf')
 
 	break
 
