@@ -77,8 +77,8 @@ nyc_transit_graph = tg.TransitGraph(shapefile_stations_path, shapefile_links_pat
 for index, sbwy_trip in df_subway_trips.iterrows():
 
 	# get interested variables
-	trip_id = str(sbwy_trip['sampn']) + '_' + str(sbwy_trip['perno']) + '_' + str(sbwy_trip['tripno'])
-	print 'trip_id', trip_id
+	sampn_perno_tripno = str(sbwy_trip['sampn']) + '_' + str(sbwy_trip['perno']) + '_' + str(sbwy_trip['tripno'])
+	print 'sampn_perno_tripno', sampn_perno_tripno
 
 	# get census tract code from survey
 	ct_od = get_origin_destination_tract_id(sbwy_trip)
@@ -117,8 +117,8 @@ for index, sbwy_trip in df_subway_trips.iterrows():
 
 	print 'shapefile_station_id', shapefile_station_id
 	print 'sbwy_boarding_station_name', sbwy_boarding_station_name
-	print 'sf_boarding_station', gdf_boarding_station['objectid'].iloc[0], gdf_boarding_station['name'].iloc[0], gdf_boarding_station['line'].iloc[0]
-	#list_stations.append(sbwy_station_id)
+	print 'sf_boarding_station', gdf_boarding_station['objectid'].iloc[0],\
+	 gdf_boarding_station['name'].iloc[0], gdf_boarding_station['line'].iloc[0]
 
 	# get census tract of origin and census tract of destination
 	try:
@@ -139,7 +139,7 @@ for index, sbwy_trip in df_subway_trips.iterrows():
 	except:
 		travel = {'boardings': 0, 'alight_destination_distance': None, 'subway_distance': None}
 
-	travel['trip_id'] = trip_id
+	travel['sampn_perno_tripno'] = sampn_perno_tripno
 	list_bus_route.append(travel)
 	print travel
 	print ''
@@ -154,7 +154,7 @@ for index, sbwy_trip in df_subway_trips.iterrows():
 
 df_bus_routes = pd.DataFrame(list_bus_route)
 print df_bus_routes
-df_bus_routes.to_csv(results_folder+'sbwy_passenger_route.csv')
+df_bus_routes.to_csv(results_folder+'sbwy_route_wkdy.csv', index_label='id')
 
 #gdf_census_tract = gpd.read_file(shapefile_census_tract_base_path)
 #list_stations.sort()

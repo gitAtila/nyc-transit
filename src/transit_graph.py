@@ -1,5 +1,5 @@
 '''
-    Read edges and build a transit_graph of the transit system
+    Graph of transit system
 '''
 
 from sys import argv, maxint
