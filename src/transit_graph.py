@@ -15,19 +15,18 @@ import matplotlib.pyplot as plt
 
 class TransitGraph:
 
-'''
-    Read stations, subay lines and links between stations
-'''
+    '''
+        Read stations, subay lines and links between stations
+    '''
     def __init__(self, stations_path, links_path, census_tract_path):
         self.gdf_stations = gpd.GeoDataFrame.from_file(stations_path)
         self.gdf_links = gpd.GeoDataFrame.from_file(links_path)
         self.gdf_census_tract = gpd.GeoDataFrame.from_file(census_tract_path)
         self.transit_graph = self.create_transit_graph()
 
-'''
-    Create subway transit_graph
-'''
-
+    '''
+        Create subway transit_graph
+    '''
     def create_transit_graph(self):
         transit_graph = nx.Graph()
         # add stations to subway transit_graph
@@ -46,10 +45,9 @@ class TransitGraph:
 
         return transit_graph
 
-'''
-    Graph operations
-'''
-
+    '''
+        Graph operations
+    '''
     def get_subgraph_node(self, node_key, node_value):
         list_node = []
         for key, dict_attribute in self.transit_graph.nodes_iter(data=True):
@@ -93,10 +91,9 @@ class TransitGraph:
         return vincenty((point_lon_lat_A[1], point_lon_lat_A[0]),\
          (point_lon_lat_B[1], point_lon_lat_B[0])).meters
 
-'''
-    Get the best subway path from a station to a census tract
-'''
-
+    '''
+        Get the best subway path from a station to a census tract
+    '''
     def stations_near_point_per_trunk(self, gs_point):
         list_trunk_stations = list()
         list_unique_trunks = unique_edge_values(self.transit_graph, 'trunk')
@@ -288,22 +285,22 @@ class TransitGraph:
 
     def travel_distance_shortest_walk_distance(self, first_subway_boarding, ct_origin,\
         ct_destination, boro_origin, boro_destination):
+        try:
+            gs_origin = self.gdf_census_tract[self.gdf_census_tract['ct2010'] == ct_origin]
+            gs_origin = gs_origin[gs_origin['boro_code'] == str(int(boro_origin))]
+            origin_centroid = gs_origin.centroid
 
-        gs_origin = self.gdf_census_tract[self.gdf_census_tract['ct2010'] == ct_origin]
-        gs_origin = gs_origin[gs_origin['boro_code'] == str(int(boro_origin))]
-        origin_centroid = gs_origin.centroid
+            # discover which was the alight station
+            ## get the centroid of the census tract
+            gs_destination = self.gdf_census_tract[self.gdf_census_tract['ct2010'] == ct_destination]
+            gs_destination = gs_destination[gs_destination['boro_code'] == str(int(boro_destination))]
+            destination_centroid = gs_destination.centroid
 
-        # discover which was the alight station
-        ## get the centroid of the census tract
-        gs_destination = self.gdf_census_tract[self.gdf_census_tract['ct2010'] == ct_destination]
-        gs_destination = gs_destination[gs_destination['boro_code'] == str(int(boro_destination))]
-        destination_centroid = gs_destination.centroid
-
-        print origin_centroid
-        print destination_centroid
+        except:
+            return {'boardings': 0, 'alight_destination_distance': None, 'subway_distance': None}
 
         if len(origin_centroid) == 0 or len(destination_centroid) == 0:
-            return {}
+            return {'boardings': 0, 'alight_destination_distance': None, 'subway_distance': None}
 
         # compute the distance from origin to boarding station
         initial_walking_distance = vincenty((origin_centroid.iloc[0].x, origin_centroid.iloc[0].y),\
@@ -313,16 +310,15 @@ class TransitGraph:
         #travel = self.station_location_all_lines(first_subway_boarding, destination_centroid)
         #travel = self.location_location_all_lines(origin_centroid, destination_centroid)
 
-        travel['origin_boarding_distance'] = initial_walking_distance
+        #travel['origin_boarding_distance'] = initial_walking_distance
         travel['boardings'] = len(travel['stations'])-1
         del travel['stations']
 
         return travel
 
-'''
-    Plot transit_graph
-'''
-
+    '''
+        Plot transit_graph
+    '''
     def plot_gdf(gdf, plot_name):
         fig, ax = plt.subplots()
         ax.set_aspect('equal')

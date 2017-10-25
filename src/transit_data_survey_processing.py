@@ -63,20 +63,24 @@ def get_transit_trips_in_nyc(df_trips, gdf_census_tract):
 df_trips_in_nyc = get_transit_trips_in_nyc(df_trips, gdf_census_tract)
 
 '''
-	Find out the subway passenger trip route
+	Get subway passenger trip route
 '''
 
 borough_survey_shape = {1:'1', 2:'4', 3:'2', 4:'3', 5:'5'}
 list_stations = []
+list_bus_route = []
 
 # select trips by subway
 df_subway_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 1]
+# load transit_graph
+nyc_transit_graph = tg.TransitGraph(shapefile_stations_path, shapefile_links_path, shapefile_census_tract_base_path)
 for index, sbwy_trip in df_subway_trips.iterrows():
 
 	# get interested variables
 	trip_id = str(sbwy_trip['sampn']) + '_' + str(sbwy_trip['perno']) + '_' + str(sbwy_trip['tripno'])
 	print 'trip_id', trip_id
 
+	# get census tract code from survey
 	ct_od = get_origin_destination_tract_id(sbwy_trip)
 	ct_origin = ct_od['o_tract_id']
 	ct_destination = ct_od['d_tract_id']
@@ -115,25 +119,27 @@ for index, sbwy_trip in df_subway_trips.iterrows():
 	print 'sbwy_boarding_station_name', sbwy_boarding_station_name
 	print 'sf_boarding_station', gdf_boarding_station['objectid'].iloc[0], gdf_boarding_station['name'].iloc[0], gdf_boarding_station['line'].iloc[0]
 	#list_stations.append(sbwy_station_id)
-	print ''
 
-	nyc_transit_graph = tg.TransitGraph(shapefile_stations_path, shapefile_links_path, shapefile_census_tract_base_path)
+	# get subway passenger route from graph
 	travel = nyc_transit_graph.travel_distance_shortest_walk_distance(shapefile_station_id, ct_origin,\
 		ct_destination, borough_origin, borough_destination)
+
+	travel['trip_id'] = trip_id
+	list_bus_route.append(travel)
 	print travel
+	print ''
 
-	breakable = True
 	# get census tract of origin and census tract of destination
-	try:
-		gdf_ct_origin = gdf_census_tract[gdf_census_tract['ct2010'] == ct_origin]
-		gdf_ct_origin = gdf_ct_origin[gdf_ct_origin['boro_code'] == borough_survey_shape[borough_origin]]
-
-		gdf_ct_destination = gdf_census_tract[gdf_census_tract['ct2010'] == ct_destination]
-		gdf_ct_destination = gdf_ct_destination[gdf_ct_destination['boro_code'] == borough_survey_shape[borough_destination]]
-
-	except KeyError:
-		breakable = False
-		print 'Census tract out of NYC area'
+	# try:
+	# 	gdf_ct_origin = gdf_census_tract[gdf_census_tract['ct2010'] == ct_origin]
+	# 	gdf_ct_origin = gdf_ct_origin[gdf_ct_origin['boro_code'] == borough_survey_shape[borough_origin]]
+	#
+	# 	gdf_ct_destination = gdf_census_tract[gdf_census_tract['ct2010'] == ct_destination]
+	# 	gdf_ct_destination = gdf_ct_destination[gdf_ct_destination['boro_code'] == borough_survey_shape[borough_destination]]
+	#
+	# except KeyError:
+	# 	breakable = False
+	# 	print 'Census tract out of NYC area'
 
 	# fig, ax = plt.subplots()
 	# ax.set_aspect('equal')
@@ -142,8 +148,10 @@ for index, sbwy_trip in df_subway_trips.iterrows():
 	# gdf_ct_destination.plot(ax=ax, color='red', linewidth=0.5, edgecolor='0.5')
 	# gdf_boarding_station.plot(ax=ax, color='green', markersize=5)
 	# fig.savefig(results_folder + 'test_ct_' + trip_id + '.pdf')
-	if breakable == False:
-		break
+
+df_bus_routes = pd.DataFrame(list_bus_route)
+print df_bus_routes
+df_bus_routes.to_csv(results_folder+'sbwy_passenger_route.csv')
 
 #gdf_census_tract = gpd.read_file(shapefile_census_tract_base_path)
 #list_stations.sort()
