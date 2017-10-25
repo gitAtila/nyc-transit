@@ -10,125 +10,23 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
-# stations_path = argv[1]
-# links_path = argv[2]
-# census_tract_path = argv[3]
-# result_path = argv[4]
-
-# __walking_speed = 1.4 # m/s
-# __subway_speed = 7.59968 # m/s it is 17mph
-
 # trunk_colors = {'1':'#ee352e', '4':'#00933c', '7':'#b933ad', 'A':'#2850ad', 'B':'#ff6319',\
 #  'G':'#6cbe45', 'J':'#996633', 'L':'#a7a9ac', 'N':'#fccc0a', 'T':'#000000'}
 
 class TransitGraph:
 
-    '''
-        Read stations, subay lines and links between stations
-    '''
-    def __init__(self, stations_path, geolinks_path, census_tract_path):
+'''
+    Read stations, subay lines and links between stations
+'''
+    def __init__(self, stations_path, links_path, census_tract_path):
         self.gdf_stations = gpd.GeoDataFrame.from_file(stations_path)
         self.gdf_links = gpd.GeoDataFrame.from_file(links_path)
         self.gdf_census_tract = gpd.GeoDataFrame.from_file(census_tract_path)
         self.transit_graph = self.create_transit_graph()
 
-    '''
-        Plot transit_graph
-    '''
-
-    def plot_gdf(gdf, plot_name):
-        fig, ax = plt.subplots()
-        ax.set_aspect('equal')
-        ax.axis('off')
-        gdf.plot(ax=ax)
-
-        fig.savefig(plot_name)
-
-    def plot_graph(self, color_field,  file_name):
-        unique_keys = list(self.gdf_stations['trunk'].unique())
-        # set colors to stations acording with its line
-        color_map = dict()
-        cmap = plt.get_cmap('prism')
-        colors = cmap(np.linspace(0,1,len(unique_keys)))
-        for key in range(len(unique_keys)):
-            color_map[unique_keys[key]] = colors[key]
-        #plot color
-        positions = nx.get_node_attributes(self.transit_graph, 'posxy')
-        node_color=[color_map[self.transit_graph.node[node][color_field]] for node in self.transit_graph]
-        nx.draw(self.transit_graph, positions, node_color=node_color, cmap=plt.get_cmap('jet'), node_size=5,\
-         font_size=5, with_labels=False)
-        plt.savefig(file_name, dpi=1000)
-
-    def plot_transit_graph(self, result_file_name):
-        # # set nodes color according to lines
-        # ## get unique lines
-        # unique_lines = list(self.gdf_stations['line'].unique())
-        # ## define color range
-        # cmap = plt.get_cmap('prism')
-        # ## set color to nodes
-        # colors = cmap(np.linspace(0,1,len(unique_lines)))
-        # color_map = dict()
-        # for line in range(len(unique_lines)):
-        #     color_map[unique_lines[line]] = colors[line]
-        # node_color = [color_map[self.transit_graph.node[node]['line']] for node in self.transit_graph]
-        node_color = '#000000'
-
-        # set edges color according to trunks
-        ## get official colors
-        trunk_colors = {'1':'#ee352e', '4':'#00933c', '7':'#b933ad', 'A':'#2850ad', 'B':'#ff6319',\
-         'G':'#6cbe45', 'J':'#996633', 'L':'#a7a9ac', 'N':'#fccc0a', 'T':'#000000'}
-        ## set colors to edges
-        edge_color = [trunk_colors[self.transit_graph[u][v]['trunk']] for u,v in self.transit_graph.edges()]
-        #edge_color = '#ff6319'
-
-        # set node positions according to geographical positions of stations
-        node_position = nx.get_node_attributes(self.transit_graph, 'posxy')
-
-        # plot and save self.transit_graph
-        nx.draw(self.transit_graph, node_position, node_color=node_color, edge_color=edge_color,\
-         node_size=1, alpha=0.5, linewidths=0.5 , with_labels=False)
-        plt.savefig(result_file_name, dpi=1000)
-
-    def plot_path(self, list_stations, result_file_name):
-        # plot complete transit self.transit_graph
-        node_position = nx.get_node_attributes(self.transit_graph, 'posxy')
-        node_color = '#000000'
-        edge_color = '#a7a9ac'
-        nx.draw(self.transit_graph, node_position, node_color=node_color, edge_color=edge_color,\
-         node_size=1, alpha=0.2, linewidths=0.5 , with_labels=False)
-
-        # plot trip path
-        trip_path = self.transit_graph.subgraph(list_stations)
-        node_position = nx.get_node_attributes(trip_path, 'posxy')
-        node_color = '#a7a9ac'
-        edge_color = '#000000'
-        nx.draw(trip_path, node_position, node_color=node_color, edge_color=edge_color,\
-         node_size=1, alpha=1, linewidths=0.5 , with_labels=False)
-
-        plt.savefig(result_file_name, dpi=1000)
-
-    def plot_complete_route(self, gs_origin, gs_destination, list_stations, \
-     trunk_colors, plot_name):
-        # plot census tracts of origin and destination
-
-        fig, ax = plt.subplots()
-        ax.set_aspect('equal')
-        ax.axis('off')
-        gs_origin.plot(ax=ax)
-        gs_destination.plot(ax=ax)
-
-        # plot stations path
-        for station in list_stations:
-            posxy = nx.get_node_attributes(self.transit_graph, 'posxy')[station]
-            # print posxy
-            # x, y = linestring_s1.xy
-            ax.scatter(posxy[0],posxy[1], color='black')
-
-        fig.savefig(plot_name)
-
-    '''
-        Create subway transit_graph
-    '''
+'''
+    Create subway transit_graph
+'''
 
     def create_transit_graph(self):
         transit_graph = nx.Graph()
@@ -148,9 +46,9 @@ class TransitGraph:
 
         return transit_graph
 
-    '''
-        Graph operations
-    '''
+'''
+    Graph operations
+'''
 
     def get_subgraph_node(self, node_key, node_value):
         list_node = []
@@ -195,9 +93,9 @@ class TransitGraph:
         return vincenty((point_lon_lat_A[1], point_lon_lat_A[0]),\
          (point_lon_lat_B[1], point_lon_lat_B[0])).meters
 
-    '''
-        Get the best subway path from a station to a census tract
-    '''
+'''
+    Get the best subway path from a station to a census tract
+'''
 
     def stations_near_point_per_trunk(self, gs_point):
         list_trunk_stations = list()
@@ -392,14 +290,20 @@ class TransitGraph:
         ct_destination, boro_origin, boro_destination):
 
         gs_origin = self.gdf_census_tract[self.gdf_census_tract['ct2010'] == ct_origin]
-        gs_origin = gs_origin[gs_origin['boro_code'] == boro_origin]
+        gs_origin = gs_origin[gs_origin['boro_code'] == str(int(boro_origin))]
         origin_centroid = gs_origin.centroid
 
         # discover which was the alight station
         ## get the centroid of the census tract
         gs_destination = self.gdf_census_tract[self.gdf_census_tract['ct2010'] == ct_destination]
-        gs_destination = gs_destination[gs_destination['boro_code'] == boro_destination]
+        gs_destination = gs_destination[gs_destination['boro_code'] == str(int(boro_destination))]
         destination_centroid = gs_destination.centroid
+
+        print origin_centroid
+        print destination_centroid
+
+        if len(origin_centroid) == 0 or len(destination_centroid) == 0:
+            return {}
 
         # compute the distance from origin to boarding station
         initial_walking_distance = vincenty((origin_centroid.iloc[0].x, origin_centroid.iloc[0].y),\
@@ -416,42 +320,95 @@ class TransitGraph:
         return travel
 
 '''
-    Test area
+    Plot transit_graph
 '''
-# transit_graph = create_transit_graph(nx.Graph(), self.gdf_stations, gdf_links)
-#transit_graph = create_transit_graph(nx.MultiGraph(), self.gdf_stations, df_links)
-#split_line_route(self.gdf_stations, gdf_lines, df_links)
 
-stations_path = argv[1]
-links_path = argv[2]
-census_tract_path = argv[3]
-result_path = argv[4]
+    def plot_gdf(gdf, plot_name):
+        fig, ax = plt.subplots()
+        ax.set_aspect('equal')
+        ax.axis('off')
+        gdf.plot(ax=ax)
 
-first_subway_boarding = 49
-ct_origin = '012600'
-boro_origin = '1'
-ct_destination = '024100'
-boro_destination = '2'
+        fig.savefig(plot_name)
 
-t_graph = TransitGraph(stations_path, links_path, census_tract_path)
-travel = t_graph.travel_distance_shortest_walk_distance(first_subway_boarding, ct_origin,\
-    ct_destination, boro_origin, boro_destination)
+    def plot_graph(self, color_field,  file_name):
+        unique_keys = list(self.gdf_stations['trunk'].unique())
+        # set colors to stations acording with its line
+        color_map = dict()
+        cmap = plt.get_cmap('prism')
+        colors = cmap(np.linspace(0,1,len(unique_keys)))
+        for key in range(len(unique_keys)):
+            color_map[unique_keys[key]] = colors[key]
+        #plot color
+        positions = nx.get_node_attributes(self.transit_graph, 'posxy')
+        node_color=[color_map[self.transit_graph.node[node][color_field]] for node in self.transit_graph]
+        nx.draw(self.transit_graph, positions, node_color=node_color, cmap=plt.get_cmap('jet'), node_size=5,\
+         font_size=5, with_labels=False)
+        plt.savefig(file_name, dpi=1000)
 
-print travel
-# travel = travel_distance_shortest_walk_distance(first_subway_boarding, ct_origin,\
-#     ct_destination, boro_origin, boro_destination)
-#
-# print travel
+    def plot_transit_graph(self, result_file_name):
+        # # set nodes color according to lines
+        # ## get unique lines
+        # unique_lines = list(self.gdf_stations['line'].unique())
+        # ## define color range
+        # cmap = plt.get_cmap('prism')
+        # ## set color to nodes
+        # colors = cmap(np.linspace(0,1,len(unique_lines)))
+        # color_map = dict()
+        # for line in range(len(unique_lines)):
+        #     color_map[unique_lines[line]] = colors[line]
+        # node_color = [color_map[self.transit_graph.node[node]['line']] for node in self.transit_graph]
+        node_color = '#000000'
 
-#plot_path(transit_graph, trip_path, result_path+'passenger_path.pdf')
-# plot_complete_route(gs_origin, gs_destination, trip_path, transit_graph,\
-#  trunk_colors, self.gdf_census_tract, result_path+'ct_od.png')
+        # set edges color according to trunks
+        ## get official colors
+        trunk_colors = {'1':'#ee352e', '4':'#00933c', '7':'#b933ad', 'A':'#2850ad', 'B':'#ff6319',\
+         'G':'#6cbe45', 'J':'#996633', 'L':'#a7a9ac', 'N':'#fccc0a', 'T':'#000000'}
+        ## set colors to edges
+        edge_color = [trunk_colors[self.transit_graph[u][v]['trunk']] for u,v in self.transit_graph.edges()]
+        #edge_color = '#ff6319'
 
-# dict_trip_trunks = dict()
-# for trunk, destination_station in trunk_stations.iteritems():
-#     print trunk, destination_station
-#     trip_path = nx.dijkstra_path(transit_graph, first_subway_boarding, destination_station['station'],\
-#      weight='distance')
-#     dict_trip_trunks[trunk] = trip_path
-#     print trip_path
-#     print ''
+        # set node positions according to geographical positions of stations
+        node_position = nx.get_node_attributes(self.transit_graph, 'posxy')
+
+        # plot and save self.transit_graph
+        nx.draw(self.transit_graph, node_position, node_color=node_color, edge_color=edge_color,\
+         node_size=1, alpha=0.5, linewidths=0.5 , with_labels=False)
+        plt.savefig(result_file_name, dpi=1000)
+
+    def plot_path(self, list_stations, result_file_name):
+        # plot complete transit self.transit_graph
+        node_position = nx.get_node_attributes(self.transit_graph, 'posxy')
+        node_color = '#000000'
+        edge_color = '#a7a9ac'
+        nx.draw(self.transit_graph, node_position, node_color=node_color, edge_color=edge_color,\
+         node_size=1, alpha=0.2, linewidths=0.5 , with_labels=False)
+
+        # plot trip path
+        trip_path = self.transit_graph.subgraph(list_stations)
+        node_position = nx.get_node_attributes(trip_path, 'posxy')
+        node_color = '#a7a9ac'
+        edge_color = '#000000'
+        nx.draw(trip_path, node_position, node_color=node_color, edge_color=edge_color,\
+         node_size=1, alpha=1, linewidths=0.5 , with_labels=False)
+
+        plt.savefig(result_file_name, dpi=1000)
+
+    def plot_complete_route(self, gs_origin, gs_destination, list_stations, \
+     trunk_colors, plot_name):
+        # plot census tracts of origin and destination
+
+        fig, ax = plt.subplots()
+        ax.set_aspect('equal')
+        ax.axis('off')
+        gs_origin.plot(ax=ax)
+        gs_destination.plot(ax=ax)
+
+        # plot stations path
+        for station in list_stations:
+            posxy = nx.get_node_attributes(self.transit_graph, 'posxy')[station]
+            # print posxy
+            # x, y = linestring_s1.xy
+            ax.scatter(posxy[0],posxy[1], color='black')
+
+        fig.savefig(plot_name)

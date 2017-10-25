@@ -5,20 +5,19 @@ import math
 import geopandas as gpd
 
 import matplotlib.pyplot as plt
-import transit_graph
+import transit_graph as tg
 
 shapefile_census_tract_base_path = argv[1]
-shapefile_stations = argv[2]
+shapefile_stations_path = argv[2]
+shapefile_links_path = argv[3]
+survey_trips_path = argv[4]
+survey_stations_path = argv[5]
+equivalence_survey_shapefile_path = argv[6]
 
-survey_trips = argv[3]
-survey_stations = argv[4]
+results_folder = argv[7]
 
-equivalence_survey_shapefile = argv[5]
-
-results_folder = argv[6]
-
-def df_from_csv(survey_trips):
-	return pd.read_csv(survey_trips)
+def df_from_csv(survey_trips_path):
+	return pd.read_csv(survey_trips_path)
 
 def float_to_int_str(float_number):
 	return str(float_number).split('.')[0]
@@ -37,11 +36,11 @@ def get_origin_destination_tract_id(s_trip):
 	Read transit data
 '''
 # od survey
-df_trips = df_from_csv(survey_trips)
-df_survey_stations = df_from_csv(survey_stations)
-df_equivalence_survey_shapefile = df_from_csv(equivalence_survey_shapefile)
+df_trips = df_from_csv(survey_trips_path)
+df_survey_stations = df_from_csv(survey_stations_path)
+df_equivalence_survey_shapefile = df_from_csv(equivalence_survey_shapefile_path)
 # shapefiles
-gdf_subway_stations = gpd.GeoDataFrame.from_file(shapefile_stations)
+gdf_subway_stations = gpd.GeoDataFrame.from_file(shapefile_stations_path)
 gdf_census_tract = gpd.read_file(shapefile_census_tract_base_path)
 
 '''
@@ -105,19 +104,25 @@ for index, sbwy_trip in df_subway_trips.iterrows():
 	sbwy_station_id = float_to_int_str(sbwy_trip['StopAreaNo'])
 	if math.isnan(float(sbwy_station_id)) == False and sbwy_station_id != '0' and sbwy_station_id != '1384':
 		sbwy_boarding_station_name = df_survey_stations[df_survey_stations['Value'] == int(sbwy_station_id)]['Label']
-		shapefile_station_id = df_equivalence_survey_shapefile[df_equivalence_survey_shapefile['sv_id'] == float(sbwy_station_id)]['sf_id']
-		gdf_boarding_station = gdf_subway_stations[gdf_subway_stations['objectid'] == shapefile_station_id.iloc[0]]
+		shapefile_station_id = df_equivalence_survey_shapefile[df_equivalence_survey_shapefile['sv_id'] == float(sbwy_station_id)]['sf_id'].iloc[0]
+		gdf_boarding_station = gdf_subway_stations[gdf_subway_stations['objectid'] == shapefile_station_id]
 	else:
 		print 'There is not information of boarding station'
 		sbwy_boarding_station_name = ''
 		sf_boarding_station_name = ''
 
-	print 'sbwy_station_id', sbwy_station_id
+	print 'shapefile_station_id', shapefile_station_id
 	print 'sbwy_boarding_station_name', sbwy_boarding_station_name
 	print 'sf_boarding_station', gdf_boarding_station['objectid'].iloc[0], gdf_boarding_station['name'].iloc[0], gdf_boarding_station['line'].iloc[0]
 	#list_stations.append(sbwy_station_id)
 	print ''
 
+	nyc_transit_graph = tg.TransitGraph(shapefile_stations_path, shapefile_links_path, shapefile_census_tract_base_path)
+	travel = nyc_transit_graph.travel_distance_shortest_walk_distance(shapefile_station_id, ct_origin,\
+		ct_destination, borough_origin, borough_destination)
+	print travel
+
+	breakable = True
 	# get census tract of origin and census tract of destination
 	try:
 		gdf_ct_origin = gdf_census_tract[gdf_census_tract['ct2010'] == ct_origin]
@@ -126,9 +131,8 @@ for index, sbwy_trip in df_subway_trips.iterrows():
 		gdf_ct_destination = gdf_census_tract[gdf_census_tract['ct2010'] == ct_destination]
 		gdf_ct_destination = gdf_ct_destination[gdf_ct_destination['boro_code'] == borough_survey_shape[borough_destination]]
 
-		
-
 	except KeyError:
+		breakable = False
 		print 'Census tract out of NYC area'
 
 	# fig, ax = plt.subplots()
@@ -138,8 +142,8 @@ for index, sbwy_trip in df_subway_trips.iterrows():
 	# gdf_ct_destination.plot(ax=ax, color='red', linewidth=0.5, edgecolor='0.5')
 	# gdf_boarding_station.plot(ax=ax, color='green', markersize=5)
 	# fig.savefig(results_folder + 'test_ct_' + trip_id + '.pdf')
-
-	break
+	if breakable == False:
+		break
 
 #gdf_census_tract = gpd.read_file(shapefile_census_tract_base_path)
 #list_stations.sort()
