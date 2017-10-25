@@ -18,10 +18,9 @@ class TransitGraph:
     '''
         Read stations, subay lines and links between stations
     '''
-    def __init__(self, stations_path, links_path, census_tract_path):
+    def __init__(self, stations_path, links_path):
         self.gdf_stations = gpd.GeoDataFrame.from_file(stations_path)
         self.gdf_links = gpd.GeoDataFrame.from_file(links_path)
-        self.gdf_census_tract = gpd.GeoDataFrame.from_file(census_tract_path)
         self.transit_graph = self.create_transit_graph()
 
     '''
@@ -283,38 +282,6 @@ class TransitGraph:
 
         return list_routes
 
-    def travel_distance_shortest_walk_distance(self, first_subway_boarding, ct_origin,\
-        ct_destination, boro_origin, boro_destination):
-        try:
-            gs_origin = self.gdf_census_tract[self.gdf_census_tract['ct2010'] == ct_origin]
-            gs_origin = gs_origin[gs_origin['boro_code'] == str(int(boro_origin))]
-            origin_centroid = gs_origin.centroid
-
-            # discover which was the alight station
-            ## get the centroid of the census tract
-            gs_destination = self.gdf_census_tract[self.gdf_census_tract['ct2010'] == ct_destination]
-            gs_destination = gs_destination[gs_destination['boro_code'] == str(int(boro_destination))]
-            destination_centroid = gs_destination.centroid
-
-        except:
-            return {'boardings': 0, 'alight_destination_distance': None, 'subway_distance': None}
-
-        if len(origin_centroid) == 0 or len(destination_centroid) == 0:
-            return {'boardings': 0, 'alight_destination_distance': None, 'subway_distance': None}
-
-        # compute the distance from origin to boarding station
-        initial_walking_distance = vincenty((origin_centroid.iloc[0].x, origin_centroid.iloc[0].y),\
-         self.transit_graph.node[first_subway_boarding]['posxy']).meters
-
-        travel = self.station_location_shortest_walk_distance(first_subway_boarding, destination_centroid)
-        #travel = self.station_location_all_lines(first_subway_boarding, destination_centroid)
-        #travel = self.location_location_all_lines(origin_centroid, destination_centroid)
-
-        #travel['origin_boarding_distance'] = initial_walking_distance
-        travel['boardings'] = len(travel['stations'])-1
-        del travel['stations']
-
-        return travel
 
     '''
         Plot transit_graph
