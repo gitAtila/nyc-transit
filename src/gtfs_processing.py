@@ -57,7 +57,7 @@ def split_shape_id(gdf_shapes, separator):
 def shapes_to_shapefile(gtfs_zip_folder):
     df_shapes = read_file_in_zip(gtfs_zip_folder, 'shapes.txt')
     gdf_lines = format_shape_lines(df_shapes)
-    gdf_lines = split_shape_id(gdf_lines, '.')
+    #gdf_lines = split_shape_id(gdf_lines, '.')
     return gdf_lines
 
 def stops_to_shapefile(gtfs_zip_folder):
@@ -80,7 +80,8 @@ def fractionate_trip_id(df_stop_times):
     df_stop_times['vehicle'] = underline_split.apply(lambda x: x[2].split('.')[-1][1:])
     return df_stop_times
 
-def temporal_links_between_stations(df_stop_times):
+def temporal_links_between_stations(gtfs_zip_folder):
+    df_stop_times = read_file_in_zip(gtfs_zip_folder, 'stop_times.txt')
     link_attributes = []
 
     previous_stop = df_stop_times.iloc[0]
@@ -88,11 +89,9 @@ def temporal_links_between_stations(df_stop_times):
         # edges are consecutive stations of each line
         if previous_stop['trip_id'] == current_stop['trip_id']\
          and previous_stop['stop_sequence'] == (current_stop['stop_sequence']-1):
-            link_attributes.append({'line': current_stop['line'],\
+            link_attributes.append({'trip_id': current_stop['trip_id'],\
              'departure_stop': previous_stop['stop_id'], 'departure_time': previous_stop['departure_time'],\
-             'arrival_stop': current_stop['stop_id'], 'arrival_time': current_stop['arrival_time'],\
-             'direction': current_stop['direction'], 'day_type': current_stop['day_type'],\
-             'trip_id': current_stop['trip_id']})
+             'arrival_stop': current_stop['stop_id'], 'arrival_time': current_stop['arrival_time']})
         else:
             print 'link', previous_stop['stop_id'], current_stop['stop_id']
             break
@@ -100,7 +99,22 @@ def temporal_links_between_stations(df_stop_times):
     df_edge_attributes = pd.DataFrame(link_attributes)
     return df_edge_attributes
 
-df_stop_times = read_file_in_zip(gtfs_zip_folder, 'stop_times.txt')
-df_stop_times = fractionate_trip_id(df_stop_times)
-df_link_attributes = temporal_links_between_stations(df_stop_times)
-print df_link_attributes
+def spatial_links_between_stations(gtfs_zip_folder, df_temporal_links):
+    df_trips = read_file_in_zip(gtfs_zip_folder, 'trips.txt')
+    gdf_stops = stops_to_shapefile(gtfs_zip_folder)
+    gdf_shapes = shapes_to_shapefile(gtfs_zip_folder)
+
+    for index, temporal_link in df_temporal_links.iterrows():
+        # get positions of stops
+        departure_stop = gdf_stops[gdf_stops['stop_id'] == temporal_link['departure_stop']]
+        arrival_stop = gdf_stops[gdf_stops['stop_id'] == temporal_link['arrival_stop']]
+
+        # get linestring of line
+        s_trip = df_trips[df_trips['trip_id'] == temporal_link['trip_id']]
+        s_line = gdf_shapes[gdf_shapes['shape_id'] == s_trip['shape_id']]
+
+        # cut linestring by stations
+        
+
+df_temporal_links = temporal_links_between_stations(gtfs_zip_folder)
+print df_temporal_links
