@@ -24,6 +24,18 @@ nyc_line_colors = {'1':'#ee352e', '4':'#00933c', '7':'#b933ad', 'A':'#2850ad',\
  'B':'#ff6319', 'G':'#6cbe45', 'J':'#996633', 'L':'#a7a9ac', 'N':'#fccc0a',\
  'S':'#808183'}
 
+def dict_to_dataframe(dictionary, head_key, head_value):
+    list_dict = []
+    for key, value in dictionary.iteritems():
+        new_dict = dict()
+        new_dict[head_key] = key
+        new_dict[head_value] = value
+        list_dict.append(new_dict)
+    return pd.DataFrame(list_dict)
+
+dict_to_dataframe(nyc_trunk_names, 'line', 'trunk').to_csv(result_path+'line_trunk.csv')
+dict_to_dataframe(nyc_line_colors, 'trunk', 'color').to_csv(result_path+'trunk_colors.csv')
+
 def read_file_in_zip(gtfs_zip_folder, file_name):
     zip_file = zipfile.ZipFile(gtfs_zip_folder)
     df_csv = pd.read_csv(zip_file.open(file_name))
@@ -87,7 +99,7 @@ def fractionate_trip_id(df_stop_times):
     df_stop_times['vehicle'] = underline_split.apply(lambda x: x[2].split('.')[-1][1:])
     return df_stop_times
 
-def links_between_stations(df_stop_times):
+def temporal_links_between_stations(df_stop_times):
     link_attributes = []
 
     previous_stop = df_stop_times.iloc[0]
@@ -109,7 +121,7 @@ def links_between_stations(df_stop_times):
 
 df_stop_times = read_file_in_zip(gtfs_zip_folder, 'stop_times.txt')
 df_stop_times = fractionate_trip_id(df_stop_times)
-df_link_attributes = links_between_stations(df_stop_times)
+df_link_attributes = temporal_links_between_stations(df_stop_times)
 print df_link_attributes
 
 # insert trunk according to lines
@@ -145,6 +157,10 @@ def group_line_by_trunk(gdf_lines, dict_trunk_names):
         dict_trunk_lines[trunk] = gpd.GeoDataFrame(list_lines)
 
     return dict_trunk_lines
+
+'''
+    Plots
+'''
 
 def plot_gdf(gdf, plot_name):
     fig, ax = plt.subplots()
