@@ -75,8 +75,24 @@ def stops_to_shapefile(gtfs_zip_folder):
 '''
     Process stop times
 '''
-df_stop_times = read_file_in_zip(gtfs_zip_folder, 'stop_times.txt')
 
+def fractionate_trip_id(df_stop_times):
+    underline_split = df_stop_times['trip_id'].apply(lambda x:x.split('_'))
+    df_stop_times['collect_reference'] = underline_split.apply(lambda x: x[0][0:9])
+    df_stop_times['day_type'] = underline_split.apply(lambda x: x[0][9:])
+    df_stop_times['trip_id'] = underline_split.apply(lambda x: x[1])
+    df_stop_times['trip_id'] = underline_split.apply(lambda x: x[1])
+    df_stop_times['line'] = underline_split.apply(lambda x: x[2].split('.')[0])
+    df_stop_times['direction'] = underline_split.apply(lambda x: x[2].split('.')[-1][0])
+    df_stop_times['vehicle'] = underline_split.apply(lambda x: x[2].split('.')[-1][1:])
+    return df_stop_times
+
+#def link_between_stations(df_stop_times):
+
+
+df_stop_times = read_file_in_zip(gtfs_zip_folder, 'stop_times.txt')
+df_stop_times = fractionate_trip_id(df_stop_times)
+print df_stop_times
 
 # insert trunk according to lines
 def insert_trunk(gdf_lines, dict_trunk_names):
