@@ -87,12 +87,30 @@ def fractionate_trip_id(df_stop_times):
     df_stop_times['vehicle'] = underline_split.apply(lambda x: x[2].split('.')[-1][1:])
     return df_stop_times
 
-#def link_between_stations(df_stop_times):
+def links_between_stations(df_stop_times):
+    link_attributes = []
 
+    previous_stop = df_stop_times.iloc[0]
+    for index, current_stop in df_stop_times.loc[1:].iterrows():
+        # edges are consecutive stations of each line
+        if previous_stop['trip_id'] == current_stop['trip_id']\
+         and previous_stop['stop_sequence'] == (current_stop['stop_sequence']-1):
+            link_attributes.append({'line': current_stop['line'],\
+             'departure_stop': previous_stop['stop_id'], 'departure_time': previous_stop['departure_time'],\
+             'arrival_stop': current_stop['stop_id'], 'arrival_time': current_stop['arrival_time'],\
+             'direction': current_stop['direction'], 'day_type': current_stop['day_type'],\
+             'trip_id': current_stop['trip_id']})
+        else:
+            print 'link', previous_stop['stop_id'], current_stop['stop_id']
+            break
+        previous_stop = current_stop
+    df_edge_attributes = pd.DataFrame(link_attributes)
+    return df_edge_attributes
 
 df_stop_times = read_file_in_zip(gtfs_zip_folder, 'stop_times.txt')
 df_stop_times = fractionate_trip_id(df_stop_times)
-print df_stop_times
+df_link_attributes = links_between_stations(df_stop_times)
+print df_link_attributes
 
 # insert trunk according to lines
 def insert_trunk(gdf_lines, dict_trunk_names):
