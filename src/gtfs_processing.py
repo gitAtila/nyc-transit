@@ -9,6 +9,7 @@ import zipfile
 import pandas as pd
 
 import geopandas as gpd
+from geopy.distance import vincenty
 from shapely.geometry import Point, LineString
 
 import matplotlib.pyplot as plt
@@ -80,8 +81,52 @@ def fractionate_trip_id(df_stop_times):
     df_stop_times['vehicle'] = underline_split.apply(lambda x: x[2].split('.')[-1][1:])
     return df_stop_times
 
-def temporal_links_between_stations(gtfs_zip_folder):
+# from:https://stackoverflow.com/questions/34754777/shapely-split-linestrings-at-intersections-with-other-linestrings
+def cut_line_at_points(line, points):
+    # First coords of line
+    coords = list(line.coords)
+
+    # Keep list coords where to cut (cuts = 1)
+    cuts = [0] * len(coords)
+    cuts[0] = 1
+    cuts[-1] = 1
+
+    # Add the coords from the points
+    coords += [list(p.coords)[0] for p in points]
+    cuts += [1] * len(points)
+
+    # Calculate the distance along the line for each point
+    dists = [line.project(Point(p)) for p in coords]
+
+    # sort the coords/cuts based on the distances
+    coords = [p for (d, p) in sorted(zip(dists, coords))]
+    cuts = [p for (d, p) in sorted(zip(dists, cuts))]
+
+    # generate the Lines
+    lines = []
+    for i in range(len(coords)-1):
+        if cuts[i] == 1:
+            # find next element in cuts == 1 starting from index i + 1
+            j = cuts.index(1, i + 1)
+            lines.append(LineString(coords[i:j+1]))
+
+    return lines
+
+def distance_linestring(linestring):
+    total_distance = 0
+    previous_position = linestring.coords[0]
+    for index in range(1, len(linestring.coords)):
+        current_position = linestring.coords[index]
+        total_distance += vincenty(previous_position, current_position).meters
+        previous_position = current_position
+    return total_distance
+
+def links_between_stations(gtfs_zip_folder):
     df_stop_times = read_file_in_zip(gtfs_zip_folder, 'stop_times.txt')
+    df_trips = read_file_in_zip(gtfs_zip_folder, 'trips.txt')
+
+    gdf_stops = stops_to_shapefile(gtfs_zip_folder)
+    gdf_shapes = shapes_to_shapefile(gtfs_zip_folder)
     link_attributes = []
 
     previous_stop = df_stop_times.iloc[0]
@@ -89,32 +134,36 @@ def temporal_links_between_stations(gtfs_zip_folder):
         # edges are consecutive stations of each line
         if previous_stop['trip_id'] == current_stop['trip_id']\
          and previous_stop['stop_sequence'] == (current_stop['stop_sequence']-1):
-            link_attributes.append({'trip_id': current_stop['trip_id'],\
-             'departure_stop': previous_stop['stop_id'], 'departure_time': previous_stop['departure_time'],\
-             'arrival_stop': current_stop['stop_id'], 'arrival_time': current_stop['arrival_time']})
+
+            from_stop_id = previous_stop['stop_id']
+            to_stop_id = current_stop['stop_id']
+            trip_id = current_stop['trip_id']
+
+            # get positions of stops
+            from_stop = gdf_stops[gdf_stops['stop_id'] == from_stop_id]
+            to_stop = gdf_stops[gdf_stops['stop_id'] == to_stop_id]
+
+            # get linestring of line
+            s_trip = df_trips[df_trips['trip_id'] == trip_id]
+            s_line = gdf_shapes[gdf_shapes['shape_id'] == s_trip['shape_id'].iloc[0]]
+
+            # cut linestring by stations
+            link_linestring = cut_line_at_points(s_line['geometry'].iloc[0], [from_stop['geometry'].iloc[0],\
+             to_stop['geometry'].iloc[0]])[1]
+
+            link_distance = distance_linestring(link_linestring)
+
+            link_attributes.append({'route_id': s_trip['route_id'].iloc[0], 'trip_id': trip_id,\
+             'from_stop_id': from_stop_id, 'departure_time': previous_stop['departure_time'],\
+             'to_stop_id': to_stop_id, 'arrival_time': current_stop['arrival_time'],\
+             'trip_headsign': s_trip['trip_headsign'].iloc[0], 'shape_dist_traveled': link_distance})
+
         else:
             print 'link', previous_stop['stop_id'], current_stop['stop_id']
             break
         previous_stop = current_stop
     df_edge_attributes = pd.DataFrame(link_attributes)
     return df_edge_attributes
-
-def spatial_links_between_stations(gtfs_zip_folder, df_temporal_links):
-    df_trips = read_file_in_zip(gtfs_zip_folder, 'trips.txt')
-    gdf_stops = stops_to_shapefile(gtfs_zip_folder)
-    gdf_shapes = shapes_to_shapefile(gtfs_zip_folder)
-
-    for index, temporal_link in df_temporal_links.iterrows():
-        # get positions of stops
-        departure_stop = gdf_stops[gdf_stops['stop_id'] == temporal_link['departure_stop']]
-        arrival_stop = gdf_stops[gdf_stops['stop_id'] == temporal_link['arrival_stop']]
-
-        # get linestring of line
-        s_trip = df_trips[df_trips['trip_id'] == temporal_link['trip_id']]
-        s_line = gdf_shapes[gdf_shapes['shape_id'] == s_trip['shape_id']]
-
-        # cut linestring by stations
-        
 
 df_temporal_links = temporal_links_between_stations(gtfs_zip_folder)
 print df_temporal_links
