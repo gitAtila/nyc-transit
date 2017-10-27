@@ -3,9 +3,10 @@ from sys import argv
 import pandas as pd
 import math
 import geopandas as gpd
-
 import matplotlib.pyplot as plt
+
 import transit_graph as tg
+import gtfs_processing as gtfs
 
 shapefile_census_tract_base_path = argv[1]
 shapefile_stations_path = argv[2]
@@ -13,8 +14,9 @@ shapefile_links_path = argv[3]
 survey_trips_path = argv[4]
 survey_stations_path = argv[5]
 equivalence_survey_shapefile_path = argv[6]
+gtfs_path = argv[7]
 
-results_folder = argv[7]
+results_folder = argv[8]
 
 def df_from_csv(survey_trips_path):
 	return pd.read_csv(survey_trips_path)
@@ -60,12 +62,10 @@ def get_transit_trips_in_nyc(df_trips, gdf_census_tract):
 	print 'list_trips_in_nyc', len(list_trips_in_nyc)
 	return pd.DataFrame(list_trips_in_nyc)
 
-df_trips_in_nyc = get_transit_trips_in_nyc(df_trips, gdf_census_tract)
-
 '''
 	Get subway passenger trip route
 '''
-def subway_trip(df_trips_in_nyc, shapefile_stations_path, shapefile_links_path, results_folder,\
+def subway_trips(df_trips_in_nyc, shapefile_stations_path, shapefile_links_path, results_folder,\
  result_file):
 
 	borough_survey_shape = {1:'1', 2:'4', 3:'2', 4:'3', 5:'5'}
@@ -151,6 +151,13 @@ def subway_trip(df_trips_in_nyc, shapefile_stations_path, shapefile_links_path, 
 	print df_bus_routes
 	df_bus_routes.to_csv(results_folder + result_file, index_label='id')
 
+df_trips_in_nyc = get_transit_trips_in_nyc(df_trips, gdf_census_tract)
+# subway_trips(df_trips_in_nyc, shapefile_stations_path, shapefile_links_path, results_folder,\
+#  'sbwy_route_sun.csv')
+
+gtfs_nyc_subway = gtfs.TransitFeedProcessing(gtfs_path)
+df_nyc_subway_links = gtfs_nyc_subway.links_between_stations()
+print df_nyc_subway_links
 
 df_subway_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 2]
 df_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 3]

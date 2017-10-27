@@ -22,7 +22,7 @@ class TransitFeedProcessing:
         Format spatial attributes
     '''
     # strings to geometry
-    def format_points(df_points, lon_column, lat_column):
+    def format_points(self, df_points, lon_column, lat_column):
         # Zip the coordinates into a point object and convert to a GeoDataFrame
         geometry = [Point(xy) for xy in zip(df_points[lon_column], df_points[lat_column])]
         gdf_points = gpd.GeoDataFrame(df_points, geometry=geometry)
@@ -32,9 +32,9 @@ class TransitFeedProcessing:
         return gdf_points
 
     # group points into linestrings
-    def format_shape_lines(df_shapes):
+    def format_shape_lines(self, df_shapes):
         # Zip the coordinates into a point object and convert to a GeoDataFrame
-        gdf_points = format_points(df_shapes, 'shape_pt_lon', 'shape_pt_lat')
+        gdf_points = self.format_points(df_shapes, 'shape_pt_lon', 'shape_pt_lat')
 
         # Aggregate these points into a lineString object
         gdf_shapes = gdf_points.groupby(['shape_id'])['geometry'].apply(lambda x: LineString(x.tolist())).reset_index()
@@ -42,20 +42,20 @@ class TransitFeedProcessing:
         return gdf_shapes
 
     def shapes_to_shapefile(self):
-        df_shapes = read_file_in_zip(self.gtfs_zip_folder, 'shapes.txt')
-        gdf_lines = format_shape_lines(df_shapes)
+        df_shapes = self.read_file_in_zip('shapes.txt')
+        gdf_lines = self.format_shape_lines(df_shapes)
         return gdf_lines
 
     def stops_to_shapefile(self):
-        df_stops = read_file_in_zip(self.gtfs_zip_folder, 'stops.txt')
-        gdf_stops = format_points(df_stops, 'stop_lon', 'stop_lat')
+        df_stops = self.read_file_in_zip('stops.txt')
+        gdf_stops = self.format_points(df_stops, 'stop_lon', 'stop_lat')
         return gdf_stops
 
     '''
         Process stop times
     '''
     # from:https://stackoverflow.com/questions/34754777/shapely-split-linestrings-at-intersections-with-other-linestrings
-    def cut_line_at_points(line, points):
+    def cut_line_at_points(self, line, points):
         # First coords of line
         coords = list(line.coords)
 
@@ -85,7 +85,7 @@ class TransitFeedProcessing:
 
         return lines
 
-    def distance_linestring(linestring):
+    def distance_linestring(self, linestring):
         total_distance = 0
         previous_position = linestring.coords[0]
         for index in range(1, len(linestring.coords)):
@@ -95,8 +95,8 @@ class TransitFeedProcessing:
         return total_distance
 
     def links_between_stations(self):
-        df_stop_times = self.read_file_in_zip(self.gtfs_zip_folder, 'stop_times.txt')
-        df_trips = self.read_file_in_zip(self.gtfs_zip_folder, 'trips.txt')
+        df_stop_times = self.read_file_in_zip('stop_times.txt')
+        df_trips = self.read_file_in_zip('trips.txt')
 
         gdf_stops = self.stops_to_shapefile()
         gdf_shapes = self.shapes_to_shapefile()
