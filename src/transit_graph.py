@@ -2,7 +2,7 @@
     Graph of transit system
 '''
 
-from sys import argv, maxint
+from sys import maxint
 from geopy.distance import vincenty
 import pandas as pd
 import geopandas as gpd
