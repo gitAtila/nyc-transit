@@ -136,45 +136,47 @@ class TransitFeedProcessing:
                     # get linestring of line
                     trip_id = current_stop['trip_id']
                     s_trip = df_trips[df_trips['trip_id'] == trip_id]
-
-                    print from_stop['stop_id'].iloc[0], to_stop['stop_id'].iloc[0]
-                    print s_trip['trip_id'].iloc[0]
                     shape_id = s_trip['shape_id'].iloc[0]
-                    if shape_id not in gdf_shapes['shape_id'].tolist():
-                        df_shape_id = df_trips[df_trips['route_id'] == s_trip['route_id'].iloc[0]]
-                        df_shape_id = df_shape_id[df_shape_id['shape_id'].notnull()]
-                        if len(df_shape_id) > 0:
-                            shape_id = df_shape_id['shape_id'].iloc[0]
-                        else:
-                            route_id = s_trip['route_id'].iloc[0]
-                            print route_id
-                            print s_trip['trip_id'].iloc[0]
-                            gdf_shape_id = gdf_shapes[gdf_shapes['shape_id'].str.contains(str(route_id)+'.')]
 
-                            if len(gdf_shape_id) > 0:
-                                shape_id = gdf_shape_id['shape_id'].iloc[0]
-                            elif route_id != s_trip['trip_id'].iloc[0].split('_')[-1].split('.')[0]:
-                                route_id = s_trip['trip_id'].iloc[0].split('_')[-1].split('.')[0]
-                                gdf_shape_id = gdf_shapes[gdf_shapes['shape_id'].str.contains(str(route_id)+'.')]
-                                shape_id = gdf_shape_id['shape_id'].iloc[0]
+                    # print from_stop['stop_id'].iloc[0], to_stop['stop_id'].iloc[0]
+                    # print s_trip['trip_id'].iloc[0]
+                    #
+                    # if shape_id not in gdf_shapes['shape_id'].tolist():
+                    #     df_shape_id = df_trips[df_trips['route_id'] == s_trip['route_id'].iloc[0]]
+                    #     df_shape_id = df_shape_id[df_shape_id['shape_id'].notnull()]
+                    #     if len(df_shape_id) > 0:
+                    #         shape_id = df_shape_id['shape_id'].iloc[0]
+                    #     else:
+                    #         route_id = s_trip['route_id'].iloc[0]
+                    #         print route_id
+                    #         print s_trip['trip_id'].iloc[0]
+                    #         gdf_shape_id = gdf_shapes[gdf_shapes['shape_id'].str.contains(str(route_id)+'.')]
+                    #
+                    #         if len(gdf_shape_id) > 0:
+                    #             shape_id = gdf_shape_id['shape_id'].iloc[0]
+                    #         elif route_id != s_trip['trip_id'].iloc[0].split('_')[-1].split('.')[0]:
+                    #             route_id = s_trip['trip_id'].iloc[0].split('_')[-1].split('.')[0]
+                    #             gdf_shape_id = gdf_shapes[gdf_shapes['shape_id'].str.contains(str(route_id)+'.')]
+                    #             shape_id = gdf_shape_id['shape_id'].iloc[0]
 
-                    s_line = gdf_shapes[gdf_shapes['shape_id'] == shape_id]
-                    print shape_id
-                    print s_line
-                    print ''
-                    # cut linestring by stations
-                    link_linestring = self.cut_line_at_points(s_line['geometry'].iloc[0], [from_stop['geometry'].iloc[0],\
-                     to_stop['geometry'].iloc[0]])[1]
+                    if shape_id in gdf_shapes['shape_id'].tolist():
+                        s_line = gdf_shapes[gdf_shapes['shape_id'] == shape_id]
+                        print shape_id
+                        print s_line
+                        # print ''
+                        # cut linestring by stations
+                        link_linestring = self.cut_line_at_points(s_line['geometry'].iloc[0], [from_stop['geometry'].iloc[0],\
+                         to_stop['geometry'].iloc[0]])[1]
 
-                    # get parent station
-                    from_parent_station = from_stop['parent_station'].iloc[0]
-                    to_parent_station = to_stop['parent_station'].iloc[0]
+                        # get parent station
+                        from_parent_station = from_stop['parent_station'].iloc[0]
+                        to_parent_station = to_stop['parent_station'].iloc[0]
 
-                    link_distance = self.distance_linestring(link_linestring)
+                        link_distance = self.distance_linestring(link_linestring)
 
-                    link_attributes.append({'from_stop_id': from_stop_id,'to_stop_id': to_stop_id,\
-                     'from_parent_station': from_parent_station, 'to_parent_station': to_parent_station,\
-                     'shape_dist_traveled': link_distance}, 'geometry':link_linestring)
+                        link_attributes.append({'from_stop_id': from_stop_id,'to_stop_id': to_stop_id,\
+                         'from_parent_station': from_parent_station, 'to_parent_station': to_parent_station,\
+                         'shape_dist_traveled': link_distance, 'geometry':link_linestring})
 
                     list_distinct_links.append(link_id)
 

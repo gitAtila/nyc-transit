@@ -156,8 +156,11 @@ df_trips_in_nyc = get_transit_trips_in_nyc(df_trips, gdf_census_tract)
 #  'sbwy_route_sun.csv')
 
 gtfs_nyc_subway = gtfs.TransitFeedProcessing(gtfs_path)
-df_nyc_subway_links = gtfs_nyc_subway.links_between_stations()
-print df_nyc_subway_links
+df_nyc_subway_links = gtfs_nyc_subway.distinct_links_between_stations()
+gdf_nyc_subway_links = gpd.GeoDataFrame(df_nyc_subway_links, geometry='geometry')
+
+print gdf_nyc_subway_links
+gdf_nyc_subway_links.to_file('gtfs_links.shp')
 
 df_subway_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 2]
 df_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 3]
