@@ -51,6 +51,20 @@ class TransitFeedProcessing:
         gdf_stops = self.format_points(df_stops, 'stop_lon', 'stop_lat')
         return gdf_stops
 
+    def distinct_route_each_station(self):
+        dict_stop_route = dict()
+        df_stop_times = self.read_file_in_zip('stop_times.txt')
+        df_trips = self.read_file_in_zip('trips.txt')
+        # get distinct trip_id for each stop_id
+        list_unique_stop_id = list(df_stop_times['stop_id'].unique())
+        for stop_id in list_unique_stop_id:
+            list_unique_trip_id = list(df_stop_times[df_stop_times['stop_id'] == stop_id]['trip_id'].unique())
+            list_route_id = []
+            for trip_id in list_unique_trip_id:
+                route_id = df_trips[df_trips['trip_id'] == trip_id].iloc[0]
+                dict_stop_route.setdefault(stop_id, []).append(route_id)
+        return dict_stop_route
+
     '''
         Process stop times
     '''
@@ -94,6 +108,81 @@ class TransitFeedProcessing:
             previous_position = current_position
         return total_distance
 
+    def distinct_links_between_stations(self):
+        df_stop_times = self.read_file_in_zip('stop_times.txt')
+        df_trips = self.read_file_in_zip('trips.txt')
+
+        gdf_stops = self.stops_to_shapefile()
+        gdf_shapes = self.shapes_to_shapefile()
+        list_distinct_links = []
+        link_attributes = []
+
+        previous_stop = df_stop_times.iloc[0]
+        for index, current_stop in df_stop_times.loc[1:].iterrows():
+            # edges are consecutive stations of a line
+            if previous_stop['trip_id'] == current_stop['trip_id']\
+             and previous_stop['stop_sequence'] == (current_stop['stop_sequence']-1):
+
+                from_stop_id = previous_stop['stop_id']
+                to_stop_id = current_stop['stop_id']
+                link_id = from_stop_id + '_' + to_stop_id
+
+                if link_id not in list_distinct_links:
+
+                    # get positions of stops
+                    from_stop = gdf_stops[gdf_stops['stop_id'] == from_stop_id]
+                    to_stop = gdf_stops[gdf_stops['stop_id'] == to_stop_id]
+
+                    # get linestring of line
+                    trip_id = current_stop['trip_id']
+                    s_trip = df_trips[df_trips['trip_id'] == trip_id]
+
+                    print from_stop['stop_id'].iloc[0], to_stop['stop_id'].iloc[0]
+                    print s_trip['trip_id'].iloc[0]
+                    shape_id = s_trip['shape_id'].iloc[0]
+                    if shape_id not in gdf_shapes['shape_id'].tolist():
+                        df_shape_id = df_trips[df_trips['route_id'] == s_trip['route_id'].iloc[0]]
+                        df_shape_id = df_shape_id[df_shape_id['shape_id'].notnull()]
+                        if len(df_shape_id) > 0:
+                            shape_id = df_shape_id['shape_id'].iloc[0]
+                        else:
+                            route_id = s_trip['route_id'].iloc[0]
+                            print route_id
+                            print s_trip['trip_id'].iloc[0]
+                            gdf_shape_id = gdf_shapes[gdf_shapes['shape_id'].str.contains(str(route_id)+'.')]
+
+                            if len(gdf_shape_id) > 0:
+                                shape_id = gdf_shape_id['shape_id'].iloc[0]
+                            elif route_id != s_trip['trip_id'].iloc[0].split('_')[-1].split('.')[0]:
+                                route_id = s_trip['trip_id'].iloc[0].split('_')[-1].split('.')[0]
+                                gdf_shape_id = gdf_shapes[gdf_shapes['shape_id'].str.contains(str(route_id)+'.')]
+                                shape_id = gdf_shape_id['shape_id'].iloc[0]
+
+                    s_line = gdf_shapes[gdf_shapes['shape_id'] == shape_id]
+                    print shape_id
+                    print s_line
+                    print ''
+                    # cut linestring by stations
+                    link_linestring = self.cut_line_at_points(s_line['geometry'].iloc[0], [from_stop['geometry'].iloc[0],\
+                     to_stop['geometry'].iloc[0]])[1]
+
+                    # get parent station
+                    from_parent_station = from_stop['parent_station'].iloc[0]
+                    to_parent_station = to_stop['parent_station'].iloc[0]
+
+                    link_distance = self.distance_linestring(link_linestring)
+
+                    link_attributes.append({'from_stop_id': from_stop_id,'to_stop_id': to_stop_id,\
+                     'from_parent_station': from_parent_station, 'to_parent_station': to_parent_station,\
+                     'shape_dist_traveled': link_distance}, 'geometry':link_linestring)
+
+                    list_distinct_links.append(link_id)
+
+            previous_stop = current_stop
+
+        df_edge_attributes = pd.DataFrame(link_attributes)
+        return df_edge_attributes
+
     def links_between_stations(self):
         df_stop_times = self.read_file_in_zip('stop_times.txt')
         df_trips = self.read_file_in_zip('trips.txt')
@@ -104,7 +193,7 @@ class TransitFeedProcessing:
 
         previous_stop = df_stop_times.iloc[0]
         for index, current_stop in df_stop_times.loc[1:].iterrows():
-            # edges are consecutive stations of each line
+            # edges are consecutive stations of a line
             if previous_stop['trip_id'] == current_stop['trip_id']\
              and previous_stop['stop_sequence'] == (current_stop['stop_sequence']-1):
 
@@ -124,16 +213,21 @@ class TransitFeedProcessing:
                 link_linestring = self.cut_line_at_points(s_line['geometry'].iloc[0], [from_stop['geometry'].iloc[0],\
                  to_stop['geometry'].iloc[0]])[1]
 
+                # get parent station
+                from_parent_station = from_stop['parent_station'].iloc[0]
+                to_parent_station = to_stop['parent_station'].iloc[0]
+
                 link_distance = self.distance_linestring(link_linestring)
 
                 link_attributes.append({'route_id': s_trip['route_id'].iloc[0], 'trip_id': trip_id,\
                  'from_stop_id': from_stop_id, 'departure_time': previous_stop['departure_time'],\
                  'to_stop_id': to_stop_id, 'arrival_time': current_stop['arrival_time'],\
+                 'from_parent_station': from_parent_station, 'to_parent_station': to_parent_station,\
                  'trip_headsign': s_trip['trip_headsign'].iloc[0], 'shape_dist_traveled': link_distance})
 
-            else:
+            else: # different lines or directions
                 print 'link', previous_stop['stop_id'], current_stop['stop_id']
-                break
+                # break
             previous_stop = current_stop
 
         df_edge_attributes = pd.DataFrame(link_attributes)
