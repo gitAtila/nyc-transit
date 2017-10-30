@@ -57,6 +57,9 @@ class TransitFeedProcessing:
     def transfers(self):
         return self.read_file_in_zip('transfers.txt')
 
+    def stops(self):
+        return self.read_file_in_zip('stops.txt')
+
     def distinct_route_each_station(self):
         dict_stop_route = dict()
         df_stop_times = self.read_file_in_zip('stop_times.txt')
