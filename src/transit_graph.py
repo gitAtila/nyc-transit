@@ -90,6 +90,7 @@ class TransitGraph:
         return vincenty((point_lon_lat_A[1], point_lon_lat_A[0]),\
          (point_lon_lat_B[1], point_lon_lat_B[0])).meters
 
+    
     '''
         Get the best subway path from a station to a census tract
     '''
