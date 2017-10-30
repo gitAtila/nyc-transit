@@ -12,13 +12,14 @@ import gtfs_processing as gp
 shapefile_census_tract_base_path = argv[1]
 shapefile_stations_path = argv[2]
 shapefile_links_path = argv[3]
-survey_trips_path = argv[4]
-survey_stations_path = argv[5]
-equivalence_survey_shapefile_path = argv[6]
-equivalence_gtfs_shape_stops_path = argv[7]
-gtfs_path = argv[8]
+gtfs_links_path = argv[4]
+survey_trips_path = argv[5]
+survey_stations_path = argv[6]
+equivalence_survey_shapefile_path = argv[7]
+equivalence_gtfs_shape_stops_path = argv[8]
+gtfs_path = argv[9]
 
-results_folder = argv[9]
+results_folder = argv[10]
 
 def df_from_csv(survey_trips_path):
 	return pd.read_csv(survey_trips_path)
@@ -197,8 +198,63 @@ df_equivalence_gtfs_shape_stops = df_from_csv(equivalence_gtfs_shape_stops_path)
 del df_equivalence_gtfs_shape_stops['name']
 df_shape_gtfs_stops = pd.merge(gdf_subway_stations, df_equivalence_gtfs_shape_stops,\
  left_on='objectid', right_on='objectid')
-print df_shape_gtfs_stops
+#print df_shape_gtfs_stops
+
 # geometry links from shape
+nyc_transit_graph = tg.TransitGraph(shapefile_stations_path, shapefile_links_path)
+
+gdf_shape_links = gpd.GeoDataFrame.from_file(shapefile_links_path)
+df_gtfs_links = df_from_csv(gtfs_links_path)
+# add gtfs stop_id and line on links
+for index, gtfs_link in df_gtfs_links.iterrows():
+	line = gtfs_link['route_id']
+	gtfs_from_station = gtfs_link['from_parent_station']
+	gtfs_to_station = gtfs_link['to_parent_station']
+	# get shape id
+	shape_from_station = df_equivalence_gtfs_shape_stops[\
+	 df_equivalence_gtfs_shape_stops['stop_id'] == gtfs_from_station]['objectid']
+	shape_to_station = df_equivalence_gtfs_shape_stops[\
+	 df_equivalence_gtfs_shape_stops['stop_id'] == gtfs_to_station]['objectid']
+
+	if len(shape_from_station) == 1 and len(shape_to_station) == 1:
+		shape_from_station = shape_from_station.iloc[0]
+		shape_to_station = shape_to_station.iloc[0]
+		# get geometry from path
+
+		geometry = gdf_shape_links.query('(@shape_from_station == node_1 and @shape_to_station == node_2)\
+		 or (@shape_from_station == node_2 and @shape_to_station == node_1)')
+		if geometry.empty == True:
+		# 	for edge in geometry.iterrows():
+		# 		print edge
+		# else:
+			# print 'line', line
+			#
+			# print shape_from_station, shape_to_station
+			# print gtfs_from_station, gtfs_to_station, 'Not found'
+			try:
+				nyc_transit_graph.shortest_path_line(shape_from_station, shape_to_station, line)
+			except nx.exception.NetworkXNoPath:
+				print 'line', line
+				print shape_from_station, shape_to_station
+				print gtfs_from_station, gtfs_to_station, 'Not found'
+				print 'There is not path between', shape_from_station, shape_to_station
+				print ''
+			except nx.exception.NetworkXError:
+				print 'line', line
+				print shape_from_station, shape_to_station
+				print gtfs_from_station, gtfs_to_station, 'Not found'
+				print shape_from_station, 'or' ,shape_to_station, 'is not in the graph'
+				print nyc_transit_graph.shortest_path(shape_from_station, shape_to_station)
+				print ''
+	else:
+		print 'gtfs_station', gtfs_from_station
+
+	#print to_from_links
+
+
+
+
+#print gdf_links
 
 
 df_subway_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 2]

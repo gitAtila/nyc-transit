@@ -23,7 +23,6 @@ class TransitGraph:
     def __init__(self, stations_path, links_path):
         self.gdf_stations = gpd.GeoDataFrame.from_file(stations_path)
         self.gdf_links = gpd.GeoDataFrame.from_file(links_path)
-        #self.gtfs = gp.TransitFeedProcessing(gtfs_path)
         self.transit_graph = self.create_transit_graph()
 
 
@@ -51,7 +50,7 @@ class TransitGraph:
     '''
         Graph operations
     '''
-    def get_subgraph_node(self, node_key, node_value):
+    def subgraph_node(self, node_key, node_value):
         list_node = []
         for key, dict_attribute in self.transit_graph.nodes_iter(data=True):
             if type(dict_attribute[node_key]) == list:
@@ -62,7 +61,7 @@ class TransitGraph:
         subgraph = self.transit_graph.subgraph(list_node)
         return subgraph
 
-    def get_subgraph_edge(self, edge_key, edge_value):
+    def subgraph_edge(self, edge_key, edge_value):
         list_node = []
         for u, v, dict_attribute in self.transit_graph.edges_iter(data=True):
             if dict_attribute[edge_key] == edge_value:
@@ -94,6 +93,13 @@ class TransitGraph:
         return vincenty((point_lon_lat_A[1], point_lon_lat_A[0]),\
          (point_lon_lat_B[1], point_lon_lat_B[0])).meters
 
+    def shortest_path_line(self, from_id, to_id, line):
+        subgraph_line = self.subgraph_node('line', line)
+        return nx.shortest_path(subgraph_line, from_id, to_id)
+
+    def shortest_path(self, from_id, to_id):
+        return nx.shortest_path(self.transit_graph, from_id, to_id)
+
 
     '''
         Get the best subway path from a station to a census tract
@@ -105,7 +111,7 @@ class TransitGraph:
         # Find out the nearest station from point for each line trunk
         dict_stations_trunk = dict()
         for trunk in list_unique_trunks:
-            g_trunk = get_subgraph_edge(self.transit_graph, 'trunk', trunk)
+            g_trunk = subgraph_edge(self.transit_graph, 'trunk', trunk)
             # get the nearest station
             shortest_distance = maxint
             best_station = -1
@@ -129,7 +135,7 @@ class TransitGraph:
         # Find the nearest station from point for each line
         dict_stations_line = dict()
         for line in list_unique_lines:
-            g_line = self.get_subgraph_node('line', line)
+            g_line = self.subgraph_node('line', line)
 
             # get the nearest station
             shortest_distance = maxint
