@@ -5,33 +5,31 @@ import gtfs_processing as gp
 
 class GtfsTransitGraph:
 
-    def __init__(self, gtfs_path):
+    def __init__(self, gtfs_links_path, gtfs_path):
+        self.df_transit_links = pd.read_csv(gtfs_links_path)
         self.transit_feed = gp.TransitFeedProcessing(gtfs_path)
-        self.transit_links = self.transit_feed.distinct_links_between_stations()
         self.gdf_stations = self.transit_feed.stops_to_shapefile()
-        # self.dict_station_routes = self.transit_feed.distinct_route_each_station()
-        # for station, list_route in self.dict_station_routes.iteritems():
-        #     print station, list_route
+        self.df_stop_times = self.transit_feed.stop_times()
+        self.df_transfers = self.transit_feed.transfers()
         self.transit_graph = self.create_transit_graph()
 
     def create_transit_graph(self):
         transit_graph = nx.Graph()
-        # add stations to subway transit_graph
-        for index, station in self.gdf_stations.iterrows():
-            #lines = self.dict_station_routes[station['stop_id']]
-            transit_graph.add_node(station['stop_id'], name=station['stop_name'],\
-             posxy=(station['geometry'].x, station['geometry'].y))
-
         # add links to subway transit_graph
         for index, link in self.transit_links.iterrows():
-            if link['from_parent_station'] in transit_graph.nodes()\
-             and link['to_parent_station'] in transit_graph.nodes():
-                # compute link distance
-                transit_graph.add_edge(link['from_parent_station'], link['to_parent_station'],\
-                 distance=link['shape_dist_traveled'])
+            if link['from_parent_station'] not in transit_graph.nodes():
+                self.transit_graph.add_node(link['from_parent_station'], attr_dict={'routes':[link['route_id']]})
             else:
-            	print link['from_parent_station'] + 'and' + link['to_parent_station']\
-                 + 'are not present in transit_graph'
+                routes = self.transit_graph.nodes(data=True)[link['from_parent_station']]['routes']
+                self.transit_graph.add_node(link['from_parent_station'], routes=[link['route_id']])
+
+            transit_graph.add_edge(link['from_parent_station'], link['to_parent_station'],\
+             distance=link['shape_len'])
+        # add transfers
+        for index, transference in self.df_transfers.iterrows():
+            if transference['from_stop_id'] != transference['to_stop_id']:
+                transit_graph.add_edge(transference['from_stop_id'], transference['to_stop_id'],\
+                 distance=0, route='T')
 
         return transit_graph
 
