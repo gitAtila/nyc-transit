@@ -55,6 +55,52 @@ def links_from_gtfs(gtfs_path):
 	gtfs_nyc_subway = gp.TransitFeedProcessing(gtfs_path)
 	df_nyc_subway_links = gtfs_nyc_subway.distinct_links_between_stations()
 
+def links_from_gtfs(equivalence_gtfs_shape_stops_path, shapefile_stations_path, shapefile_links_path):
+	# merge shape stations with gtfs stations
+	list_gtfs_links_distance = []
+	gdf_subway_stations = gpd.GeoDataFrame.from_file(shapefile_stations_path)
+	df_equivalence_gtfs_shape_stops = df_from_csv(equivalence_gtfs_shape_stops_path)
+	del df_equivalence_gtfs_shape_stops['name']
+
+	# geometry links from shape
+	nyc_transit_graph = tg.TransitGraph(shapefile_stations_path, shapefile_links_path)
+
+	gdf_shape_links = gpd.GeoDataFrame.from_file(shapefile_links_path)
+	df_gtfs_links = df_from_csv(gtfs_links_path)
+	# add gtfs stop_id and line on links
+	for index, gtfs_link in df_gtfs_links.iterrows():
+		line = gtfs_link['route_id']
+		gtfs_from_station = gtfs_link['from_parent_station']
+		gtfs_to_station = gtfs_link['to_parent_station']
+		# get shape id
+		shape_from_station = df_equivalence_gtfs_shape_stops[\
+		 df_equivalence_gtfs_shape_stops['stop_id'] == gtfs_from_station]['objectid']
+		shape_to_station = df_equivalence_gtfs_shape_stops[\
+		 df_equivalence_gtfs_shape_stops['stop_id'] == gtfs_to_station]['objectid']
+
+		if len(shape_from_station) == 1 and len(shape_to_station) == 1:
+			shape_from_station = shape_from_station.iloc[0]
+			shape_to_station = shape_to_station.iloc[0]
+
+			# get distance from path
+			geometry = gdf_shape_links.query('(@shape_from_station == node_1 and @shape_to_station == node_2)\
+			 or (@shape_from_station == node_2 and @shape_to_station == node_1)')
+			if geometry.empty == False:
+				path_distance = geometry.iloc[0]['shape_len']
+			else:
+				try:
+					path_distance = nyc_transit_graph.shortest_path_length_line(shape_from_station, shape_to_station, line)
+				except:
+					path_distance = nyc_transit_graph.shortest_path_length(shape_from_station, shape_to_station)
+
+			dict_gtfs_link_distance = gtfs_link.to_dict()
+			dict_gtfs_link_distance['shape_len'] = path_distance
+			list_gtfs_links_distance.append(dict_gtfs_link_distance)
+		else:
+			print 'gtfs_station', gtfs_from_station
+
+	return pd.DataFrame(list_gtfs_links_distance)
+
 '''
 	Get trips in New York City
 '''
@@ -162,99 +208,14 @@ def subway_trips(df_trips_in_nyc, shapefile_stations_path, shapefile_links_path,
 	print df_bus_routes
 	df_bus_routes.to_csv(results_folder + result_file, index_label='id')
 
-def shape_stop_times(shapefile_stations_path, shapefile_links_path, gdf_subway_stations, df_stop_times):
-
-	# load transit_graph
-	nyc_transit_graph = tg.TransitGraph(shapefile_stations_path, shapefile_links_path)
-
-	# check if stop time sequence match with shape sequence
-	list_unique_lines = nyc_transit_graph.unique_node_values('line')
-	# for each line
-	for line in list_unique_lines:
-		print 'line', line
-		line_route = nyc_transit_graph.get_subgraph_node('line', line)
-		for index in line_route:
-			value = line_route.node[index]['line']
-			print index, value, line_route.degree(index)
-
-		path = nx.shortest_path(line_route, 213, 261)
-		print path
-		break
-
-
-	#	print the complete sequence of stations considering stop times
-	#	print the complete sequence of stations considering gtfs
-
-	# print gdf_subway_stations
-	# print df_stop_times
-
 df_trips_in_nyc = get_transit_trips_in_nyc(df_trips, gdf_census_tract)
-#shape_stop_times(shapefile_stations_path, shapefile_links_path, gdf_subway_stations, df_stop_times)
 # subway_trips(df_trips_in_nyc, shapefile_stations_path, shapefile_links_path, results_folder,\
 #  'sbwy_route_sun.csv')
 
-# merge shape stations with gtfs stations
-df_equivalence_gtfs_shape_stops = df_from_csv(equivalence_gtfs_shape_stops_path)
-del df_equivalence_gtfs_shape_stops['name']
-df_shape_gtfs_stops = pd.merge(gdf_subway_stations, df_equivalence_gtfs_shape_stops,\
- left_on='objectid', right_on='objectid')
-#print df_shape_gtfs_stops
+df_gtfs_links_distance = links_from_gtfs(equivalence_gtfs_shape_stops_path, shapefile_stations_path,\
+ shapefile_links_path)
 
-# geometry links from shape
-nyc_transit_graph = tg.TransitGraph(shapefile_stations_path, shapefile_links_path)
-
-gdf_shape_links = gpd.GeoDataFrame.from_file(shapefile_links_path)
-df_gtfs_links = df_from_csv(gtfs_links_path)
-# add gtfs stop_id and line on links
-for index, gtfs_link in df_gtfs_links.iterrows():
-	line = gtfs_link['route_id']
-	gtfs_from_station = gtfs_link['from_parent_station']
-	gtfs_to_station = gtfs_link['to_parent_station']
-	# get shape id
-	shape_from_station = df_equivalence_gtfs_shape_stops[\
-	 df_equivalence_gtfs_shape_stops['stop_id'] == gtfs_from_station]['objectid']
-	shape_to_station = df_equivalence_gtfs_shape_stops[\
-	 df_equivalence_gtfs_shape_stops['stop_id'] == gtfs_to_station]['objectid']
-
-	if len(shape_from_station) == 1 and len(shape_to_station) == 1:
-		shape_from_station = shape_from_station.iloc[0]
-		shape_to_station = shape_to_station.iloc[0]
-		# get geometry from path
-
-		geometry = gdf_shape_links.query('(@shape_from_station == node_1 and @shape_to_station == node_2)\
-		 or (@shape_from_station == node_2 and @shape_to_station == node_1)')
-		if geometry.empty == True:
-		# 	for edge in geometry.iterrows():
-		# 		print edge
-		# else:
-			# print 'line', line
-			#
-			# print shape_from_station, shape_to_station
-			# print gtfs_from_station, gtfs_to_station, 'Not found'
-			try:
-				nyc_transit_graph.shortest_path_line(shape_from_station, shape_to_station, line)
-			except nx.exception.NetworkXNoPath:
-				print 'line', line
-				print shape_from_station, shape_to_station
-				print gtfs_from_station, gtfs_to_station, 'Not found'
-				print 'There is not path between', shape_from_station, shape_to_station
-				print ''
-			except nx.exception.NetworkXError:
-				print 'line', line
-				print shape_from_station, shape_to_station
-				print gtfs_from_station, gtfs_to_station, 'Not found'
-				print shape_from_station, 'or' ,shape_to_station, 'is not in the graph'
-				print nyc_transit_graph.shortest_path(shape_from_station, shape_to_station)
-				print ''
-	else:
-		print 'gtfs_station', gtfs_from_station
-
-	#print to_from_links
-
-
-
-
-#print gdf_links
+print df_gtfs_links_distance
 
 
 df_subway_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 2]

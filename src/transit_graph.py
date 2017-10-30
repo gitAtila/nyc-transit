@@ -95,11 +95,17 @@ class TransitGraph:
 
     def shortest_path_line(self, from_id, to_id, line):
         subgraph_line = self.subgraph_node('line', line)
-        return nx.shortest_path(subgraph_line, from_id, to_id)
+        return nx.shortest_path(subgraph_line, from_id, to_id, weight='distance')
 
     def shortest_path(self, from_id, to_id):
-        return nx.shortest_path(self.transit_graph, from_id, to_id)
+        return nx.shortest_path(self.transit_graph, from_id, to_id, weight='distance')
 
+    def shortest_path_length_line(self, from_id, to_id, line):
+        subgraph_line = self.subgraph_node('line', line)
+        return nx.shortest_path_length(subgraph_line, from_id, to_id, weight='distance')
+
+    def shortest_path_length(self, from_id, to_id):
+        return nx.shortest_path_length(self.transit_graph, from_id, to_id, weight='distance')
 
     '''
         Get the best subway path from a station to a census tract
