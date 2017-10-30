@@ -8,6 +8,7 @@ import networkx as nx
 
 import transit_graph as tg
 import gtfs_processing as gp
+import gtfs_transit_graph as gtg
 
 shapefile_census_tract_base_path = argv[1]
 shapefile_stations_path = argv[2]
@@ -152,7 +153,7 @@ def subway_trips_shape(df_trips_in_nyc, shapefile_stations_path, shapefile_links
 	print df_bus_routes
 	df_bus_routes.to_csv(results_folder + result_file, index_label='id')
 
-def subway_trips_gtfs(df_trips_in_nyc, shapefile_stations_path, shapefile_links_path, results_folder,\
+def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folder,\
  result_file):
 
 	borough_survey_shape = {1:'1', 2:'4', 3:'2', 4:'3', 5:'5'}
@@ -163,8 +164,8 @@ def subway_trips_gtfs(df_trips_in_nyc, shapefile_stations_path, shapefile_links_
 	df_subway_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 1]
 
 	# load transit_graph
-	nyc_transit_graph = tg.TransitGraph(shapefile_stations_path, shapefile_links_path)
-
+	nyc_transit_graph = gtg.GtfsTransitGraph(gtfs_links_path, gtfs_path)
+	return None
 	for index, sbwy_trip in df_subway_trips.iterrows():
 
 		# get interested variables
@@ -242,8 +243,7 @@ def subway_trips_gtfs(df_trips_in_nyc, shapefile_stations_path, shapefile_links_
 df_trips_in_nyc = get_transit_trips_in_nyc(df_trips, gdf_census_tract)
 # subway_trips(df_trips_in_nyc, shapefile_stations_path, shapefile_links_path, results_folder,\
 #  'sbwy_route_sun.csv')
-
-
+subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folder,'sbwy_route_sun.csv')
 
 df_subway_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 2]
 df_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 3]
