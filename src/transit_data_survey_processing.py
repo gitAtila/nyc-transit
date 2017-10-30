@@ -6,7 +6,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 
 import transit_graph as tg
-import gtfs_processing as gtfs
+import gtfs_processing as gp
 
 shapefile_census_tract_base_path = argv[1]
 shapefile_stations_path = argv[2]
@@ -14,9 +14,10 @@ shapefile_links_path = argv[3]
 survey_trips_path = argv[4]
 survey_stations_path = argv[5]
 equivalence_survey_shapefile_path = argv[6]
-gtfs_path = argv[7]
+equivalence_gtfs_shape_stops = argv[7]
+gtfs_path = argv[8]
 
-results_folder = argv[8]
+results_folder = argv[9]
 
 def df_from_csv(survey_trips_path):
 	return pd.read_csv(survey_trips_path)
@@ -44,7 +45,9 @@ df_equivalence_survey_shapefile = df_from_csv(equivalence_survey_shapefile_path)
 # shapefiles
 gdf_subway_stations = gpd.GeoDataFrame.from_file(shapefile_stations_path)
 gdf_census_tract = gpd.read_file(shapefile_census_tract_base_path)
-
+# gtfs
+gtfs_nyc_subway = gp.TransitFeedProcessing(gtfs_path)
+df_stop_times = gtfs_nyc_subway.get_stop_times()
 '''
 	Get trips in New York City
 '''
@@ -72,11 +75,12 @@ def subway_trips(df_trips_in_nyc, shapefile_stations_path, shapefile_links_path,
 	list_stations = []
 	list_bus_route = []
 
-	# select trips by subway
+	# select subway trips
 	df_subway_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 1]
 
 	# load transit_graph
 	nyc_transit_graph = tg.TransitGraph(shapefile_stations_path, shapefile_links_path)
+
 	for index, sbwy_trip in df_subway_trips.iterrows():
 
 		# get interested variables
@@ -135,7 +139,7 @@ def subway_trips(df_trips_in_nyc, shapefile_stations_path, shapefile_links_path,
 			if len(destination_centroid) == 0:
 				travel = {'boardings': 0, 'alight_destination_distance': None, 'subway_distance': None}
 			else:
-				# get subway passenger route from graph
+				# get subway passenger route through graph
 				travel = nyc_transit_graph.station_location_shortest_walk_distance(shapefile_station_id, destination_centroid)
 				travel['boardings'] = len(travel['stations'])-1
 		        del travel['stations']
@@ -151,16 +155,22 @@ def subway_trips(df_trips_in_nyc, shapefile_stations_path, shapefile_links_path,
 	print df_bus_routes
 	df_bus_routes.to_csv(results_folder + result_file, index_label='id')
 
+def shape_stop_times(gdf_subway_stations, df_stop_times):
+	print gdf_subway_stations
+	print df_stop_times
+	
+
 df_trips_in_nyc = get_transit_trips_in_nyc(df_trips, gdf_census_tract)
+shape_stop_times(gdf_subway_stations, df_stop_times)
 # subway_trips(df_trips_in_nyc, shapefile_stations_path, shapefile_links_path, results_folder,\
 #  'sbwy_route_sun.csv')
 
-gtfs_nyc_subway = gtfs.TransitFeedProcessing(gtfs_path)
-df_nyc_subway_links = gtfs_nyc_subway.distinct_links_between_stations()
-gdf_nyc_subway_links = gpd.GeoDataFrame(df_nyc_subway_links, geometry='geometry')
-
-print gdf_nyc_subway_links
-gdf_nyc_subway_links.to_file('gtfs_links.shp')
+# gtfs_nyc_subway = gp.TransitFeedProcessing(gtfs_path)
+# df_nyc_subway_links = gtfs_nyc_subway.distinct_links_between_stations()
+# gdf_nyc_subway_links = gpd.GeoDataFrame(df_nyc_subway_links, geometry='geometry')
+#
+# print gdf_nyc_subway_links
+# gdf_nyc_subway_links.to_file('gtfs_links.shp')
 
 df_subway_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 2]
 df_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 3]

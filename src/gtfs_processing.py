@@ -51,6 +51,9 @@ class TransitFeedProcessing:
         gdf_stops = self.format_points(df_stops, 'stop_lon', 'stop_lat')
         return gdf_stops
 
+    def get_stop_times(self):
+        return self.read_file_in_zip('stop_times.txt')
+
     def distinct_route_each_station(self):
         dict_stop_route = dict()
         df_stop_times = self.read_file_in_zip('stop_times.txt')
