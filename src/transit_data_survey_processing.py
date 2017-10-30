@@ -21,9 +21,6 @@ gtfs_path = argv[9]
 
 results_folder = argv[10]
 
-def df_from_csv(survey_trips_path):
-	return pd.read_csv(survey_trips_path)
-
 def float_to_int_str(float_number):
 	return str(float_number).split('.')[0]
 
@@ -41,65 +38,12 @@ def get_origin_destination_tract_id(s_trip):
 	Read transit data
 '''
 # od survey
-df_trips = df_from_csv(survey_trips_path)
-df_survey_stations = df_from_csv(survey_stations_path)
-df_equivalence_survey_shapefile = df_from_csv(equivalence_survey_shapefile_path)
+df_trips = pd.read_csv(survey_trips_path)
+df_survey_stations = pd.read_csv(survey_stations_path)
+df_equivalence_survey_shapefile = pd.read_csv(equivalence_survey_shapefile_path)
 # shapefiles
 gdf_subway_stations = gpd.GeoDataFrame.from_file(shapefile_stations_path)
 gdf_census_tract = gpd.read_file(shapefile_census_tract_base_path)
-# gtfs
-gtfs_nyc_subway = gp.TransitFeedProcessing(gtfs_path)
-df_stop_times = gtfs_nyc_subway.get_stop_times()
-
-def links_from_gtfs(gtfs_path):
-	gtfs_nyc_subway = gp.TransitFeedProcessing(gtfs_path)
-	df_nyc_subway_links = gtfs_nyc_subway.distinct_links_between_stations()
-
-def links_from_gtfs(equivalence_gtfs_shape_stops_path, shapefile_stations_path, shapefile_links_path):
-	# merge shape stations with gtfs stations
-	list_gtfs_links_distance = []
-	gdf_subway_stations = gpd.GeoDataFrame.from_file(shapefile_stations_path)
-	df_equivalence_gtfs_shape_stops = df_from_csv(equivalence_gtfs_shape_stops_path)
-	del df_equivalence_gtfs_shape_stops['name']
-
-	# geometry links from shape
-	nyc_transit_graph = tg.TransitGraph(shapefile_stations_path, shapefile_links_path)
-
-	gdf_shape_links = gpd.GeoDataFrame.from_file(shapefile_links_path)
-	df_gtfs_links = df_from_csv(gtfs_links_path)
-	# add gtfs stop_id and line on links
-	for index, gtfs_link in df_gtfs_links.iterrows():
-		line = gtfs_link['route_id']
-		gtfs_from_station = gtfs_link['from_parent_station']
-		gtfs_to_station = gtfs_link['to_parent_station']
-		# get shape id
-		shape_from_station = df_equivalence_gtfs_shape_stops[\
-		 df_equivalence_gtfs_shape_stops['stop_id'] == gtfs_from_station]['objectid']
-		shape_to_station = df_equivalence_gtfs_shape_stops[\
-		 df_equivalence_gtfs_shape_stops['stop_id'] == gtfs_to_station]['objectid']
-
-		if len(shape_from_station) == 1 and len(shape_to_station) == 1:
-			shape_from_station = shape_from_station.iloc[0]
-			shape_to_station = shape_to_station.iloc[0]
-
-			# get distance from path
-			geometry = gdf_shape_links.query('(@shape_from_station == node_1 and @shape_to_station == node_2)\
-			 or (@shape_from_station == node_2 and @shape_to_station == node_1)')
-			if geometry.empty == False:
-				path_distance = geometry.iloc[0]['shape_len']
-			else:
-				try:
-					path_distance = nyc_transit_graph.shortest_path_length_line(shape_from_station, shape_to_station, line)
-				except:
-					path_distance = nyc_transit_graph.shortest_path_length(shape_from_station, shape_to_station)
-
-			dict_gtfs_link_distance = gtfs_link.to_dict()
-			dict_gtfs_link_distance['shape_len'] = path_distance
-			list_gtfs_links_distance.append(dict_gtfs_link_distance)
-		else:
-			print 'gtfs_station', gtfs_from_station
-
-	return pd.DataFrame(list_gtfs_links_distance)
 
 '''
 	Get trips in New York City
@@ -212,10 +156,6 @@ df_trips_in_nyc = get_transit_trips_in_nyc(df_trips, gdf_census_tract)
 # subway_trips(df_trips_in_nyc, shapefile_stations_path, shapefile_links_path, results_folder,\
 #  'sbwy_route_sun.csv')
 
-df_gtfs_links_distance = links_from_gtfs(equivalence_gtfs_shape_stops_path, shapefile_stations_path,\
- shapefile_links_path)
-
-print df_gtfs_links_distance
 
 
 df_subway_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 2]
