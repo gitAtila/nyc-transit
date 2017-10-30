@@ -10,6 +10,8 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
+import gtfs_processing as gp
+
 # trunk_colors = {'1':'#ee352e', '4':'#00933c', '7':'#b933ad', 'A':'#2850ad', 'B':'#ff6319',\
 #  'G':'#6cbe45', 'J':'#996633', 'L':'#a7a9ac', 'N':'#fccc0a', 'T':'#000000'}
 
@@ -21,7 +23,9 @@ class TransitGraph:
     def __init__(self, stations_path, links_path):
         self.gdf_stations = gpd.GeoDataFrame.from_file(stations_path)
         self.gdf_links = gpd.GeoDataFrame.from_file(links_path)
+        #self.gtfs = gp.TransitFeedProcessing(gtfs_path)
         self.transit_graph = self.create_transit_graph()
+
 
     '''
         Create subway transit_graph
@@ -90,7 +94,7 @@ class TransitGraph:
         return vincenty((point_lon_lat_A[1], point_lon_lat_A[0]),\
          (point_lon_lat_B[1], point_lon_lat_B[0])).meters
 
-    
+
     '''
         Get the best subway path from a station to a census tract
     '''

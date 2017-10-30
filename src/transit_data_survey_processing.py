@@ -15,7 +15,7 @@ shapefile_links_path = argv[3]
 survey_trips_path = argv[4]
 survey_stations_path = argv[5]
 equivalence_survey_shapefile_path = argv[6]
-equivalence_gtfs_shape_stops = argv[7]
+equivalence_gtfs_shape_stops_path = argv[7]
 gtfs_path = argv[8]
 
 results_folder = argv[9]
@@ -49,6 +49,11 @@ gdf_census_tract = gpd.read_file(shapefile_census_tract_base_path)
 # gtfs
 gtfs_nyc_subway = gp.TransitFeedProcessing(gtfs_path)
 df_stop_times = gtfs_nyc_subway.get_stop_times()
+
+def links_from_gtfs(gtfs_path):
+	gtfs_nyc_subway = gp.TransitFeedProcessing(gtfs_path)
+	df_nyc_subway_links = gtfs_nyc_subway.distinct_links_between_stations()
+
 '''
 	Get trips in New York City
 '''
@@ -182,19 +187,19 @@ def shape_stop_times(shapefile_stations_path, shapefile_links_path, gdf_subway_s
 	# print gdf_subway_stations
 	# print df_stop_times
 
-
-
 df_trips_in_nyc = get_transit_trips_in_nyc(df_trips, gdf_census_tract)
 #shape_stop_times(shapefile_stations_path, shapefile_links_path, gdf_subway_stations, df_stop_times)
 # subway_trips(df_trips_in_nyc, shapefile_stations_path, shapefile_links_path, results_folder,\
 #  'sbwy_route_sun.csv')
 
-# gtfs_links
-gtfs_nyc_subway = gp.TransitFeedProcessing(gtfs_path)
-df_nyc_subway_links = gtfs_nyc_subway.distinct_links_between_stations()
+# merge shape stations with gtfs stations
+df_equivalence_gtfs_shape_stops = df_from_csv(equivalence_gtfs_shape_stops_path)
+del df_equivalence_gtfs_shape_stops['name']
+df_shape_gtfs_stops = pd.merge(gdf_subway_stations, df_equivalence_gtfs_shape_stops,\
+ left_on='objectid', right_on='objectid')
+print df_shape_gtfs_stops
+# geometry links from shape
 
-print df_nyc_subway_links
-df_nyc_subway_links.to_csv(results_folder+'gtfs_links.csv')
 
 df_subway_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 2]
 df_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 3]
