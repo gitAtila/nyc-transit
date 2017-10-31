@@ -80,7 +80,7 @@ class TransitGraph:
             else:
                 for item in value:
                     list_values.append(item)
-
+        
         return set(list_values)
 
     def unique_edge_values(self, edge_key):

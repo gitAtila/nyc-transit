@@ -17,7 +17,7 @@ gtfs_links_path = argv[4]
 survey_trips_path = argv[5]
 survey_stations_path = argv[6]
 equivalence_survey_shapefile_path = argv[7]
-equivalence_gtfs_shape_stops_path = argv[8]
+equivalence_survey_gtfs_path = argv[8]
 gtfs_path = argv[9]
 
 results_folder = argv[10]
@@ -42,6 +42,7 @@ def get_origin_destination_tract_id(s_trip):
 df_trips = pd.read_csv(survey_trips_path)
 df_survey_stations = pd.read_csv(survey_stations_path)
 df_equivalence_survey_shapefile = pd.read_csv(equivalence_survey_shapefile_path)
+df_equivalence_survey_gtfs = pd.read_csv(equivalence_survey_gtfs_path)
 # shapefiles
 gdf_subway_stations = gpd.GeoDataFrame.from_file(shapefile_stations_path)
 gdf_census_tract = gpd.read_file(shapefile_census_tract_base_path)
@@ -156,6 +157,10 @@ def subway_trips_shape(df_trips_in_nyc, shapefile_stations_path, shapefile_links
 def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folder,\
  result_file):
 
+ 	transit_feed = gp.TransitFeedProcessing(gtfs_path)
+	df_subway_stations = transit_feed.stops()
+	df_subway_stations = df_subway_stations[df_subway_stations['location_type'] == 1]
+
 	borough_survey_shape = {1:'1', 2:'4', 3:'2', 4:'3', 5:'5'}
 	list_stations = []
 	list_bus_route = []
@@ -165,7 +170,7 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 
 	# load transit_graph
 	nyc_transit_graph = gtg.GtfsTransitGraph(gtfs_links_path, gtfs_path)
-	return None
+
 	for index, sbwy_trip in df_subway_trips.iterrows():
 
 		# get interested variables
@@ -196,21 +201,22 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 				break
 		print list_modes
 
-		# get boarding station in shapefile
+		# get boarding station in graph
 		sbwy_station_id = float_to_int_str(sbwy_trip['StopAreaNo'])
 		if math.isnan(float(sbwy_station_id)) == False and sbwy_station_id != '0' and sbwy_station_id != '1384':
 			sbwy_boarding_station_name = df_survey_stations[df_survey_stations['Value'] == int(sbwy_station_id)]['Label']
-			shapefile_station_id = df_equivalence_survey_shapefile[df_equivalence_survey_shapefile['sv_id'] == float(sbwy_station_id)]['sf_id'].iloc[0]
-			gdf_boarding_station = gdf_subway_stations[gdf_subway_stations['objectid'] == shapefile_station_id]
+			gtfs_station_id = df_equivalence_survey_gtfs[df_equivalence_survey_gtfs['survey_stop_id']\
+			 == float(sbwy_station_id)]['gtfs_stop_id'].iloc[0]
+			df_boarding_station = df_subway_stations[df_subway_stations['stop_id'] == gtfs_station_id]
 		else:
 			print 'There is not information of boarding station'
 			sbwy_boarding_station_name = ''
 			sf_boarding_station_name = ''
 
-		print 'shapefile_station_id', shapefile_station_id
-		print 'sbwy_boarding_station_name', sbwy_boarding_station_name
-		print 'sf_boarding_station', gdf_boarding_station['objectid'].iloc[0],\
-		 gdf_boarding_station['name'].iloc[0], gdf_boarding_station['line'].iloc[0]
+		print 'gtfs_station_id', gtfs_station_id
+		print 'sbwy_boarding_station_name', sbwy_boarding_station_name.iloc[0]
+		print 'sf_boarding_station', df_boarding_station['stop_id'].iloc[0],\
+		 df_boarding_station['stop_name'].iloc[0]
 
 		# get census tract of origin and census tract of destination
 		try:
@@ -225,7 +231,7 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 				travel = {'boardings': 0, 'alight_destination_distance': None, 'subway_distance': None}
 			else:
 				# get subway passenger route through graph
-				travel = nyc_transit_graph.station_location_shortest_walk_distance(shapefile_station_id, destination_centroid)
+				travel = nyc_transit_graph.station_location_shortest_walk_distance(gtfs_station_id, destination_centroid)
 				travel['boardings'] = len(travel['stations'])-1
 		        del travel['stations']
 		except:
@@ -235,13 +241,14 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 		list_bus_route.append(travel)
 		print travel
 		print ''
+		return None
 
 	df_bus_routes = pd.DataFrame(list_bus_route)
 	print df_bus_routes
 	df_bus_routes.to_csv(results_folder + result_file, index_label='id')
 
 df_trips_in_nyc = get_transit_trips_in_nyc(df_trips, gdf_census_tract)
-# subway_trips(df_trips_in_nyc, shapefile_stations_path, shapefile_links_path, results_folder,\
+# subway_trips_shape(df_trips_in_nyc, shapefile_stations_path, shapefile_links_path, results_folder,\
 #  'sbwy_route_sun.csv')
 subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folder,'sbwy_route_sun.csv')
 

@@ -47,7 +47,7 @@ class GtfsTransitGraph:
 
             transit_graph.add_edge(link['from_parent_station'], link['to_parent_station'],\
              distance=link['shape_len'])
-            
+
         # add transfers
         df_transfers = self.transit_feed.transfers()
         for index, transference in df_transfers.iterrows():
@@ -56,3 +56,111 @@ class GtfsTransitGraph:
                  distance=0)
 
         return transit_graph
+
+    def unique_node_values(self, node_key):
+        list_values = []
+        for index in self.transit_graph:
+            value = self.transit_graph.node[index][node_key]
+            if type(value) != list:
+                if value not in list_values:
+                    list_values.append(value)
+            else:
+                for item in value:
+                    if item not in list_values:
+                        list_values.append(item)
+                        print list_values
+
+        return list_values
+
+    def subgraph_node(self, node_key, node_value):
+        list_node = []
+        for key, dict_attribute in self.transit_graph.nodes_iter(data=True):
+            if type(dict_attribute[node_key]) == list:
+                if node_value in dict_attribute[node_key]:
+                    list_node.append(key)
+            elif dict_attribute[node_key] == node_value:
+                list_node.append(key)
+        subgraph = self.transit_graph.subgraph(list_node)
+        return subgraph
+
+    def distance_points(self, point_lon_lat_A, point_lon_lat_B):
+        return vincenty((point_lon_lat_A[1], point_lon_lat_A[0]),\
+         (point_lon_lat_B[1], point_lon_lat_B[0])).meters
+
+    def stations_near_point_per_route(self, gs_point):
+        list_trunk_stations = list()
+        list_unique_routes = ['G', 'R', 'E', '7', '7X', 'D', 'M', 'J', 'Z', 'A',\
+         'F', 'N', '1', 'GS', '2', '4', 'Q', 'B', '6', '6X']
+        # list_unique_routes = self.unique_node_values('routes')
+
+        # Find the nearest station from point for each route
+        dict_stations_route = dict()
+        for route in list_unique_routes:
+            print route
+            g_route = self.subgraph_node('routes', route)
+            print g_route
+            # get the nearest station
+            shortest_distance = maxint
+            best_station = -1
+            for node_key, dict_attribute in g_route.nodes_iter(data=True):
+                distance =  self.distance_points(dict_attribute['posxy'], (gs_point.iloc[0].x, gs_point.iloc[0].y))
+                if distance < shortest_distance:
+                    shortest_distance = distance
+                    best_station = node_key
+            dict_stations_route[route] = {'station':best_station ,'distance': shortest_distance}
+
+        return dict_stations_route
+
+    def best_route_shortest_walk_distance(self, dict_trip, key_name):
+        shortest_distance = maxint
+        nearest_key = -1
+        for key_value, destination_station in dict_trip.iteritems():
+            if destination_station['distance'] < shortest_distance:
+                shortest_distance = destination_station['distance']
+                nearest_key = key_value
+
+        best_destination = dict_trip[nearest_key]
+        best_destination[key_name] = nearest_key
+
+        return best_destination
+
+    def station_location_shortest_walk_distance(self, origin_station, destination_location):
+        ## get the stations nearby destination point
+        dict_route_stations_near_destination = self.stations_near_point_per_route(destination_location)
+        print '-->', dict_route_stations_near_destination
+        return None
+        # construct probable trips
+        #print dict_route_stations_near_destination
+        dict_last_station = self.best_route_shortest_walk_distance(dict_route_stations_near_destination, 'route')
+
+        path_stations = nx.shortest_path(self.transit_graph, origin_station, dict_last_station['station'],\
+         weight='distance')
+        path_length = nx.shortest_path_length(self.transit_graph, origin_station, dict_last_station['station'],\
+         weight='distance')
+
+        # stations of integration
+        list_distinct_routes = []
+        previous_routes = sorted(self.transit_graph.node[origin_station]['route'])
+        list_distinct_routes.append({'station': origin_station, 'routes': previous_routes})
+
+        for index in range(1, len(path_stations)):
+            station = path_stations[index]
+            previous_routes = list_distinct_routes[-1]['routes']
+            current_routes = sorted(self.transit_graph.node[station]['route'])
+            intersection_routes = sorted(list(set(previous_routes) & set(current_routes)))
+
+            # there is an itegration
+            if len(intersection_routes) == 0:
+                list_distinct_routes.append({'station': station, 'routes': current_routes})
+
+            # remove from the previous routes the ones that is not in the current routes
+            elif current_routes != previous_routes and previous_routes != intersection_routes:
+                previous_routes = intersection_routes
+                previous_station = list_distinct_routes[-1]['station']
+                del list_distinct_routes[-1]
+                list_distinct_routes.append({'station': previous_station, 'routes': previous_routes})
+
+        list_distinct_routes.append({'station': dict_last_station['station'], 'routes': ''})
+
+        return {'subway_distance': path_length, 'alight_destination_distance': dict_last_station['distance'],\
+         'stations': list_distinct_routes}
