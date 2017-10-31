@@ -228,14 +228,14 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 			#print destination_centroid
 
 			if len(destination_centroid) == 0:
-				travel = {'boardings': 0, 'alight_destination_distance': None, 'subway_distance': None}
+				travel = {'transfers': 0, 'alight_destination_distance': None, 'subway_distance': None}
 			else:
 				# get subway passenger route through graph
 				travel = nyc_transit_graph.station_location_shortest_walk_distance(gtfs_station_id, destination_centroid)
-				travel['boardings'] = len(travel['stations'])-1
+				travel['transfers'] = (len(travel['stations'])/2)-1
 		        del travel['stations']
 		except:
-			travel = {'boardings': 0, 'alight_destination_distance': None, 'subway_distance': None}
+			travel = {'transfers': 0, 'alight_destination_distance': None, 'subway_distance': None}
 
 		travel['sampn_perno_tripno'] = sampn_perno_tripno
 		list_bus_route.append(travel)

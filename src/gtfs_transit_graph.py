@@ -133,7 +133,6 @@ class GtfsTransitGraph:
         dict_route_stations_near_destination = self.stations_near_point_per_route(destination_location)
 
         # construct probable trips
-        #print dict_route_stations_near_destination
         dict_last_station = self.best_route_shortest_walk_distance(dict_route_stations_near_destination, 'route')
 
         path_stations = nx.shortest_path(self.transit_graph, origin_station, dict_last_station['station'],\
@@ -156,6 +155,7 @@ class GtfsTransitGraph:
 
             # there is an itegration
             if len(intersection_routes) == 0:
+                list_distinct_routes.append({'station': path_stations[index-1], 'routes': previous_routes})
                 list_distinct_routes.append({'station': station, 'routes': current_routes})
 
             # remove from the previous routes the ones that is not in the current routes
@@ -165,7 +165,7 @@ class GtfsTransitGraph:
                 del list_distinct_routes[-1]
                 list_distinct_routes.append({'station': previous_station, 'routes': previous_routes})
 
-        list_distinct_routes.append({'station': dict_last_station['station'], 'routes': ''})
+        list_distinct_routes.append({'station': dict_last_station['station'], 'routes': dict_last_station['route']})
 
         return {'subway_distance': path_length, 'alight_destination_distance': dict_last_station['distance'],\
          'stations': list_distinct_routes}
