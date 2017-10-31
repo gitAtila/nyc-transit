@@ -1,5 +1,7 @@
 # find transit passenger route
 from sys import argv
+from datetime import datetime
+
 import pandas as pd
 import math
 import geopandas as gpd
@@ -184,6 +186,15 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 		borough_origin = sbwy_trip['O_Boro']
 		borough_destination = sbwy_trip['D_Boro']
 		nbr_sbwy_segments = sbwy_trip['NSUB']
+
+		date_origin = sbwy_trip['trip_sdate'].split(' ')[0]
+		time_origin = sbwy_trip['dtime']
+		date_destination = sbwy_trip['trip_edate'].split(' ')[0]
+		time_destination = sbwy_trip['atime']
+
+		date_time_origin = datetime.strptime(date_origin + ' ' + time_origin, '%m/%d/%y %H:%M')
+		date_time_destination = datetime.strptime(date_destination + ' ' + time_destination, '%m/%d/%y %H:%M')
+
 		list_modes = []
 
 		print 'ct_origin', ct_origin
@@ -191,6 +202,9 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 		print 'boro_origin', borough_origin
 		print 'boro_destination', borough_destination
 		print 'nbr_sbwy_segments', nbr_sbwy_segments
+
+		print 'date_time_origin', date_time_origin
+		print 'date_time_destination', date_time_destination
 
 		# remove empty mode
 		for mode in range(1,17):
