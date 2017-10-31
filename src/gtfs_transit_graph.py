@@ -99,7 +99,7 @@ class GtfsTransitGraph:
     def stations_near_point_per_route(self, gs_point):
         list_trunk_stations = list()
         list_unique_routes = self.unique_node_values('routes')
-        #print list_unique_routes
+
         # Find the nearest station from point for each route
         dict_stations_route = dict()
         for route in list_unique_routes:
@@ -143,29 +143,32 @@ class GtfsTransitGraph:
         print path_stations
 
         # stations of integration
-        list_distinct_routes = []
+        list_passenger_trip = []
         previous_routes = sorted(self.transit_graph.node[origin_station]['routes'])
-        list_distinct_routes.append({'station': origin_station, 'routes': previous_routes})
-
+        list_passenger_trip.append({'boarding':{'station': origin_station, 'routes': previous_routes}})
         for index in range(1, len(path_stations)):
+
             station = path_stations[index]
-            previous_routes = list_distinct_routes[-1]['routes']
+            previous_routes = list_passenger_trip[-1]['boarding']['routes']
             current_routes = sorted(self.transit_graph.node[station]['routes'])
             intersection_routes = sorted(list(set(previous_routes) & set(current_routes)))
 
             # there is an itegration
             if len(intersection_routes) == 0:
-                list_distinct_routes.append({'station': path_stations[index-1], 'routes': previous_routes})
-                list_distinct_routes.append({'station': station, 'routes': current_routes})
+                list_passenger_trip[-1]['alighting'] = {'station': path_stations[index-1], 'routes': previous_routes}
+                list_passenger_trip.append({'boarding': {'station': station, 'routes': current_routes}})
 
-            # remove from the previous routes the ones that is not in the current routes
+            # remove from the previous trip the routes that it is not in the current trip
             elif current_routes != previous_routes and previous_routes != intersection_routes:
                 previous_routes = intersection_routes
-                previous_station = list_distinct_routes[-1]['station']
-                del list_distinct_routes[-1]
-                list_distinct_routes.append({'station': previous_station, 'routes': previous_routes})
+                previous_station = list_passenger_trip[-1]['boarding']['station']
+                list_passenger_trip[-1]['boarding'] = {'station': previous_station, 'routes': previous_routes}
 
-        list_distinct_routes.append({'station': dict_last_station['station'], 'routes': dict_last_station['route']})
+        #append last aligth
+        list_passenger_trip[-1]['alighting'] = {'station': dict_last_station['station'], 'routes': previous_routes}
+
+        for trip in list_passenger_trip:
+            print trip
 
         return {'subway_distance': path_length, 'alight_destination_distance': dict_last_station['distance'],\
-         'stations': list_distinct_routes}
+         'stations': list_passenger_trip}

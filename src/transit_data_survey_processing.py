@@ -250,6 +250,7 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 df_trips_in_nyc = get_transit_trips_in_nyc(df_trips, gdf_census_tract)
 # subway_trips_shape(df_trips_in_nyc, shapefile_stations_path, shapefile_links_path, results_folder,\
 #  'sbwy_route_sun.csv')
+
 subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folder,'sbwy_route_sun.csv')
 
 df_subway_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 2]
