@@ -135,22 +135,23 @@ class GtfsTransitGraph:
         # construct probable trips
         #print dict_route_stations_near_destination
         dict_last_station = self.best_route_shortest_walk_distance(dict_route_stations_near_destination, 'route')
-        print origin_station, dict_last_station['station']
 
         path_stations = nx.shortest_path(self.transit_graph, origin_station, dict_last_station['station'],\
          weight='distance')
         path_length = nx.shortest_path_length(self.transit_graph, origin_station, dict_last_station['station'],\
          weight='distance')
 
+        print path_stations
+
         # stations of integration
         list_distinct_routes = []
-        previous_routes = sorted(self.transit_graph.node[origin_station]['route'])
+        previous_routes = sorted(self.transit_graph.node[origin_station]['routes'])
         list_distinct_routes.append({'station': origin_station, 'routes': previous_routes})
 
         for index in range(1, len(path_stations)):
             station = path_stations[index]
             previous_routes = list_distinct_routes[-1]['routes']
-            current_routes = sorted(self.transit_graph.node[station]['route'])
+            current_routes = sorted(self.transit_graph.node[station]['routes'])
             intersection_routes = sorted(list(set(previous_routes) & set(current_routes)))
 
             # there is an itegration
@@ -165,15 +166,6 @@ class GtfsTransitGraph:
                 list_distinct_routes.append({'station': previous_station, 'routes': previous_routes})
 
         list_distinct_routes.append({'station': dict_last_station['station'], 'routes': ''})
-        print {'subway_distance': path_length, 'alight_destination_distance': dict_last_station['distance'],\
-         'stations': list_distinct_routes}
-         
+
         return {'subway_distance': path_length, 'alight_destination_distance': dict_last_station['distance'],\
          'stations': list_distinct_routes}
-
-# gtfs_links_path = argv[1]
-# gtfs_path = argv[2]
-# nyc_transit_graph = GtfsTransitGraph(gtfs_links_path, gtfs_path)
-# nodes = nyc_transit_graph.subgraph_node('routes', 'G').nodes(data=True)
-# for key, node in nodes:
-#     print key
