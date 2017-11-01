@@ -92,6 +92,19 @@ class GtfsTransitGraph:
         subgraph = self.transit_graph.subgraph(list_node)
         return subgraph
 
+    def subgraph_routes(self, list_route):
+        list_node = []
+        for key, dict_attribute in self.transit_graph.nodes_iter(data=True):
+            if type(dict_attribute['routes']) == list:
+                for route in list_route:
+                    if route in dict_attribute['routes']:
+                        list_node.append(key)
+            elif dict_attribute['routes'] == node_value:
+                for route in list_route:
+                    sslist_node.append(key)
+        subgraph = self.transit_graph.subgraph(list_node)
+        return subgraph
+
     def distance_points(self, point_lon_lat_A, point_lon_lat_B):
         return vincenty((point_lon_lat_A[1], point_lon_lat_A[0]),\
          (point_lon_lat_B[1], point_lon_lat_B[0])).meters
@@ -128,24 +141,11 @@ class GtfsTransitGraph:
 
         return best_destination
 
-    def station_location_shortest_walk_distance(self, origin_station, destination_location):
-        ## get the stations nearby destination point
-        dict_route_stations_near_destination = self.stations_near_point_per_route(destination_location)
-
-        # construct probable trips
-        dict_last_station = self.best_route_shortest_walk_distance(dict_route_stations_near_destination, 'route')
-
-        path_stations = nx.shortest_path(self.transit_graph, origin_station, dict_last_station['station'],\
-         weight='distance')
-        path_length = nx.shortest_path_length(self.transit_graph, origin_station, dict_last_station['station'],\
-         weight='distance')
-
-        print path_stations
-
+    def trips_from_stations_path(self, path_stations):
         # stations of integration
         list_passenger_trip = []
-        previous_routes = sorted(self.transit_graph.node[origin_station]['routes'])
-        list_passenger_trip.append({'boarding':{'station': origin_station, 'routes': previous_routes}})
+        previous_routes = sorted(self.transit_graph.node[path_stations[0]]['routes'])
+        list_passenger_trip.append({'boarding':{'station': path_stations[0], 'routes': previous_routes}})
         for index in range(1, len(path_stations)):
 
             station = path_stations[index]
@@ -165,10 +165,70 @@ class GtfsTransitGraph:
                 list_passenger_trip[-1]['boarding'] = {'station': previous_station, 'routes': previous_routes}
 
         #append last aligth
-        list_passenger_trip[-1]['alighting'] = {'station': dict_last_station['station'], 'routes': previous_routes}
+        list_passenger_trip[-1]['alighting'] = {'station': path_stations[-1], 'routes': previous_routes}
+
+        return list_passenger_trip
+
+    def station_location_shortest_walk_distance(self, origin_station, destination_location):
+        ## get the nearest station from destination location
+        dict_route_stations_near_destination = self.stations_near_point_per_route(destination_location)
+
+
+        dict_last_station = self.best_route_shortest_walk_distance(dict_route_stations_near_destination, 'route')
+
+        path_stations = nx.shortest_path(self.transit_graph, origin_station, dict_last_station['station'],\
+         weight='distance')
+        path_length = nx.shortest_path_length(self.transit_graph, origin_station, dict_last_station['station'],\
+         weight='distance')
+
+        #print path_stations
+        list_passenger_trip = self.trips_from_stations_path(path_stations)
 
         for trip in list_passenger_trip:
             print trip
 
         return {'subway_distance': path_length, 'alight_destination_distance': dict_last_station['distance'],\
          'stations': list_passenger_trip}
+
+    def station_location_transfers(self, origin_station, destination_location, number_subway_routes):
+        ## get the nearest station from destination location for each route
+        dict_route_stations_near_destination = self.stations_near_point_per_route(destination_location)
+        # construct probable trips
+        #dict_last_station = self.best_route_shortest_walk_distance(dict_route_stations_near_destination, 'route')
+
+        if number_subway_routes == 1:
+            # routes that pass by boarding station
+            list_routes = sorted(self.transit_graph.node[origin_station]['routes'])
+            print list_routes
+
+        elif number_subway_routes > 1:
+            # get reachable routes from boarding station route
+            # for each number_subway_routes
+            list_route_distances = []
+
+            for key, dict_station in dict_route_stations_near_destination.iteritems():
+                list_route_distances.append((key, dict_station))
+            list_route_distances = sorted(list_route_distances, key=lambda tup:tup[1]['distance'])
+            print list_route_distances
+            return None
+
+        # from boarding routes get the nearest station to destination location
+        nearest_route = ''
+        shortest_distance = maxint
+        for route in list_routes:
+            if dict_route_stations_near_destination[route]['distance'] < shortest_distance:
+                shortest_distance = dict_route_stations_near_destination[route]['distance']
+                nearest_route = route
+        destination_station = dict_route_stations_near_destination[nearest_route]['station']
+        print nearest_route, destination_station
+
+        # get the best route connecting origin to destination stations
+        subgraph_routes = self.subgraph_routes(list_routes)
+        path_stations = nx.shortest_path(subgraph_routes, origin_station, destination_station)
+        print path_stations
+        for station in path_stations:
+            print self.transit_graph.node[station]['routes']
+        list_passenger_trip = self.trips_from_stations_path(path_stations)
+
+        for trip in list_passenger_trip:
+            print trip

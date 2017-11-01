@@ -207,13 +207,18 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 		print 'date_time_destination', date_time_destination
 
 		# remove empty mode
+
 		for mode in range(1,17):
 			mode_key = 'MODE'
 			if math.isnan(sbwy_trip[mode_key + str(mode)]) == False:
 				list_modes.append(sbwy_trip[mode_key + str(mode)])
 			else:
 				break
-		print list_modes
+		number_subway_routes = 0
+		for index in range(len(list_modes)):
+			if index != 1 and list_modes[index] == 3:
+				number_subway_routes += 1
+		print list_modes, number_subway_routes
 
 		# get boarding station in graph
 		sbwy_station_id = float_to_int_str(sbwy_trip['StopAreaNo'])
@@ -245,17 +250,20 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 				travel = {'transfers': 0, 'alight_destination_distance': None, 'subway_distance': None}
 			else:
 				# get subway passenger route through graph
-				travel = nyc_transit_graph.station_location_shortest_walk_distance(gtfs_station_id, destination_centroid)
-				travel['transfers'] = (len(travel['stations'])/2)-1
-		        del travel['stations']
+				# travel = nyc_transit_graph.station_location_shortest_walk_distance(gtfs_station_id, destination_centroid)
+				# travel['transfers'] = (len(travel['stations'])/2)-1
+		        # del travel['stations']
+				print gtfs_station_id
+				nyc_transit_graph.station_location_transfers(gtfs_station_id, destination_centroid, number_subway_routes)
 		except:
 			travel = {'transfers': 0, 'alight_destination_distance': None, 'subway_distance': None}
 
+		return None
 		travel['sampn_perno_tripno'] = sampn_perno_tripno
 		list_bus_route.append(travel)
 		print travel
 		print ''
-		return None
+
 
 	df_bus_routes = pd.DataFrame(list_bus_route)
 	print df_bus_routes
