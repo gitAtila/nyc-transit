@@ -141,7 +141,8 @@ def subway_trips_shape(df_trips_in_nyc, shapefile_stations_path, shapefile_links
 				travel = {'boardings': 0, 'alight_destination_distance': None, 'subway_distance': None}
 			else:
 				# get subway passenger route through graph
-				travel = nyc_transit_graph.station_location_shortest_walk_distance(shapefile_station_id, destination_centroid)
+				travel = nyc_transit_graph.station_location_shortest_walk_distance(shapefile_station_id,\
+				 destination_centroid)
 				travel['boardings'] = len(travel['stations'])-1
 		        del travel['stations']
 		except:
@@ -227,15 +228,16 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 			gtfs_station_id = df_equivalence_survey_gtfs[df_equivalence_survey_gtfs['survey_stop_id']\
 			 == float(sbwy_station_id)]['gtfs_stop_id'].iloc[0]
 			df_boarding_station = df_subway_stations[df_subway_stations['stop_id'] == gtfs_station_id]
+
+			print 'gtfs_station_id', gtfs_station_id
+			print 'sbwy_boarding_station_name', sbwy_boarding_station_name.iloc[0]
+			print 'sf_boarding_station', df_boarding_station['stop_id'].iloc[0],\
+			 df_boarding_station['stop_name'].iloc[0]
+			
 		else:
 			print 'There is not information of boarding station'
 			sbwy_boarding_station_name = ''
 			sf_boarding_station_name = ''
-
-		print 'gtfs_station_id', gtfs_station_id
-		print 'sbwy_boarding_station_name', sbwy_boarding_station_name.iloc[0]
-		print 'sf_boarding_station', df_boarding_station['stop_id'].iloc[0],\
-		 df_boarding_station['stop_name'].iloc[0]
 
 		# get census tract of origin and census tract of destination
 		try:
@@ -247,6 +249,7 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 			#print destination_centroid
 
 			if len(destination_centroid) == 0:
+				print destination_centroid
 				travel = {'transfers': 0, 'alight_destination_distance': None, 'subway_distance': None}
 			else:
 				# get subway passenger route through graph
@@ -254,14 +257,17 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 				# travel['transfers'] = (len(travel['stations'])/2)-1
 		        # del travel['stations']
 				print gtfs_station_id
-				nyc_transit_graph.station_location_transfers(gtfs_station_id, destination_centroid, number_subway_routes)
+				travel = nyc_transit_graph.station_location_transfers(gtfs_station_id, destination_centroid,\
+				 number_subway_routes, date_time_origin)
 		except:
 			travel = {'transfers': 0, 'alight_destination_distance': None, 'subway_distance': None}
 
-		return None
-		travel['sampn_perno_tripno'] = sampn_perno_tripno
-		list_bus_route.append(travel)
-		print travel
+		if type(travel) == list:
+			return None
+
+		# travel['sampn_perno_tripno'] = sampn_perno_tripno
+		# list_bus_route.append(travel)
+		# print travel
 		print ''
 
 
