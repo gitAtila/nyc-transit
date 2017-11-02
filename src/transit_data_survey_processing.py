@@ -193,8 +193,15 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 		date_destination = sbwy_trip['trip_edate'].split(' ')[0]
 		time_destination = sbwy_trip['atime']
 
-		date_time_origin = datetime.strptime(date_origin + ' ' + time_origin, '%m/%d/%y %H:%M')
-		date_time_destination = datetime.strptime(date_destination + ' ' + time_destination, '%m/%d/%y %H:%M')
+		try:
+			date_time_origin = datetime.strptime(date_origin + ' ' + time_origin, '%m/%d/%y %H:%M')
+			date_time_destination = datetime.strptime(date_destination + ' ' + time_destination, '%m/%d/%y %H:%M')
+		except ValueError:
+			print 'Date Error'
+			date_time_origin = date_origin + ' ' + time_origin
+			date_time_destination = date_destination + ' ' + time_destination
+			print date_time_origin
+			print date_time_destination
 
 		list_modes = []
 
@@ -233,7 +240,7 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 			print 'sbwy_boarding_station_name', sbwy_boarding_station_name.iloc[0]
 			print 'sf_boarding_station', df_boarding_station['stop_id'].iloc[0],\
 			 df_boarding_station['stop_name'].iloc[0]
-			
+
 		else:
 			print 'There is not information of boarding station'
 			sbwy_boarding_station_name = ''
@@ -249,7 +256,7 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 			#print destination_centroid
 
 			if len(destination_centroid) == 0:
-				print destination_centroid
+				print 'Destination location was not found'
 				travel = {'transfers': 0, 'alight_destination_distance': None, 'subway_distance': None}
 			else:
 				# get subway passenger route through graph
