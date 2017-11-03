@@ -215,31 +215,29 @@ class GtfsTransitGraph:
             list_boarding_routes = self.transit_graph.node[origin_station]['routes']
             list_alighting_routes = self.transit_graph.node[destination_station]['routes']
             list_board_alight_routes = set(list_boarding_routes + list_alighting_routes)
+            #print 'list_board_alight_routes', list_board_alight_routes
 
             # get unique route values
             list_unique_routes = set(self.unique_node_values('routes'))
 
             # remove boarding and alighting ones
             list_unique_routes = list_unique_routes - list_board_alight_routes
-            list_unique_routes = list(list_unique_routes)
             print list_unique_routes
 
             # for each route that is not in boarding and alighting stations
             min_path_length = maxint
             best_route = ''
             for new_route in list_unique_routes:
-                list_board_alight_routes.append(new_route)
+                # add this route and find the shortest path
+                list_routes = list(list_board_alight_routes) + [new_route]
                 subgraph_routes = self.subgraph_routes(list_routes)
                 path_length = nx.shortest_path_length(subgraph_routes, origin_station, destination_station)
                 if path_length < min_path_length:
+                    print new_route, path_length
                     min_path_length = path_length
                     best_route = new_route
-                # remove new route from list
-                del list_board_alight_routes[-1]
-                print list_board_alight_routes
+
             print best_route
-            # add this route and find the shortest path
-            #
 
             print 'to be implemented'
             a = b
