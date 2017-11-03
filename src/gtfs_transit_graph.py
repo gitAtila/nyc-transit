@@ -271,6 +271,7 @@ class GtfsTransitGraph:
             for route, station_distance in list_route_distances:
                 if route in list_boarding_routes:
                     station = station_distance['station']
+                    break
             print 'destination_station', station
             path_stations = self.shortest_path_n_transfers(origin_station, station, number_subway_routes-1)
 
@@ -301,42 +302,7 @@ class GtfsTransitGraph:
         if len(path_stations) == 0:
             print 'There is no path'
             return []
-        #dict_last_station = self.best_route_shortest_walk_distance(dict_route_stations_near_destination, 'route')
 
-        # if number_subway_routes == 1:
-        #     # routes that pass by boarding station
-        #     list_routes = sorted(self.transit_graph.node[origin_station]['routes'])
-        #     print list_routes
-        #
-        # elif number_subway_routes > 1:
-        #     # get reachable routes from boarding station route
-        #     list_routes = sorted(self.transit_graph.node[origin_station]['routes'])
-        #     print list_routes
-        #     # for each number_subway_routes
-        #     list_route_distances = []
-        #
-        #     for key, dict_station in dict_route_stations_near_destination.iteritems():
-        #         list_route_distances.append((key, dict_station))
-        #     list_route_distances = sorted(list_route_distances, key=lambda tup:tup[1]['distance'])
-        #     #print list_route_distances
-        #     # for route_id, destination_station_distance in list_route_distances:
-        #     #     print route_id
-        #     self.shortest_path_n_transfers(origin_station, list_route_distances[0][1]['station'], number_subway_routes-1)
-        #     return None
-        #
-        # # from boarding routes get the nearest station to destination location
-        # nearest_route = ''
-        # shortest_distance = maxint
-        # for route in list_routes:
-        #     if dict_route_stations_near_destination[route]['distance'] < shortest_distance:
-        #         shortest_distance = dict_route_stations_near_destination[route]['distance']
-        #         nearest_route = route
-        # destination_station = dict_route_stations_near_destination[nearest_route]['station']
-        # print nearest_route, destination_station
-        #
-        # # get the best route connecting origin to destination stations
-        # subgraph_routes = self.subgraph_routes(list_routes)
-        # path_stations = nx.shortest_path(subgraph_routes, origin_station, destination_station)
         print path_stations
         for station in path_stations:
             print self.transit_graph.node[station]['routes']
@@ -344,5 +310,5 @@ class GtfsTransitGraph:
 
         for trip in list_passenger_trip:
             print trip
-        if number_subway_routes > 3:
-            print unknown
+        # if number_subway_routes < len(list_passenger_trip):
+        #     print unknown
