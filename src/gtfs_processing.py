@@ -123,9 +123,29 @@ class TransitFeedProcessing:
             previous_position = current_position
         return total_distance
 
-    def distinct_links_between_stations(self):
-        df_stop_times = self.read_file_in_zip('stop_times.txt')
-        df_trips = self.read_file_in_zip('trips.txt')
+    def distinct_links_between_stations(self, day_type):
+        df_stop_times = self.stop_times()
+        df_trips = self.trips()
+        df_calendar = self.calendar()
+
+        # get service_id in that weekday
+        list_service_id = []
+        if day_type == 1: # weekday
+            for index in range(1,6):
+                print index
+                list_service_id += df_calendar[df_calendar.iloc[:,index] == 1]['service_id'].tolist()
+            list_service_id = set(list_service_id)
+        elif day_type == 2: # saturday
+            list_service_id = df_calendar[df_calendar.iloc[:,6] == 1]['service_id'].tolist()
+        elif day_type == 3: # sunday
+            list_service_id = df_calendar[df_calendar.iloc[:,7] == 1]['service_id'].tolist()
+        else:
+            return None
+
+        # filter df_trips by service_id
+        list_trip_id = list(df_trips[df_trips['service_id'].isin(list_service_id)]['trip_id'].unique())
+        # get stop_times in that day
+        df_stop_times = df_stop_times[df_stop_times['trip_id'].isin(list_trip_id)]
 
         gdf_stops = self.stops_to_shapefile()
         gdf_shapes = self.shapes_to_shapefile()

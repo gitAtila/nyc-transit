@@ -13,11 +13,12 @@ shapefile_stations_path = argv[1]
 shapefile_links_path = argv[2]
 equivalence_gtfs_shape_stops_path = argv[3]
 gtfs_path = argv[4]
+day_type = argv[5]
 
-results_folder = argv[5]
+results_file_name = argv[6]
 
 def links_distance(equivalence_gtfs_shape_stops_path, shapefile_stations_path,\
- shapefile_links_path, gtfs_path):
+ shapefile_links_path, gtfs_path, day_type):
     list_gtfs_links_distance = []
 
     gtfs_nyc_subway = gp.TransitFeedProcessing(gtfs_path)
@@ -29,7 +30,7 @@ def links_distance(equivalence_gtfs_shape_stops_path, shapefile_stations_path,\
     nyc_transit_graph = tg.TransitGraph(shapefile_stations_path, shapefile_links_path)
 
     gdf_shape_links = gpd.GeoDataFrame.from_file(shapefile_links_path)
-    df_gtfs_links = gtfs_nyc_subway.distinct_links_between_stations()
+    df_gtfs_links = gtfs_nyc_subway.distinct_links_between_stations(day_type)
     # add gtfs stop_id and line on links
     for index, gtfs_link in df_gtfs_links.iterrows():
     	line = gtfs_link['route_id']
@@ -65,8 +66,8 @@ def links_distance(equivalence_gtfs_shape_stops_path, shapefile_stations_path,\
     return pd.DataFrame(list_gtfs_links_distance)
 
 df_gtfs_links_distance = links_distance(equivalence_gtfs_shape_stops_path, shapefile_stations_path,\
- shapefile_links_path, gtfs_path)
+ shapefile_links_path, gtfs_path, int(day_type))
 df_gtfs_links_distance = df_gtfs_links_distance[['route_id','from_stop_id','to_stop_id','from_parent_station', 'to_parent_station','shape_len']]
-df_gtfs_links_distance.to_csv(results_folder+'gtfs_links_distance.csv', index=False, )
+df_gtfs_links_distance.to_csv(results_file_name, index=False)
 
 print df_gtfs_links_distance
