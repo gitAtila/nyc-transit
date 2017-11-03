@@ -195,11 +195,11 @@ class GtfsTransitGraph:
         if number_of_transfers == 0:
             # create a graph with boarding routes and find the shortest path
             list_boarding_routes = self.transit_graph.node[origin_station]['routes']
-            list_alighting_routes = self.transit_graph.node[destination_station]['routes']
-            list_routes = set(list_boarding_routes + list_alighting_routes)
-            print list_boarding_routes, list_alighting_routes
             subgraph_routes = self.subgraph_routes(list_boarding_routes)
-            path_stations = nx.shortest_path(subgraph_routes, origin_station, destination_station)
+            try:
+                path_stations = nx.shortest_path(subgraph_routes, origin_station, destination_station)
+            except nx.exception.NetworkXNoPath:
+                path_stations = []
             return path_stations
         if number_of_transfers == 1:
             # create a graph with boarding and alighting routes and find the shortest path
@@ -208,7 +208,10 @@ class GtfsTransitGraph:
             list_routes = set(list_boarding_routes + list_alighting_routes)
             print list_boarding_routes, list_alighting_routes, list_routes
             subgraph_routes = self.subgraph_routes(list_routes)
-            path_stations = nx.shortest_path(subgraph_routes, origin_station, destination_station)
+            try:
+                path_stations = nx.shortest_path(subgraph_routes, origin_station, destination_station)
+            except nx.exception.NetworkXNoPath:
+                path_stations = []
             return path_stations
         else:
             # create a graph with boarding and alighting stations route
@@ -231,18 +234,25 @@ class GtfsTransitGraph:
                 # add this route and find the shortest path
                 list_routes = list(list_board_alight_routes) + [new_route]
                 subgraph_routes = self.subgraph_routes(list_routes)
-                path_length = nx.shortest_path_length(subgraph_routes, origin_station, destination_station)
+                try:
+                    path_length = nx.shortest_path_length(subgraph_routes, origin_station, destination_station)
+                except nx.exception.NetworkXNoPath:
+                    path_length = maxint
                 if path_length < min_path_length:
                     print new_route, path_length
                     min_path_length = path_length
                     best_route = new_route
 
             print best_route
-
-            print 'to be implemented'
-            a = b
-
-            return []
+            list_routes = list(list_board_alight_routes) + [best_route]
+            # print 'to be implemented'
+            # print unknown
+            subgraph_routes = self.subgraph_routes(list_routes)
+            try:
+                path_stations = nx.shortest_path(subgraph_routes, origin_station, destination_station)
+            except nx.exception.NetworkXNoPath:
+                path_stations = []
+            return path_stations
 
     def station_location_transfers(self, origin_station, destination_location, number_subway_routes, date_time_origin):
 
@@ -254,9 +264,9 @@ class GtfsTransitGraph:
         for key, dict_station in dict_route_stations_near_destination.iteritems():
             list_route_distances.append((key, dict_station))
         list_route_distances = sorted(list_route_distances, key=lambda tup:tup[1]['distance'])
-
+        list_boarding_routes = self.transit_graph.node[origin_station]['routes']
+        path_stations = []
         if number_subway_routes == 1:
-            list_boarding_routes = self.transit_graph.node[origin_station]['routes']
             station = ''
             for route, station_distance in list_route_distances:
                 if route in list_boarding_routes:
@@ -265,9 +275,29 @@ class GtfsTransitGraph:
             path_stations = self.shortest_path_n_transfers(origin_station, station, number_subway_routes-1)
 
         elif number_subway_routes > 1:
-            print 'destination_station', list_route_distances[0]
-            path_stations = self.shortest_path_n_transfers(origin_station, list_route_distances[0][1]['station'],\
-             number_subway_routes-1)
+            # find the shortest path nearest to destination station
+            if number_subway_routes == 2:
+                best_destination = 0
+
+                while True:
+                    if list_route_distances[best_destination][0] not in list_boarding_routes:
+                        print 'destination_station', list_route_distances[best_destination]
+                        path_stations = self.shortest_path_n_transfers(origin_station,\
+                         list_route_distances[best_destination][1]['station'],\
+                         number_subway_routes-1)
+
+                    best_destination += 1
+                    if len(path_stations) > 0 or best_destination > len(list_route_distances):
+                        #print unknown
+                        break
+            else:
+
+                print 'destination_station', list_route_distances[0]
+                path_stations = self.shortest_path_n_transfers(origin_station,\
+                 list_route_distances[0][1]['station'],\
+                 number_subway_routes-1)
+                #print unknown
+
         if len(path_stations) == 0:
             print 'There is no path'
             return []
@@ -314,3 +344,5 @@ class GtfsTransitGraph:
 
         for trip in list_passenger_trip:
             print trip
+        if number_subway_routes > 3:
+            print unknown
