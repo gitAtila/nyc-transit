@@ -2,6 +2,7 @@
 from sys import argv, maxint
 import pandas as pd
 import networkx as nx
+from datetime import datetime, timedelta
 from geopy.distance import vincenty
 
 import gtfs_processing as gp
@@ -270,9 +271,43 @@ class GtfsTransitGraph:
             list_trip_id = list(df_trips_weekday[df_trips_weekday['route_id'] == trip['boarding']['routes'][0]]['trip_id'].unique())
             # filter stop_times by trip_id
             df_stop_times_trip_id = df_stop_times[df_stop_times['trip_id'].isin(list_trip_id)]
+            # split dataframe by direction
+            df_stop_times_south = df_stop_times_trip_id[df_stop_times_trip_id['stop_id'].str.contains('S')]
+            df_stop_times_north = df_stop_times_trip_id[df_stop_times_trip_id['stop_id'].str.contains('N')]
             # filter stop_times by stop_id
-            df_stop_times_stop_id = df_stop_times_trip_id[df_stop_times_trip_id['stop_id'].str.contains(trip['boarding']['station'])]
-            print df_stop_times_stop_id
+            df_stop_times_south_boarding = df_stop_times_south[df_stop_times_south['stop_id'].str.contains(trip['boarding']['station'])]
+            df_stop_times_north_boarding = df_stop_times_north[df_stop_times_north['stop_id'].str.contains(trip['boarding']['station'])]
+
+            # convert departure time to datetime format
+            #df_stop_times_south['departure_time'] = pd.to_datetime(df_stop_times_south['departure_time'], format='%H:%M:%S')
+            # df_stop_times_north['departure_time'] = pd.to_datetime(df_stop_times_north['departure_time'], format='%H:%M:%S')
+
+            # find the next departure after passenger origin for both directions north and south
+            df_stop_times_south_boarding = df_stop_times_south_boarding[df_stop_times_south_boarding['departure_time']\
+             > date_time_origin.strftime('%H:%M:%S')]
+            s_stop_times_south_boarding = df_stop_times_south_boarding.sort_values(by=['departure_time']).iloc[0]
+
+            df_stop_times_north_boarding = df_stop_times_north_boarding[df_stop_times_north_boarding['departure_time']\
+             > date_time_origin.strftime('%H:%M:%S')]
+            s_stop_times_north_boarding = df_stop_times_north_boarding.sort_values(by=['departure_time']).iloc[0]
+
+            print date_time_origin
+            print s_stop_times_south_boarding
+            print s_stop_times_north_boarding
+
+            # find destination's direction
+            df_stop_times_south_trip_id = df_stop_times_south[df_stop_times_south['trip_id'] == s_stop_times_south_boarding['trip_id']]
+            df_stop_times_north_trip_id = df_stop_times_north[df_stop_times_north['trip_id'] == s_stop_times_north_boarding['trip_id']]
+            print df_stop_times_south_trip_id
+            print df_stop_times_north_trip_id
+            print trip['alighting']['station']
+            df_stop_times_south_alighting = df_stop_times_south_trip_id[df_stop_times_south_trip_id['stop_id']\
+             .str.contains(trip['alighting']['station'])]
+            print df_stop_times_south_alighting
+
+            # for index, stop_times in df_stop_times_south.iterrows():
+            #     print stop_times['trip_id'], stop_times['departure_time'], stop_times['stop_id']
+            #     break
             break
 
     def station_location_transfers(self, origin_station, destination_location, number_subway_routes, date_time_origin):
