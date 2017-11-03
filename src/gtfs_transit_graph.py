@@ -254,12 +254,33 @@ class GtfsTransitGraph:
                 path_stations = []
             return path_stations
 
+    def compute_trip_time(self, list_passenger_trip, date_time_origin):
+        df_stop_times = self.transit_feed.stop_times()
+        df_trips = self.transit_feed.trips()
+        df_calendar = self.transit_feed.calendar()
+
+        # get service_id in that weekday
+        list_service_id_weekday = df_calendar[df_calendar.iloc[:,1+date_time_origin.weekday()] == 1]['service_id'].tolist()
+        # filter df_trips by service_id
+        df_trips_weekday = df_trips[df_trips['service_id'].isin(list_service_id_weekday)]
+
+        for trip in list_passenger_trip:
+            print trip#['boarding']['route']
+            # filter trips by route
+            list_trip_id = list(df_trips_weekday[df_trips_weekday['route_id'] == trip['boarding']['routes'][0]]['trip_id'].unique())
+            # filter stop_times by trip_id
+            df_stop_times_trip_id = df_stop_times[df_stop_times['trip_id'].isin(list_trip_id)]
+            # filter stop_times by stop_id
+            df_stop_times_stop_id = df_stop_times_trip_id[df_stop_times_trip_id['stop_id'].str.contains(trip['boarding']['station'])]
+            print df_stop_times_stop_id
+            break
+
     def station_location_transfers(self, origin_station, destination_location, number_subway_routes, date_time_origin):
 
         ## get the nearest station from destination location for each route
         dict_route_stations_near_destination = self.stations_near_point_per_route(destination_location)
-        # construct probable trips
 
+        # construct probable trips
         list_route_distances = []
         for key, dict_station in dict_route_stations_near_destination.iteritems():
             list_route_distances.append((key, dict_station))
@@ -308,7 +329,5 @@ class GtfsTransitGraph:
             print self.transit_graph.node[station]['routes']
         list_passenger_trip = self.trips_from_stations_path(path_stations)
 
-        for trip in list_passenger_trip:
-            print trip
-        # if number_subway_routes < len(list_passenger_trip):
-        #     print unknown
+        # compute trip time
+        list_passenger_trip = self.compute_trip_time(list_passenger_trip, date_time_origin)

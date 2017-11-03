@@ -252,34 +252,20 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 				 df_boarding_station['stop_name'].iloc[0]
 
 				# get census tract of origin and census tract of destination
-				# try:
 				# discover which was the alight station
 				## get the centroid of the census tract
 				gdf_ct_destination = gdf_census_tract[gdf_census_tract['ct2010'] == ct_destination]
 				gs_ct_destination = gdf_ct_destination[gdf_ct_destination['boro_code'] == borough_survey_shape[borough_destination]]
 				destination_centroid = gs_ct_destination.centroid
-				#print destination_centroid
 
 				if len(destination_centroid) == 0:
 					print 'Destination location was not found'
-					travel = {'transfers': 0, 'alight_destination_distance': None, 'subway_distance': None}
 				else:
 					# get subway passenger route through graph
-					# travel = nyc_transit_graph.station_location_shortest_walk_distance(gtfs_station_id, destination_centroid)
-					# travel['transfers'] = (len(travel['stations'])/2)-1
-			        # del travel['stations']
 					print gtfs_station_id
 					travel = nyc_transit_graph.station_location_transfers(gtfs_station_id, destination_centroid,\
 					 number_subway_routes, date_time_origin)
-				# except:
-					#travel = {'transfers': 0, 'alight_destination_distance': None, 'subway_distance': None}
-
-				# if type(travel) == list:
-				# 	return None
-
-				# travel['sampn_perno_tripno'] = sampn_perno_tripno
-				# list_bus_route.append(travel)
-				# print travel
+					break
 				print ''
 
 			else:
