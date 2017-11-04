@@ -10,9 +10,9 @@ from shapely.geometry import Point, LineString
 
 class TransitFeedProcessing:
 
-    def __init__(self, gtfs_zip_folder):
+    def __init__(self, gtfs_zip_folder, trip_times_path):
         self.gtfs_zip_folder = gtfs_zip_folder
-
+        self.df_trip_times_path = pd.read_csv(trip_times_path)
 
     def read_file_in_zip(self, file_name):
         zip_file = zipfile.ZipFile(self.gtfs_zip_folder)
@@ -76,9 +76,9 @@ class TransitFeedProcessing:
 
     def stop_times_trip(self, trip_id):
         df_stop_times = self.read_file_in_zip('stop_times.txt')
-        df_stop_times_trip_id = df_stop_times[df_stop_times['trip_id'] == trip_id]
-        df_stop_times_trip_id = self.format_stop_times(df_stop_times_trip_id)
-        return df_stop_times_trip_id
+        df_stop_times_trip = df_stop_times[df_stop_times['trip_id'] == trip_id]
+        #df_stop_times_trip_id = self.format_stop_times(df_stop_times_trip_id)
+        return df_stop_times_trip
 
     def transfers(self):
         return self.read_file_in_zip('transfers.txt')
@@ -91,6 +91,37 @@ class TransitFeedProcessing:
 
     def calendar(self):
         return self.read_file_in_zip('calendar.txt')
+
+    def trips_start_end_times(self, df_trips, df_stop_times):
+        list_start_end_times = []
+        df_stop_times = df_stop_times[['trip_id', 'departure_time']]
+        for index, trip in df_trips.iterrows():
+            trip_id = trip['trip_id']
+            times_trip = df_stop_times[df_stop_times['trip_id'] == trip_id]
+            sorted_trip_time = times_trip.sort_values(by=['departure_time'])
+            start_time = sorted_trip_time.iloc[0]['departure_time']
+            end_time = sorted_trip_time.iloc[-1]['departure_time']
+            list_start_end_times.append({'trip_id': trip_id, 'route_id': trip['route_id'],\
+            'start_time': start_time, 'end_time':end_time})
+            print list_start_end_times[-1]
+        return pd.DataFrame(list_start_end_times)
+
+    def service_weekday(self, day_type):
+        df_calendar = self.calendar()
+        # get service_id in that weekday
+        list_service_id = []
+        if day_type == 1: # weekday
+            for index in range(1,6):
+                print index
+                list_service_id += df_calendar[df_calendar.iloc[:,index] == 1]['service_id'].tolist()
+            list_service_id = set(list_service_id)
+        elif day_type == 2: # saturday
+            list_service_id = df_calendar[df_calendar.iloc[:,6] == 1]['service_id'].tolist()
+        elif day_type == 3: # sunday
+            list_service_id = df_calendar[df_calendar.iloc[:,7] == 1]['service_id'].tolist()
+        else:
+            return None
+        return list_service_id
 
     def distinct_route_each_station(self):
         dict_stop_route = dict()
@@ -149,55 +180,6 @@ class TransitFeedProcessing:
             previous_position = current_position
         return total_distance
 
-    def trip_start_end_times(self, df_trips, df_stop_times):
-        list_start_end_times = []
-        df_stop_times = df_stop_times[['trip_id', 'departure_time']]
-        for index, trip in df_trips.iterrows():
-            trip_id = trip['trip_id']
-            times_trip = df_stop_times[df_stop_times['trip_id'] == trip_id]
-            sorted_trip_time = times_trip.sort_values(by=['departure_time'])
-            start_time = sorted_trip_time.iloc[0]['departure_time']
-            end_time = sorted_trip_time.iloc[-1]['departure_time']
-            list_start_end_times.append({'trip_id': trip_id, 'start_time': start_time, 'end_time':end_time})
-            print list_start_end_times[-1]
-        return pd.DataFrame(list_start_end_times)
-
-    def trips_in_progress_time(self, df_trips_start_end_times, date_time):
-        df_calendar = self.calendar()
-
-        # get service_id in that weekday
-        list_service_id = []
-        date_time_weekday = date_time.weekday()
-        if date_time_weekday >= 0 and date_time_weekday <= 4: #weekday
-            for index in range(1,6):
-                print index
-                list_service_id += df_calendar[df_calendar.iloc[:,index] == 1]['service_id'].tolist()
-            list_service_id = set(list_service_id)
-        elif date_time_weekday == 5: # saturday
-            list_service_id = df_calendar[df_calendar.iloc[:,6] == 1]['service_id'].tolist()
-        elif date_time_weekday == 6: # saturday
-            list_service_id = df_calendar[df_calendar.iloc[:,7] == 1]['service_id'].tolist()
-        else:
-            return None
-
-        list_trip_id = []
-        for index, start_end in df_trips_start_end_times.iterrows():
-            start_time = start_end['start_time']
-            end_time = start_end['end_time']
-            in_time = date_time.time()
-            if start_time <= end_time:
-                if in_time >= start_time and in_time <= end_time:
-                    list_trip_id.append(start_end['trip_id'])
-            else:
-                if in_time >= start_time and in_time >= end_time:
-                    list_trip_id.append(start_end['trip_id'])
-
-        df_trips = df_trips[df_trips['service_id'].isin(list_service_id)]
-        df_trips = df_trips[df_trips['trip_id'].isin(list_trip_id)]
-        
-        return df_trips
-
-
     def distinct_links_between_stations(self, day_type):
         df_stop_times = self.stop_times()
         df_trips = self.trips()
@@ -219,20 +201,15 @@ class TransitFeedProcessing:
 
         # filter df_trips by service_id
         list_trip_id = list(df_trips[df_trips['service_id'].isin(list_service_id)]['trip_id'].unique())
-        #df_trips = df_trips[df_trips['service_id'].isin(list_service_id)]
         # filter trips by time
         # get stop_times in that day
         df_stop_times = df_stop_times[df_stop_times['trip_id'].isin(list_trip_id)]
 
-        # get trips in progress at a specific time
-
-        gdf_stops = self.geo_stops()
-        gdf_shapes = self.geo_shape_lines()
         list_distinct_links = []
         link_attributes = []
 
-        previous_stop = df_stop_times.iloc[0]
-        for index, current_stop in df_stop_times.loc[1:].iterrows():
+        previous_stop = self.df_stop_times.iloc[0]
+        for index, current_stop in self.df_stop_times.loc[1:].iterrows():
             # edges are consecutive stations of a line
             if previous_stop['trip_id'] == current_stop['trip_id']\
              and previous_stop['stop_sequence'] == (current_stop['stop_sequence']-1):
@@ -265,6 +242,28 @@ class TransitFeedProcessing:
 
         df_edge_attributes = pd.DataFrame(link_attributes)
         return df_edge_attributes
+
+    def active_stops_route(self, date_time, route):
+
+        # trips happening at the moment
+        route_trips = self.df_trips_times[self.df_trips_times['route_id'] == route]
+        list_trip_id = []
+        for index, start_end in route_trips.iterrows():
+            start_time = start_end['start_time']
+            end_time = start_end['end_time']
+            in_time = date_time.time()
+            if start_time <= end_time:
+                if in_time >= start_time and in_time <= end_time:
+                    list_trip_id.append(start_end['trip_id'])
+            else:
+                if in_time >= start_time and in_time >= end_time:
+                    list_trip_id.append(start_end['trip_id'])
+
+        list_stops = []
+        for trip_id in list_trip_id:
+            list_stops += self.stop_times_trip(trip_id)['stop_id'].tolist()
+
+        return list_stops
 
     def links_between_stations(self):
         df_stop_times = self.stop_times()
@@ -316,10 +315,11 @@ class TransitFeedProcessing:
         df_edge_attributes = pd.DataFrame(link_attributes)
         return df_edge_attributes
 
-from sys import argv
-gtfs_zip_folder = argv[1]
-gp = TransitFeedProcessing(gtfs_zip_folder)
-df_stop_times = gp.stop_times()
-df_trips = gp.trips()
-df_start_end_trips = gp.trip_start_end_times(df_trips, df_stop_times)
-print df_start_end_trips
+# from sys import argv
+# gtfs_zip_folder = argv[1]
+# gp = TransitFeedProcessing(gtfs_zip_folder)
+# df_stop_times = gp.stop_times()
+#
+# df_trips = gp.trips()
+# df_start_end_trips = gp.trips_start_end_times(df_trips, df_stop_times)
+# print df_start_end_trips

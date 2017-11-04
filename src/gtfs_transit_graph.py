@@ -9,9 +9,9 @@ import gtfs_processing as gp
 
 class GtfsTransitGraph:
 
-    def __init__(self, gtfs_links_path, gtfs_path):
+    def __init__(self, gtfs_links_path, gtfs_path, day_type):
         self.df_transit_links = pd.read_csv(gtfs_links_path)
-        self.transit_feed = gp.TransitFeedProcessing(gtfs_path)
+        self.transit_feed = gp.TransitFeedProcessing(gtfs_path, day_type)
         self.transit_graph = self.create_transit_graph()
 
     def create_transit_graph(self):
@@ -87,6 +87,19 @@ class GtfsTransitGraph:
                     list_node.append(key)
             elif dict_attribute[node_key] == node_value:
                 list_node.append(key)
+        subgraph = self.transit_graph.subgraph(list_node)
+        return subgraph
+
+    def subgraph_routes(self, list_route):
+        list_node = []
+        for key, dict_attribute in self.transit_graph.nodes_iter(data=True):
+            if type(dict_attribute['routes']) == list:
+                for route in list_route:
+                    if route in dict_attribute['routes']:
+                        list_node.append(key)
+            elif dict_attribute['routes'] == node_value:
+                for route in list_route:
+                    sslist_node.append(key)
         subgraph = self.transit_graph.subgraph(list_node)
         return subgraph
 
@@ -191,8 +204,9 @@ class GtfsTransitGraph:
 
         path_stations = []
         if number_of_transfers == 0:
-            # create a graph with boarding routes and find the shortest path
+            # create a graph with boarding routes and with active stops for each route
             list_boarding_routes = self.transit_graph.node[origin_station]['routes']
+############### create a subgraph with active routes
             subgraph_routes = self.subgraph_routes(list_boarding_routes)
             try:
                 path_stations = nx.shortest_path(subgraph_routes, origin_station, destination_station)
@@ -303,7 +317,8 @@ class GtfsTransitGraph:
             #     break
 
 
-    def station_location_transfers(self, origin_station, destination_location, number_subway_routes, date_time_origin):
+    def station_location_transfers(self, origin_station, destination_location, number_subway_routes,\
+     date_time_origin):
 
         ## get the nearest station from destination location for each route
         dict_route_stations_near_destination = self.stations_near_point_per_route(destination_location)
@@ -315,6 +330,7 @@ class GtfsTransitGraph:
         list_route_distances = sorted(list_route_distances, key=lambda tup:tup[1]['distance'])
         list_boarding_routes = self.transit_graph.node[origin_station]['routes']
         path_stations = []
+
         if number_subway_routes == 1:
             station = ''
             for route, station_distance in list_route_distances:
@@ -358,4 +374,4 @@ class GtfsTransitGraph:
         list_passenger_trip = self.trips_from_stations_path(path_stations)
 
         # compute trip time
-        list_passenger_trip = self.compute_trip_time(list_passenger_trip, date_time_origin)
+        #list_passenger_trip = self.compute_trip_time(list_passenger_trip, date_time_origin)

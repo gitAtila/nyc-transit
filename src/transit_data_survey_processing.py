@@ -21,8 +21,9 @@ survey_stations_path = argv[6]
 equivalence_survey_shapefile_path = argv[7]
 equivalence_survey_gtfs_path = argv[8]
 gtfs_path = argv[9]
+trip_times_path = argv[10]
 
-results_folder = argv[10]
+results_folder = argv[11]
 
 def float_to_int_str(float_number):
 	return str(float_number).split('.')[0]
@@ -166,7 +167,7 @@ def subway_trips_shape(df_trips_in_nyc, shapefile_stations_path, shapefile_links
 def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folder,\
  result_file):
 
- 	transit_feed = gp.TransitFeedProcessing(gtfs_path)
+ 	transit_feed = gp.TransitFeedProcessing(gtfs_path, trip_times_path)
 	df_subway_stations = transit_feed.stops()
 	df_subway_stations = df_subway_stations[df_subway_stations['location_type'] == 1]
 
@@ -178,7 +179,7 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 	df_subway_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 1]
 
 	# load transit_graph
-	nyc_transit_graph = gtg.GtfsTransitGraph(gtfs_links_path, gtfs_path)
+	nyc_transit_graph = gtg.GtfsTransitGraph(gtfs_links_path, gtfs_path, trip_times_path)
 
 	for index, sbwy_trip in df_subway_trips.iterrows():
 
