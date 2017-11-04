@@ -308,7 +308,7 @@ class GtfsTransitGraph:
             # for index, stop_times in df_stop_times_south.iterrows():
             #     print stop_times['trip_id'], stop_times['departure_time'], stop_times['stop_id']
             #     break
-            break
+            
 
     def station_location_transfers(self, origin_station, destination_location, number_subway_routes, date_time_origin):
 
