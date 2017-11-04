@@ -9,9 +9,9 @@ import gtfs_processing as gp
 
 class GtfsTransitGraph:
 
-    def __init__(self, gtfs_links_path, gtfs_path, day_type):
+    def __init__(self, gtfs_links_path, gtfs_path,trip_times_path, day_type):
         self.df_transit_links = pd.read_csv(gtfs_links_path)
-        self.transit_feed = gp.TransitFeedProcessing(gtfs_path, day_type)
+        self.transit_feed = gp.TransitFeedProcessing(gtfs_path, trip_times_path, day_type)
         self.transit_graph = self.create_transit_graph()
 
     def create_transit_graph(self):
@@ -103,6 +103,14 @@ class GtfsTransitGraph:
         subgraph = self.transit_graph.subgraph(list_node)
         return subgraph
 
+    def subgraph_active_stops(self, list_route, date_time):
+        list_active_stops = []
+        for route in list_route:
+            list_active_stops += self.transit_feed.active_stops_route(date_time, route)
+        list_active_stops = list(set(list_active_stops))
+        subgraph = self.transit_graph.subgraph(list_active_stops)
+        return subgraph
+
     def subgraph_routes(self, list_route):
         list_node = []
         for key, dict_attribute in self.transit_graph.nodes_iter(data=True):
@@ -120,14 +128,15 @@ class GtfsTransitGraph:
         return vincenty((point_lon_lat_A[1], point_lon_lat_A[0]),\
          (point_lon_lat_B[1], point_lon_lat_B[0])).meters
 
-    def stations_near_point_per_route(self, gs_point):
+    def stations_near_point_per_route(self, gs_point, date_time):
         list_trunk_stations = list()
         list_unique_routes = self.unique_node_values('routes')
 
         # Find the nearest station from point for each route
         dict_stations_route = dict()
         for route in list_unique_routes:
-            g_route = self.subgraph_node('routes', route)
+            g_route = self.subgraph_active_stops([route], date_time)
+            #g_route = self.subgraph_node('routes', route)
             # get the nearest station
             shortest_distance = maxint
             best_station = -1
@@ -177,7 +186,6 @@ class GtfsTransitGraph:
 
         #append last aligth
         list_passenger_trip[-1]['alighting'] = {'station': path_stations[-1], 'routes': previous_routes}
-
         return list_passenger_trip
 
     def station_location_shortest_walk_distance(self, origin_station, destination_location):
@@ -199,15 +207,15 @@ class GtfsTransitGraph:
         return {'subway_distance': path_length, 'alight_destination_distance': dict_last_station['distance'],\
          'stations': list_passenger_trip}
 
-    def shortest_path_n_transfers(self, origin_station, destination_station, number_of_transfers):
+    def shortest_path_n_transfers(self, origin_station, destination_station, number_of_transfers, date_time_origin):
         print 'number_of_transfers', number_of_transfers
 
         path_stations = []
         if number_of_transfers == 0:
             # create a graph with boarding routes and with active stops for each route
             list_boarding_routes = self.transit_graph.node[origin_station]['routes']
-############### create a subgraph with active routes
-            subgraph_routes = self.subgraph_routes(list_boarding_routes)
+            subgraph_routes = self.subgraph_active_stops(list_boarding_routes, date_time_origin)
+            #subgraph_routes = self.subgraph_routes(list_boarding_routes)
             try:
                 path_stations = nx.shortest_path(subgraph_routes, origin_station, destination_station)
             except nx.exception.NetworkXNoPath:
@@ -219,7 +227,8 @@ class GtfsTransitGraph:
             list_alighting_routes = self.transit_graph.node[destination_station]['routes']
             list_routes = set(list_boarding_routes + list_alighting_routes)
             print list_boarding_routes, list_alighting_routes, list_routes
-            subgraph_routes = self.subgraph_routes(list_routes)
+            subgraph_routes = self.subgraph_active_stops(list_routes, date_time_origin)
+            #subgraph_routes = self.subgraph_routes(list_routes)
             try:
                 path_stations = nx.shortest_path(subgraph_routes, origin_station, destination_station)
             except nx.exception.NetworkXNoPath:
@@ -245,7 +254,8 @@ class GtfsTransitGraph:
             for new_route in list_unique_routes:
                 # add this route and find the shortest path
                 list_routes = list(list_board_alight_routes) + [new_route]
-                subgraph_routes = self.subgraph_routes(list_routes)
+                subgraph_routes = self.subgraph_active_stops(list_routes, date_time_origin)
+                #subgraph_routes = self.subgraph_routes(list_routes)
                 try:
                     path_length = nx.shortest_path_length(subgraph_routes, origin_station, destination_station)
                 except nx.exception.NetworkXNoPath:
@@ -257,8 +267,8 @@ class GtfsTransitGraph:
 
             print best_route
             list_routes = list(list_board_alight_routes) + [best_route]
-
-            subgraph_routes = self.subgraph_routes(list_routes)
+            subgraph_routes = self.subgraph_active_stops(list_routes, date_time_origin)
+            #subgraph_routes = self.subgraph_routes(list_routes)
             try:
                 path_stations = nx.shortest_path(subgraph_routes, origin_station, destination_station)
             except nx.exception.NetworkXNoPath:
@@ -267,50 +277,53 @@ class GtfsTransitGraph:
             return path_stations
 
     def compute_trip_time(self, list_passenger_trip, date_time_origin):
-        df_stop_times = self.transit_feed.stop_times()
-        df_trips = self.transit_feed.trips()
-        df_calendar = self.transit_feed.calendar()
 
-        # get service_id in that weekday
-        list_service_id_weekday = df_calendar[df_calendar.iloc[:,1+date_time_origin.weekday()] == 1]['service_id'].tolist()
-        # filter df_trips by service_id
-        df_trips_weekday = df_trips[df_trips['service_id'].isin(list_service_id_weekday)]
+        for passenger_trip in list_passenger_trip:
+            trip_duration = self.transit_feed.trip_duration(passenger_trip['boarding'], passenger_trip['alighting'])
+        # df_stop_times = self.transit_feed.stop_times()
+        # df_trips = self.transit_feed.trips()
+        # df_calendar = self.transit_feed.calendar()
 
-        for trip in list_passenger_trip:
-            print trip#['boarding']['route']
-            # filter trips by route
-            list_trip_id = list(df_trips_weekday[df_trips_weekday['route_id'] == trip['boarding']['routes'][0]]['trip_id'].unique())
-            # filter stop_times by trip_id
-            df_stop_times_trip_id = df_stop_times[df_stop_times['trip_id'].isin(list_trip_id)]
-            # split dataframe by direction
-            df_stop_times_south = df_stop_times_trip_id[df_stop_times_trip_id['stop_id'].str.contains('S')]
-            df_stop_times_north = df_stop_times_trip_id[df_stop_times_trip_id['stop_id'].str.contains('N')]
-            # filter stop_times by stop_id
-            df_stop_times_south_boarding = df_stop_times_south[df_stop_times_south['stop_id'].str.contains(trip['boarding']['station'])]
-            df_stop_times_north_boarding = df_stop_times_north[df_stop_times_north['stop_id'].str.contains(trip['boarding']['station'])]
-
-            # find the next departure after passenger origin for both directions north and south
-            df_stop_times_south_boarding = df_stop_times_south_boarding[df_stop_times_south_boarding['departure_time']\
-             > date_time_origin.time()]
-            s_stop_times_south_boarding = df_stop_times_south_boarding.sort_values(by=['departure_time']).iloc[0]
-
-            df_stop_times_north_boarding = df_stop_times_north_boarding[df_stop_times_north_boarding['departure_time']\
-             > date_time_origin.time()]
-            s_stop_times_north_boarding = df_stop_times_north_boarding.sort_values(by=['departure_time']).iloc[0]
-
-            print date_time_origin
-            print s_stop_times_south_boarding
-            print s_stop_times_north_boarding
-
-            # find destination's direction
-            df_stop_times_south_trip_id = df_stop_times_south[df_stop_times_south['trip_id'] == s_stop_times_south_boarding['trip_id']]
-            df_stop_times_north_trip_id = df_stop_times_north[df_stop_times_north['trip_id'] == s_stop_times_north_boarding['trip_id']]
-            print df_stop_times_south_trip_id
-            print df_stop_times_north_trip_id
-            print trip['alighting']['station']
-            df_stop_times_south_alighting = df_stop_times_south_trip_id[df_stop_times_south_trip_id['stop_id']\
-             .str.contains(trip['alighting']['station'])]
-            print df_stop_times_south_alighting
+        # # get service_id in that weekday
+        # list_service_id_weekday = df_calendar[df_calendar.iloc[:,1+date_time_origin.weekday()] == 1]['service_id'].tolist()
+        # # filter df_trips by service_id
+        # df_trips_weekday = df_trips[df_trips['service_id'].isin(list_service_id_weekday)]
+        #
+        # for trip in list_passenger_trip:
+        #     print trip#['boarding']['route']
+        #     # filter trips by route
+        #     list_trip_id = list(df_trips_weekday[df_trips_weekday['route_id'] == trip['boarding']['routes'][0]]['trip_id'].unique())
+        #     # filter stop_times by trip_id
+        #     df_stop_times_trip_id = df_stop_times[df_stop_times['trip_id'].isin(list_trip_id)]
+        #     # split dataframe by direction
+        #     df_stop_times_south = df_stop_times_trip_id[df_stop_times_trip_id['stop_id'].str.contains('S')]
+        #     df_stop_times_north = df_stop_times_trip_id[df_stop_times_trip_id['stop_id'].str.contains('N')]
+        #     # filter stop_times by stop_id
+        #     df_stop_times_south_boarding = df_stop_times_south[df_stop_times_south['stop_id'].str.contains(trip['boarding']['station'])]
+        #     df_stop_times_north_boarding = df_stop_times_north[df_stop_times_north['stop_id'].str.contains(trip['boarding']['station'])]
+        #
+        #     # find the next departure after passenger origin for both directions north and south
+        #     df_stop_times_south_boarding = df_stop_times_south_boarding[df_stop_times_south_boarding['departure_time']\
+        #      > date_time_origin.time()]
+        #     s_stop_times_south_boarding = df_stop_times_south_boarding.sort_values(by=['departure_time']).iloc[0]
+        #
+        #     df_stop_times_north_boarding = df_stop_times_north_boarding[df_stop_times_north_boarding['departure_time']\
+        #      > date_time_origin.time()]
+        #     s_stop_times_north_boarding = df_stop_times_north_boarding.sort_values(by=['departure_time']).iloc[0]
+        #
+        #     print date_time_origin
+        #     print s_stop_times_south_boarding
+        #     print s_stop_times_north_boarding
+        #
+        #     # find destination's direction
+        #     df_stop_times_south_trip_id = df_stop_times_south[df_stop_times_south['trip_id'] == s_stop_times_south_boarding['trip_id']]
+        #     df_stop_times_north_trip_id = df_stop_times_north[df_stop_times_north['trip_id'] == s_stop_times_north_boarding['trip_id']]
+        #     print df_stop_times_south_trip_id
+        #     print df_stop_times_north_trip_id
+        #     print trip['alighting']['station']
+        #     df_stop_times_south_alighting = df_stop_times_south_trip_id[df_stop_times_south_trip_id['stop_id']\
+        #      .str.contains(trip['alighting']['station'])]
+        #     print df_stop_times_south_alighting
 
             # for index, stop_times in df_stop_times_south.iterrows():
             #     print stop_times['trip_id'], stop_times['departure_time'], stop_times['stop_id']
@@ -321,7 +334,8 @@ class GtfsTransitGraph:
      date_time_origin):
 
         ## get the nearest station from destination location for each route
-        dict_route_stations_near_destination = self.stations_near_point_per_route(destination_location)
+        dict_route_stations_near_destination = self.stations_near_point_per_route(destination_location,\
+         date_time_origin)
 
         # construct probable trips
         list_route_distances = []
@@ -338,7 +352,7 @@ class GtfsTransitGraph:
                     station = station_distance['station']
                     break
             print 'destination_station', station
-            path_stations = self.shortest_path_n_transfers(origin_station, station, number_subway_routes-1)
+            path_stations = self.shortest_path_n_transfers(origin_station, station, number_subway_routes-1, date_time_origin)
 
         elif number_subway_routes > 1:
             # find the shortest path nearest to destination station
@@ -350,7 +364,7 @@ class GtfsTransitGraph:
                         print 'destination_station', list_route_distances[best_destination]
                         path_stations = self.shortest_path_n_transfers(origin_station,\
                          list_route_distances[best_destination][1]['station'],\
-                         number_subway_routes-1)
+                         number_subway_routes-1, date_time_origin)
 
                     best_destination += 1
                     if len(path_stations) > 0 or best_destination > len(list_route_distances):
@@ -361,7 +375,7 @@ class GtfsTransitGraph:
                 print 'destination_station', list_route_distances[0]
                 path_stations = self.shortest_path_n_transfers(origin_station,\
                  list_route_distances[0][1]['station'],\
-                 number_subway_routes-1)
+                 number_subway_routes-1, date_time_origin)
                 #print unknown
 
         if len(path_stations) == 0:
@@ -371,7 +385,11 @@ class GtfsTransitGraph:
         print path_stations
         for station in path_stations:
             print self.transit_graph.node[station]['routes']
+
         list_passenger_trip = self.trips_from_stations_path(path_stations)
+
+        for trip in list_passenger_trip:
+            print trip
 
         # compute trip time
         #list_passenger_trip = self.compute_trip_time(list_passenger_trip, date_time_origin)

@@ -10,9 +10,22 @@ from shapely.geometry import Point, LineString
 
 class TransitFeedProcessing:
 
-    def __init__(self, gtfs_zip_folder, trip_times_path):
+    def __init__(self, gtfs_zip_folder, trip_times_path, day_type):
         self.gtfs_zip_folder = gtfs_zip_folder
-        self.df_trip_times_path = pd.read_csv(trip_times_path)
+        self.df_trip_times = pd.read_csv(trip_times_path)
+        self.df_trips = self.trips()
+        self.df_stop_times = self.stop_times()
+
+        # read trips and stop_times acording to day type
+        list_service = self.service_weekday(day_type)
+        self.df_trips = self.df_trips[self.df_trips['service_id'].isin(list_service)]
+        list_trip_id = list(self.df_trips['trip_id'].unique())
+        self.df_stop_times = self.df_stop_times[self.df_stop_times['trip_id'].isin(list_trip_id)]
+        self.df_trip_times = self.df_trip_times[self.df_trip_times['trip_id'].isin(list_trip_id)]
+
+        # format datetime
+        self.df_trip_times['start_time'] = pd.to_datetime(self.df_trip_times['start_time'], format='%H:%M:%S')
+        self.df_trip_times['end_time'] = pd.to_datetime(self.df_trip_times['end_time'], format='%H:%M:%S')
 
     def read_file_in_zip(self, file_name):
         zip_file = zipfile.ZipFile(self.gtfs_zip_folder)
@@ -125,17 +138,40 @@ class TransitFeedProcessing:
 
     def distinct_route_each_station(self):
         dict_stop_route = dict()
-        df_stop_times = self.stop_times()
-        df_trips = self.trips()
+        # df_stop_times = self.stop_times()
+        # df_trips = self.trips()
         # get distinct trip_id for each stop_id
-        list_unique_stop_id = list(df_stop_times['stop_id'].unique())
+        list_unique_stop_id = list(self.df_stop_times['stop_id'].unique())
         for stop_id in list_unique_stop_id:
-            list_unique_trip_id = list(df_stop_times[df_stop_times['stop_id'] == stop_id]['trip_id'].unique())
+            list_unique_trip_id = list(self.df_stop_times[self.df_stop_times['stop_id'] == stop_id]['trip_id'].unique())
             list_route_id = []
             for trip_id in list_unique_trip_id:
-                route_id = df_trips[df_trips['trip_id'] == trip_id].iloc[0]
+                route_id = self.df_trips[self.df_trips['trip_id'] == trip_id].iloc[0]
                 dict_stop_route.setdefault(stop_id, []).append(route_id)
         return dict_stop_route
+
+    def active_stops_route(self, date_time, route):
+        # trips happening at the moment
+        route_trips = self.df_trip_times[self.df_trip_times['route_id'] == route]
+        list_trip_id = []
+        for index, start_end in route_trips.iterrows():
+            start_time = start_end['start_time'].time()
+            end_time = start_end['end_time'].time()
+            in_time = date_time.time()
+            if start_time <= end_time:
+                if in_time >= start_time and in_time <= end_time:
+                    list_trip_id.append(start_end['trip_id'])
+                    break
+            else:
+                if in_time >= start_time and in_time >= end_time:
+                    list_trip_id.append(start_end['trip_id'])
+                    break
+
+        list_stops = []
+        for trip_id in list_trip_id:
+            list_stops += self.stop_times_trip(trip_id)['stop_id'].tolist()
+        list_stops = [stop_id[:-1] for stop_id in list_stops]
+        return list_stops
 
     '''
         Process stop times
@@ -180,30 +216,30 @@ class TransitFeedProcessing:
             previous_position = current_position
         return total_distance
 
-    def distinct_links_between_stations(self, day_type):
-        df_stop_times = self.stop_times()
-        df_trips = self.trips()
-        df_calendar = self.calendar()
-
-        # get service_id in that weekday
-        list_service_id = []
-        if day_type == 1: # weekday
-            for index in range(1,6):
-                print index
-                list_service_id += df_calendar[df_calendar.iloc[:,index] == 1]['service_id'].tolist()
-            list_service_id = set(list_service_id)
-        elif day_type == 2: # saturday
-            list_service_id = df_calendar[df_calendar.iloc[:,6] == 1]['service_id'].tolist()
-        elif day_type == 3: # sunday
-            list_service_id = df_calendar[df_calendar.iloc[:,7] == 1]['service_id'].tolist()
-        else:
-            return None
-
-        # filter df_trips by service_id
-        list_trip_id = list(df_trips[df_trips['service_id'].isin(list_service_id)]['trip_id'].unique())
-        # filter trips by time
-        # get stop_times in that day
-        df_stop_times = df_stop_times[df_stop_times['trip_id'].isin(list_trip_id)]
+    def distinct_links_between_stations(self):
+        # df_stop_times = self.stop_times()
+        # df_trips = self.trips()
+        # df_calendar = self.calendar()
+        #
+        # # get service_id in that weekday
+        # list_service_id = []
+        # if day_type == 1: # weekday
+        #     for index in range(1,6):
+        #         print index
+        #         list_service_id += df_calendar[df_calendar.iloc[:,index] == 1]['service_id'].tolist()
+        #     list_service_id = set(list_service_id)
+        # elif day_type == 2: # saturday
+        #     list_service_id = df_calendar[df_calendar.iloc[:,6] == 1]['service_id'].tolist()
+        # elif day_type == 3: # sunday
+        #     list_service_id = df_calendar[df_calendar.iloc[:,7] == 1]['service_id'].tolist()
+        # else:
+        #     return None
+        #
+        # # filter df_trips by service_id
+        # list_trip_id = list(df_trips[df_trips['service_id'].isin(list_service_id)]['trip_id'].unique())
+        # # filter trips by time
+        # # get stop_times in that day
+        # df_stop_times = df_stop_times[df_stop_times['trip_id'].isin(list_trip_id)]
 
         list_distinct_links = []
         link_attributes = []
@@ -226,7 +262,7 @@ class TransitFeedProcessing:
 
                     # get linestring of line
                     trip_id = current_stop['trip_id']
-                    s_trip = df_trips[df_trips['trip_id'] == trip_id]
+                    s_trip = self.df_trips[self.df_trips['trip_id'] == trip_id]
 
                     # get parent station
                     from_parent_station = from_stop['parent_station'].iloc[0]
@@ -243,38 +279,16 @@ class TransitFeedProcessing:
         df_edge_attributes = pd.DataFrame(link_attributes)
         return df_edge_attributes
 
-    def active_stops_route(self, date_time, route):
-
-        # trips happening at the moment
-        route_trips = self.df_trips_times[self.df_trips_times['route_id'] == route]
-        list_trip_id = []
-        for index, start_end in route_trips.iterrows():
-            start_time = start_end['start_time']
-            end_time = start_end['end_time']
-            in_time = date_time.time()
-            if start_time <= end_time:
-                if in_time >= start_time and in_time <= end_time:
-                    list_trip_id.append(start_end['trip_id'])
-            else:
-                if in_time >= start_time and in_time >= end_time:
-                    list_trip_id.append(start_end['trip_id'])
-
-        list_stops = []
-        for trip_id in list_trip_id:
-            list_stops += self.stop_times_trip(trip_id)['stop_id'].tolist()
-
-        return list_stops
-
     def links_between_stations(self):
-        df_stop_times = self.stop_times()
-        df_trips = self.trips
+        # df_stop_times = self.stop_times()
+        # df_trips = self.trips
 
         gdf_stops = self.geo_stops()
         gdf_shapes = self.geo_shape_lines()
         link_attributes = []
 
-        previous_stop = df_stop_times.iloc[0]
-        for index, current_stop in df_stop_times.loc[1:].iterrows():
+        previous_stop = self.df_stop_times.iloc[0]
+        for index, current_stop in self.df_stop_times.loc[1:].iterrows():
             # edges are consecutive stations of a line
             if previous_stop['trip_id'] == current_stop['trip_id']\
              and previous_stop['stop_sequence'] == (current_stop['stop_sequence']-1):
@@ -288,7 +302,7 @@ class TransitFeedProcessing:
                 to_stop = gdf_stops[gdf_stops['stop_id'] == to_stop_id]
 
                 # get linestring of line
-                s_trip = df_trips[df_trips['trip_id'] == trip_id]
+                s_trip = self.df_trips[self.df_trips['trip_id'] == trip_id]
                 s_line = gdf_shapes[gdf_shapes['shape_id'] == s_trip['shape_id'].iloc[0]]
 
                 # cut linestring by stations

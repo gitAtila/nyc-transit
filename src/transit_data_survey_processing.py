@@ -164,10 +164,10 @@ def subway_trips_shape(df_trips_in_nyc, shapefile_stations_path, shapefile_links
 	print df_bus_routes
 	df_bus_routes.to_csv(results_folder + result_file, index_label='id')
 
-def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folder,\
+def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, day_type, results_folder,\
  result_file):
 
- 	transit_feed = gp.TransitFeedProcessing(gtfs_path, trip_times_path)
+ 	transit_feed = gp.TransitFeedProcessing(gtfs_path, trip_times_path, day_type)
 	df_subway_stations = transit_feed.stops()
 	df_subway_stations = df_subway_stations[df_subway_stations['location_type'] == 1]
 
@@ -179,7 +179,7 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 	df_subway_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 1]
 
 	# load transit_graph
-	nyc_transit_graph = gtg.GtfsTransitGraph(gtfs_links_path, gtfs_path, trip_times_path)
+	nyc_transit_graph = gtg.GtfsTransitGraph(gtfs_links_path, gtfs_path, trip_times_path, day_type)
 
 	for index, sbwy_trip in df_subway_trips.iterrows():
 
@@ -266,7 +266,7 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 					print gtfs_station_id
 					travel = nyc_transit_graph.station_location_transfers(gtfs_station_id, destination_centroid,\
 					 number_subway_routes, date_time_origin)
-					break
+					#break
 				print ''
 
 			else:
@@ -282,8 +282,8 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folde
 df_trips_in_nyc = get_transit_trips_in_nyc(df_trips, gdf_census_tract)
 # subway_trips_shape(df_trips_in_nyc, shapefile_stations_path, shapefile_links_path, results_folder,\
 #  'sbwy_route_sun.csv')
-
-subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, results_folder,'sbwy_route_sun.csv')
+day_type = 2
+subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, day_type, results_folder,'sbwy_route_sun.csv')
 
 df_subway_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 2]
 df_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 3]
