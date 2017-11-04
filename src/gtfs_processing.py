@@ -3,6 +3,7 @@
 '''
 import zipfile
 import pandas as pd
+from datetime import datetime
 import geopandas as gpd
 from geopy.distance import vincenty
 from shapely.geometry import Point, LineString
@@ -41,18 +42,37 @@ class TransitFeedProcessing:
         gdf_shapes = gpd.GeoDataFrame(gdf_shapes, geometry='geometry')
         return gdf_shapes
 
-    def shapes_to_shapefile(self):
+    def format_hour(self,str_time):
+        try:
+            formated_time = datetime.strptime(str_time, '%H:%M:%S').time()
+        except ValueError:
+            time = str_time.split(':')
+            if int(time[0]) > 23:
+                new_hour = int(time[0]) - 23
+                str_time = str(new_hour) + ':' + time[1] + ':' + time[2]
+                formated_time = datetime.strptime(str_time, '%H:%M:%S').time()
+        return formated_time
+    # set times as datetime object
+    def format_stop_times(self, df_stop_times):
+        list_stop_times = []
+        df_stop_times['departure_time'] = df_stop_times['departure_time'].apply(self.format_hour)
+        df_stop_times['arrival_time'] = df_stop_times['arrival_time'].apply(self.format_hour)
+        return df_stop_times
+
+    def geo_shape_lines(self):
         df_shapes = self.read_file_in_zip('shapes.txt')
         gdf_lines = self.format_shape_lines(df_shapes)
         return gdf_lines
 
-    def stops_to_shapefile(self):
+    def geo_stops(self):
         df_stops = self.read_file_in_zip('stops.txt')
         gdf_stops = self.format_points(df_stops, 'stop_lon', 'stop_lat')
         return gdf_stops
 
     def stop_times(self):
-        return self.read_file_in_zip('stop_times.txt')
+        df_stop_times = self.read_file_in_zip('stop_times.txt')
+        df_stop_times = self.format_stop_times(df_stop_times)
+        return df_stop_times
 
     def transfers(self):
         return self.read_file_in_zip('transfers.txt')
@@ -68,8 +88,8 @@ class TransitFeedProcessing:
 
     def distinct_route_each_station(self):
         dict_stop_route = dict()
-        df_stop_times = self.read_file_in_zip('stop_times.txt')
-        df_trips = self.read_file_in_zip('trips.txt')
+        df_stop_times = self.stop_times()
+        df_trips = self.trips()
         # get distinct trip_id for each stop_id
         list_unique_stop_id = list(df_stop_times['stop_id'].unique())
         for stop_id in list_unique_stop_id:
@@ -147,8 +167,8 @@ class TransitFeedProcessing:
         # get stop_times in that day
         df_stop_times = df_stop_times[df_stop_times['trip_id'].isin(list_trip_id)]
 
-        gdf_stops = self.stops_to_shapefile()
-        gdf_shapes = self.shapes_to_shapefile()
+        gdf_stops = self.geo_stops()
+        gdf_shapes = self.geo_shape_lines()
         list_distinct_links = []
         link_attributes = []
 
@@ -188,11 +208,11 @@ class TransitFeedProcessing:
         return df_edge_attributes
 
     def links_between_stations(self):
-        df_stop_times = self.read_file_in_zip('stop_times.txt')
-        df_trips = self.read_file_in_zip('trips.txt')
+        df_stop_times = self.stop_times()
+        df_trips = self.trips
 
-        gdf_stops = self.stops_to_shapefile()
-        gdf_shapes = self.shapes_to_shapefile()
+        gdf_stops = self.geo_stops()
+        gdf_shapes = self.geo_shape_lines()
         link_attributes = []
 
         previous_stop = df_stop_times.iloc[0]
@@ -237,6 +257,8 @@ class TransitFeedProcessing:
         df_edge_attributes = pd.DataFrame(link_attributes)
         return df_edge_attributes
 
-
-# df_temporal_links = temporal_links_between_stations(gtfs_zip_folder)
-# print df_temporal_links
+# from sys import argv
+# gtfs_zip_folder = argv[1]
+# gp = TransitFeedProcessing(gtfs_zip_folder)
+# df_stop_times = gp.stop_times()
+# print df_stop_times
