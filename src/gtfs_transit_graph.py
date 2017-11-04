@@ -12,8 +12,6 @@ class GtfsTransitGraph:
     def __init__(self, gtfs_links_path, gtfs_path):
         self.df_transit_links = pd.read_csv(gtfs_links_path)
         self.transit_feed = gp.TransitFeedProcessing(gtfs_path)
-        # self.df_stations = self.transit_feed.stops_to_shapefile()
-        #self.df_stop_times = self.transit_feed.stop_times()
         self.transit_graph = self.create_transit_graph()
 
     def create_transit_graph(self):
@@ -22,40 +20,39 @@ class GtfsTransitGraph:
         df_stops = df_stops[df_stops['location_type'] == 1]
         # add links to subway transit_graph
         for index, link in self.df_transit_links.iterrows():
-            # add stations
+
+            # add new stations with its routes and positions
             if link['from_parent_station'] not in transit_graph.nodes():
                 # get station position
                 stop = df_stops[df_stops['stop_id'] == link['from_parent_station']]
                 transit_graph.add_node(link['from_parent_station'], {'routes':[link['route_id']],\
                  'posxy':(stop['stop_lon'].iloc[0], stop['stop_lat'].iloc[0])})
-            else:
+            else: # append routes to existing stations
                 list_routes = nx.get_node_attributes(transit_graph, 'routes')[link['from_parent_station']]
                 posxy = nx.get_node_attributes(transit_graph, 'posxy')[link['from_parent_station']]
                 if link['route_id'] not in list_routes:
                     list_routes.append(link['route_id'])
                     transit_graph.add_node(link['from_parent_station'], {'routes':list_routes,\
                      'posxy':posxy})
-                    # transit_graph[link['from_parent_station']].update({'routes':list_routes,\
-                    #  'posxy':posxy})
 
+            # add new stations with its routes and positions
             if link['to_parent_station'] not in transit_graph.nodes():
                 stop = df_stops[df_stops['stop_id'] == link['to_parent_station']]
                 transit_graph.add_node(link['to_parent_station'], {'routes':[link['route_id']],\
                  'posxy':(stop['stop_lon'].iloc[0], stop['stop_lat'].iloc[0])})
-            else:
+            else:  # append routes to existing stations
                 list_routes = nx.get_node_attributes(transit_graph, 'routes')[link['to_parent_station']]
                 posxy = nx.get_node_attributes(transit_graph, 'posxy')[link['to_parent_station']]
                 if link['route_id'] not in list_routes:
                     list_routes.append(link['route_id'])
                     transit_graph.add_node(link['to_parent_station'], {'routes':list_routes,\
                      'posxy':posxy})
-                    # transit_graph[link['to_parent_station']].update({'routes':list_routes,\
-                    #  'posxy':posxy})
 
+            # add edges with its distance to connecting stations
             transit_graph.add_edge(link['from_parent_station'], link['to_parent_station'],\
              distance=link['shape_len'])
 
-        # add transfers
+        # add transfers between different routes
         df_transfers = self.transit_feed.transfers()
         for index, transference in df_transfers.iterrows():
             if transference['from_stop_id'] != transference['to_stop_id']\
@@ -246,13 +243,13 @@ class GtfsTransitGraph:
 
             print best_route
             list_routes = list(list_board_alight_routes) + [best_route]
-            # print 'to be implemented'
-            # print unknown
+
             subgraph_routes = self.subgraph_routes(list_routes)
             try:
                 path_stations = nx.shortest_path(subgraph_routes, origin_station, destination_station)
             except nx.exception.NetworkXNoPath:
                 path_stations = []
+
             return path_stations
 
     def compute_trip_time(self, list_passenger_trip, date_time_origin):
@@ -278,17 +275,13 @@ class GtfsTransitGraph:
             df_stop_times_south_boarding = df_stop_times_south[df_stop_times_south['stop_id'].str.contains(trip['boarding']['station'])]
             df_stop_times_north_boarding = df_stop_times_north[df_stop_times_north['stop_id'].str.contains(trip['boarding']['station'])]
 
-            # convert departure time to datetime format
-            #df_stop_times_south['departure_time'] = pd.to_datetime(df_stop_times_south['departure_time'], format='%H:%M:%S')
-            # df_stop_times_north['departure_time'] = pd.to_datetime(df_stop_times_north['departure_time'], format='%H:%M:%S')
-
             # find the next departure after passenger origin for both directions north and south
             df_stop_times_south_boarding = df_stop_times_south_boarding[df_stop_times_south_boarding['departure_time']\
-             > date_time_origin.strftime('%H:%M:%S')]
+             > date_time_origin.time()]
             s_stop_times_south_boarding = df_stop_times_south_boarding.sort_values(by=['departure_time']).iloc[0]
 
             df_stop_times_north_boarding = df_stop_times_north_boarding[df_stop_times_north_boarding['departure_time']\
-             > date_time_origin.strftime('%H:%M:%S')]
+             > date_time_origin.time()]
             s_stop_times_north_boarding = df_stop_times_north_boarding.sort_values(by=['departure_time']).iloc[0]
 
             print date_time_origin
@@ -308,7 +301,7 @@ class GtfsTransitGraph:
             # for index, stop_times in df_stop_times_south.iterrows():
             #     print stop_times['trip_id'], stop_times['departure_time'], stop_times['stop_id']
             #     break
-            
+
 
     def station_location_transfers(self, origin_station, destination_location, number_subway_routes, date_time_origin):
 
