@@ -14,7 +14,7 @@ class TransitFeedProcessing:
     def __init__(self, gtfs_zip_folder, trip_times_path, day_type):
         print 'Reading GTFS...'
         self.gtfs_zip_folder = gtfs_zip_folder
-        #self.df_trip_times = pd.read_csv(trip_times_path)
+        self.df_trip_times = pd.read_csv(trip_times_path)
         self.df_stops = self.stops()
         self.df_trips = self.trips()
         self.df_stop_times = self.stop_times()
@@ -25,12 +25,12 @@ class TransitFeedProcessing:
         self.df_trips = self.df_trips[self.df_trips['service_id'].isin(list_service)]
         list_trip_id = list(self.df_trips['trip_id'].unique())
         self.df_stop_times = self.df_stop_times[self.df_stop_times['trip_id'].isin(list_trip_id)]
-        #self.df_trip_times = self.df_trip_times[self.df_trip_times['trip_id'].isin(list_trip_id)]
+        self.df_trip_times = self.df_trip_times[self.df_trip_times['trip_id'].isin(list_trip_id)]
 
-        # print 'Formating trip_times...'
-        # # format datetime
-        # self.df_trip_times['start_time'] = pd.to_datetime(self.df_trip_times['start_time'], format='%H:%M:%S')
-        # self.df_trip_times['end_time'] = pd.to_datetime(self.df_trip_times['end_time'], format='%H:%M:%S')
+        print 'Formating trip_times...'
+        # format datetime
+        self.df_trip_times['start_time'] = pd.to_datetime(self.df_trip_times['start_time'], format='%H:%M:%S')
+        self.df_trip_times['end_time'] = pd.to_datetime(self.df_trip_times['end_time'], format='%H:%M:%S')
 
     def read_file_in_zip(self, file_name):
         zip_file = zipfile.ZipFile(self.gtfs_zip_folder)
@@ -113,7 +113,7 @@ class TransitFeedProcessing:
     def calendar(self):
         return self.read_file_in_zip('calendar.txt')
 
-    def stop_timetables(self, parent_station_id):
+    def stop_timestable(self, parent_station_id):
         list_timetable = []
         dict_timetable = defaultdict(lambda: defaultdict(list))
 
@@ -136,6 +136,32 @@ class TransitFeedProcessing:
         for route_id, dict_child in dict_timetable.iteritems():
             for child_id, list_timetable in dict_child.iteritems():
                 dict_timetable[route_id][child_id] = pd.DataFrame(list_timetable)
+
+        return dict_timetable
+
+    def stop_timestable_route(self, parent_station_id, route_id):
+        list_timetable = []
+        dict_timetable = defaultdict(list)
+
+        # get stop child stations
+        df_child_stops = self.df_stops[self.df_stops['parent_station'] == parent_station_id]
+        for index, child_stop in df_child_stops.iterrows():
+            # get stop sequence and departure time
+            child_stop_times = self.df_stop_times[self.df_stop_times['stop_id'] == child_stop['stop_id']]
+            child_stop_times = child_stop_times[['trip_id', 'departure_time', 'stop_sequence']]
+
+            # get route_id and direction name
+            for index, child_stop_time in child_stop_times.iterrows():
+                df_trip_route = self.df_trips[self.df_trips['route_id'] == route_id]
+                headsign = self.df_trips[self.df_trips['trip_id'] == child_stop_time['trip_id']]
+
+                dict_timetable[child_stop['stop_id']].append({'stop_sequence': child_stop_time['stop_sequence'],\
+                'trip_headsign': headsign['trip_headsign'].iloc[0], 'trip_id': child_stop_time['trip_id'],\
+                'departure_time': child_stop_time['departure_time']})
+
+        # convert timetable to dataframe
+        for child_id, list_timetable in dict_timetable.iteritems():
+            dict_timetable[child_id] = pd.DataFrame(list_timetable)
 
         return dict_timetable
 

@@ -317,56 +317,52 @@ class GtfsTransitGraph:
 
     def compute_trip_time(self, list_passenger_trip, date_time_origin):
 
+        origin_time = date_time_origin.time()
         for passenger_trip in list_passenger_trip:
-            trip_duration = self.transit_feed.trip_duration(passenger_trip['boarding'], passenger_trip['alighting'])
-        # df_stop_times = self.transit_feed.stop_times()
-        # df_trips = self.transit_feed.trips()
-        # df_calendar = self.transit_feed.calendar()
+            print 'origin_time', origin_time
+            print passenger_trip['boarding'], passenger_trip['alighting']
+            dict_timestable_boarding = self.transit_feed.stop_timestable_route(passenger_trip['boarding']['station'],\
+            passenger_trip['boarding']['routes'][0])
 
-        # # get service_id in that weekday
-        # list_service_id_weekday = df_calendar[df_calendar.iloc[:,1+date_time_origin.weekday()] == 1]['service_id'].tolist()
-        # # filter df_trips by service_id
-        # df_trips_weekday = df_trips[df_trips['service_id'].isin(list_service_id_weekday)]
-        #
-        # for trip in list_passenger_trip:
-        #     print trip#['boarding']['route']
-        #     # filter trips by route
-        #     list_trip_id = list(df_trips_weekday[df_trips_weekday['route_id'] == trip['boarding']['routes'][0]]['trip_id'].unique())
-        #     # filter stop_times by trip_id
-        #     df_stop_times_trip_id = df_stop_times[df_stop_times['trip_id'].isin(list_trip_id)]
-        #     # split dataframe by direction
-        #     df_stop_times_south = df_stop_times_trip_id[df_stop_times_trip_id['stop_id'].str.contains('S')]
-        #     df_stop_times_north = df_stop_times_trip_id[df_stop_times_trip_id['stop_id'].str.contains('N')]
-        #     # filter stop_times by stop_id
-        #     df_stop_times_south_boarding = df_stop_times_south[df_stop_times_south['stop_id'].str.contains(trip['boarding']['station'])]
-        #     df_stop_times_north_boarding = df_stop_times_north[df_stop_times_north['stop_id'].str.contains(trip['boarding']['station'])]
-        #
-        #     # find the next departure after passenger origin for both directions north and south
-        #     df_stop_times_south_boarding = df_stop_times_south_boarding[df_stop_times_south_boarding['departure_time']\
-        #      > date_time_origin.time()]
-        #     s_stop_times_south_boarding = df_stop_times_south_boarding.sort_values(by=['departure_time']).iloc[0]
-        #
-        #     df_stop_times_north_boarding = df_stop_times_north_boarding[df_stop_times_north_boarding['departure_time']\
-        #      > date_time_origin.time()]
-        #     s_stop_times_north_boarding = df_stop_times_north_boarding.sort_values(by=['departure_time']).iloc[0]
-        #
-        #     print date_time_origin
-        #     print s_stop_times_south_boarding
-        #     print s_stop_times_north_boarding
-        #
-        #     # find destination's direction
-        #     df_stop_times_south_trip_id = df_stop_times_south[df_stop_times_south['trip_id'] == s_stop_times_south_boarding['trip_id']]
-        #     df_stop_times_north_trip_id = df_stop_times_north[df_stop_times_north['trip_id'] == s_stop_times_north_boarding['trip_id']]
-        #     print df_stop_times_south_trip_id
-        #     print df_stop_times_north_trip_id
-        #     print trip['alighting']['station']
-        #     df_stop_times_south_alighting = df_stop_times_south_trip_id[df_stop_times_south_trip_id['stop_id']\
-        #      .str.contains(trip['alighting']['station'])]
-        #     print df_stop_times_south_alighting
+            dict_timestable_alight = self.transit_feed.stop_timestable_route(passenger_trip['alighting']['station'],\
+            passenger_trip['alighting']['routes'][0])
 
-            # for index, stop_times in df_stop_times_south.iterrows():
-            #     print stop_times['trip_id'], stop_times['departure_time'], stop_times['stop_id']
-            #     break
+            # find boarding and alighting common trips
+            df_common_trips = pd.DataFrame()
+            alighting_direction = ''
+            for boarding_id in dict_timestable_boarding.keys():
+                df_boarding_direction = dict_timestable_boarding[boarding_id]
+
+                for alighting_id in dict_timestable_alight.keys():
+                    df_alighting_direction = dict_timestable_alight[alighting_id]
+                    df_common_trips = df_boarding_direction[df_boarding_direction['trip_id']\
+                    .isin(df_alighting_direction['trip_id'].tolist())]
+                    # if there is an intersection
+                    if len(df_common_trips) > 0:
+                        trip_id = df_common_trips['trip_id'].iloc[0]
+                        boarding_time = df_common_trips['departure_time'].iloc[0]
+                        alighting_time = df_alighting_direction[df_alighting_direction['trip_id'] == trip_id]['departure_time'].iloc[0]
+                        # get direction with crescent order
+                        if boarding_time < alighting_time:
+                            alighting_direction = alighting_id
+                            break
+                if alighting_direction != '':
+                    break
+            # find the moment of boarding
+            best_boarding_trip = ''
+            df_common_trips = df_common_trips.sort_values(by=['departure_time'])
+            for index, boarding_trip in df_common_trips.iterrows():
+                if origin_time < boarding_trip['departure_time']:
+                    best_boarding_trip = boarding_trip
+                    break
+
+            print best_boarding_trip
+            df_timestable_alight = dict_timestable_alight[alighting_direction]
+            best_alighting_trip = df_timestable_alight[df_timestable_alight['trip_id'] == best_boarding_trip['trip_id']].iloc[0]
+            print best_alighting_trip
+            print best_alighting_trip.iloc[0]
+            origin_time = best_alighting_trip['departure_time']
+            print ''
 
 
     def station_location_transfers(self, origin_station, destination_location, number_subway_routes,\
@@ -427,15 +423,15 @@ class GtfsTransitGraph:
 
         list_passenger_trip = self.trips_from_stations_path(path_stations)
 
-        for trip in list_passenger_trip:
-            print trip
+        # for trip in list_passenger_trip:
+        #     print trip
 
         # compute trip time
-        #list_passenger_trip = self.compute_trip_time(list_passenger_trip, date_time_origin)
+        list_passenger_trip = self.compute_trip_time(list_passenger_trip, date_time_origin)
 
-gtfs_links_path = argv[1]
-gtfs_path = argv[2]
-trip_times_path = argv[3]
-day_type = argv[4]
-
-gtg = GtfsTransitGraph(gtfs_links_path, gtfs_path,trip_times_path, day_type)
+# gtfs_links_path = argv[1]
+# gtfs_path = argv[2]
+# trip_times_path = argv[3]
+# day_type = argv[4]
+#
+# gtg = GtfsTransitGraph(gtfs_links_path, gtfs_path,trip_times_path, day_type)

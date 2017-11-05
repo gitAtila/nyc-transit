@@ -167,9 +167,9 @@ def subway_trips_shape(df_trips_in_nyc, shapefile_stations_path, shapefile_links
 def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, day_type, results_folder,\
  result_file):
 
- 	transit_feed = gp.TransitFeedProcessing(gtfs_path, trip_times_path, day_type)
-	df_subway_stations = transit_feed.stops()
-	df_subway_stations = df_subway_stations[df_subway_stations['location_type'] == 1]
+ 	#transit_feed = gp.TransitFeedProcessing(gtfs_path, trip_times_path, day_type)
+	#df_subway_stations = transit_feed.stops()
+	#df_subway_stations = df_subway_stations[df_subway_stations['location_type'] == 1]
 
 	borough_survey_shape = {1:'1', 2:'4', 3:'2', 4:'3', 5:'5'}
 	list_stations = []
@@ -245,12 +245,12 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, day_type, res
 				sbwy_boarding_station_name = df_survey_stations[df_survey_stations['Value'] == int(sbwy_station_id)]['Label']
 				gtfs_station_id = df_equivalence_survey_gtfs[df_equivalence_survey_gtfs['survey_stop_id']\
 				 == float(sbwy_station_id)]['gtfs_stop_id'].iloc[0]
-				df_boarding_station = df_subway_stations[df_subway_stations['stop_id'] == gtfs_station_id]
+				#df_boarding_station = df_subway_stations[df_subway_stations['stop_id'] == gtfs_station_id]
 
 				print 'gtfs_station_id', gtfs_station_id
 				print 'sbwy_boarding_station_name', sbwy_boarding_station_name.iloc[0]
-				print 'sf_boarding_station', df_boarding_station['stop_id'].iloc[0],\
-				 df_boarding_station['stop_name'].iloc[0]
+				#print 'sf_boarding_station', df_boarding_station['stop_id'].iloc[0],\
+				# df_boarding_station['stop_name'].iloc[0]
 
 				# get census tract of origin and census tract of destination
 				# discover which was the alight station
