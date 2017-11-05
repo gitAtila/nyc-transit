@@ -4,6 +4,7 @@
 import zipfile
 import pandas as pd
 from datetime import datetime
+from collections import defaultdict
 import geopandas as gpd
 from geopy.distance import vincenty
 from shapely.geometry import Point, LineString
@@ -11,21 +12,25 @@ from shapely.geometry import Point, LineString
 class TransitFeedProcessing:
 
     def __init__(self, gtfs_zip_folder, trip_times_path, day_type):
+        print 'Reading GTFS...'
         self.gtfs_zip_folder = gtfs_zip_folder
-        self.df_trip_times = pd.read_csv(trip_times_path)
+        #self.df_trip_times = pd.read_csv(trip_times_path)
+        self.df_stops = self.stops()
         self.df_trips = self.trips()
         self.df_stop_times = self.stop_times()
 
+        print 'Selecting weekday...'
         # read trips and stop_times acording to day type
         list_service = self.service_weekday(day_type)
         self.df_trips = self.df_trips[self.df_trips['service_id'].isin(list_service)]
         list_trip_id = list(self.df_trips['trip_id'].unique())
         self.df_stop_times = self.df_stop_times[self.df_stop_times['trip_id'].isin(list_trip_id)]
-        self.df_trip_times = self.df_trip_times[self.df_trip_times['trip_id'].isin(list_trip_id)]
+        #self.df_trip_times = self.df_trip_times[self.df_trip_times['trip_id'].isin(list_trip_id)]
 
-        # format datetime
-        self.df_trip_times['start_time'] = pd.to_datetime(self.df_trip_times['start_time'], format='%H:%M:%S')
-        self.df_trip_times['end_time'] = pd.to_datetime(self.df_trip_times['end_time'], format='%H:%M:%S')
+        # print 'Formating trip_times...'
+        # # format datetime
+        # self.df_trip_times['start_time'] = pd.to_datetime(self.df_trip_times['start_time'], format='%H:%M:%S')
+        # self.df_trip_times['end_time'] = pd.to_datetime(self.df_trip_times['end_time'], format='%H:%M:%S')
 
     def read_file_in_zip(self, file_name):
         zip_file = zipfile.ZipFile(self.gtfs_zip_folder)
@@ -61,7 +66,7 @@ class TransitFeedProcessing:
         except ValueError:
             time = str_time.split(':')
             if int(time[0]) > 23:
-                new_hour = int(time[0]) - 23
+                new_hour = int(time[0]) - 24
                 str_time = str(new_hour) + ':' + time[1] + ':' + time[2]
                 formated_time = datetime.strptime(str_time, '%H:%M:%S').time()
         return formated_time
@@ -99,11 +104,40 @@ class TransitFeedProcessing:
     def stops(self):
         return self.read_file_in_zip('stops.txt')
 
+    def get_stops(self):
+        return self.df_stops
+
     def trips(self):
         return self.read_file_in_zip('trips.txt')
 
     def calendar(self):
         return self.read_file_in_zip('calendar.txt')
+
+    def stop_timetables(self, parent_station_id):
+        list_timetable = []
+        dict_timetable = defaultdict(lambda: defaultdict(list))
+
+        # get stop child stations
+        df_child_stops = self.df_stops[self.df_stops['parent_station'] == parent_station_id]
+        for index, child_stop in df_child_stops.iterrows():
+            # get stop sequence and departure time
+            child_stop_times = self.df_stop_times[self.df_stop_times['stop_id'] == child_stop['stop_id']]
+            child_stop_times = child_stop_times[['trip_id', 'departure_time', 'stop_sequence']]
+
+            # get route_id and direction name
+            for index, child_stop_time in child_stop_times.iterrows():
+                route_headsign = self.df_trips[self.df_trips['trip_id'] == child_stop_time['trip_id']]
+
+                dict_timetable[route_headsign['route_id'].iloc[0]][child_stop['stop_id']]\
+                .append({'stop_sequence': child_stop_time['stop_sequence'], 'trip_headsign': route_headsign['trip_headsign'].iloc[0],\
+                'trip_id': child_stop_time['trip_id'], 'departure_time': child_stop_time['departure_time']})
+
+        # convert timetable to dataframe
+        for route_id, dict_child in dict_timetable.iteritems():
+            for child_id, list_timetable in dict_child.iteritems():
+                dict_timetable[route_id][child_id] = pd.DataFrame(list_timetable)
+
+        return dict_timetable
 
     def trips_start_end_times(self, df_trips, df_stop_times):
         list_start_end_times = []
@@ -120,6 +154,7 @@ class TransitFeedProcessing:
         return pd.DataFrame(list_start_end_times)
 
     def service_weekday(self, day_type):
+        day_type = int(day_type)
         df_calendar = self.calendar()
         # get service_id in that weekday
         list_service_id = []

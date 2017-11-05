@@ -14,6 +14,45 @@ class GtfsTransitGraph:
         self.transit_feed = gp.TransitFeedProcessing(gtfs_path, trip_times_path, day_type)
         self.transit_graph = self.create_transit_graph()
 
+    def create_transit_graph2(self):
+        transit_graph = nx.Graph()
+        df_stops = self.transit_feed.get_stops()
+        df_parent_stations = df_stops[df_stops['location_type'] == 1]
+
+        for index, parent_station in df_parent_stations.iterrows():
+            dict_stop_attr = dict()
+            dict_stop_attr['parent_station_id'] = parent_station['stop_id']
+            dict_stop_attr['parent_station_name'] = parent_station['stop_name']
+            dict_stop_attr['posxy'] = (parent_station['stop_lon'], parent_station['stop_lat'])
+            print dict_stop_attr
+            dict_time_tables = self.transit_feed.stop_timetables(parent_station['stop_id'])
+            print dict_time_tables.keys()
+
+            # add new stations with its routes and positions
+            transit_graph.add_node(parent_station['stop_id'], {'routes': dict_time_tables.keys(),\
+             'posxy':(parent_station['stop_lon'], parent_station['stop_lat']),\
+             'timetables':dict_time_tables})
+
+        # add links to subway transit_graph
+        for index, link in self.df_transit_links.iterrows():
+            # add edges with its distance to connecting stations
+            transit_graph.add_edge(link['from_parent_station'], link['to_parent_station'],\
+             distance=link['shape_len'])
+
+        # add transfers between different routes
+        df_transfers = self.transit_feed.transfers()
+        for index, transference in df_transfers.iterrows():
+            if transference['from_stop_id'] != transference['to_stop_id']\
+             and transference['from_stop_id'] in transit_graph.nodes() and transference['to_stop_id'] in transit_graph.nodes():
+                from_stop = df_stops[df_stops['stop_id'] == transference['from_stop_id']]
+                to_stop = df_stops[df_stops['stop_id'] == transference['to_stop_id']]
+
+                transit_graph.add_edge(transference['from_stop_id'], transference['to_stop_id'],\
+                 distance=vincenty((from_stop['stop_lon'].iloc[0], from_stop['stop_lat'].iloc[0]),\
+                  (to_stop['stop_lon'].iloc[0], to_stop['stop_lat'].iloc[0])).meters)
+
+        return transit_graph
+
     def create_transit_graph(self):
         transit_graph = nx.Graph()
         df_stops = self.transit_feed.stops()
@@ -393,3 +432,10 @@ class GtfsTransitGraph:
 
         # compute trip time
         #list_passenger_trip = self.compute_trip_time(list_passenger_trip, date_time_origin)
+
+gtfs_links_path = argv[1]
+gtfs_path = argv[2]
+trip_times_path = argv[3]
+day_type = argv[4]
+
+gtg = GtfsTransitGraph(gtfs_links_path, gtfs_path,trip_times_path, day_type)
