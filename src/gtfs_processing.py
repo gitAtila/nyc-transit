@@ -29,8 +29,8 @@ class TransitFeedProcessing:
 
         print 'Formating trip_times...'
         # format datetime
-        self.df_trip_times['start_time'] = pd.to_datetime(self.df_trip_times['start_time'], format='%H:%M:%S')
-        self.df_trip_times['end_time'] = pd.to_datetime(self.df_trip_times['end_time'], format='%H:%M:%S')
+        self.df_trip_times['start_time'] = pd.to_datetime(self.df_trip_times['start_time'], format='%H:%M:%S').dt.time
+        self.df_trip_times['end_time'] = pd.to_datetime(self.df_trip_times['end_time'], format='%H:%M:%S').dt.time
 
     def read_file_in_zip(self, file_name):
         zip_file = zipfile.ZipFile(self.gtfs_zip_folder)
@@ -232,6 +232,19 @@ class TransitFeedProcessing:
         for trip_id in list_trip_id:
             list_stops += self.stop_times_trip(trip_id)['stop_id'].tolist()
         list_stops = [stop_id[:-1] for stop_id in list_stops]
+        return list_stops
+
+    def active_stops(self, time):
+        # trips happening at the exactly moment
+        list_trip_id = []
+        new_trip_times = self.df_trip_times[self.df_trip_times['start_time'] <= time]
+        new_trip_times = new_trip_times[new_trip_times['end_time'] >= time]
+        list_trip_id = new_trip_times['trip_id'].tolist()
+
+        # active stops in the trip
+        list_stops = self.df_stop_times[self.df_stop_times['trip_id'].isin(list_trip_id)]['stop_id'].tolist()
+        list_stops = [stop_id[:-1] for stop_id in list_stops]
+        list_stops = list(set(list_stops))
         return list_stops
 
     '''

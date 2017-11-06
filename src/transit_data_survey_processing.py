@@ -263,7 +263,6 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, day_type, res
 					print 'Destination location was not found'
 				else:
 					# get subway passenger route through graph
-					print gtfs_station_id
 					travel = nyc_transit_graph.station_location_transfers(gtfs_station_id, destination_centroid,\
 					 number_subway_routes, date_time_origin)
 					#break
@@ -283,7 +282,7 @@ df_trips_in_nyc = get_transit_trips_in_nyc(df_trips, gdf_census_tract)
 # subway_trips_shape(df_trips_in_nyc, shapefile_stations_path, shapefile_links_path, results_folder,\
 #  'sbwy_route_sun.csv')
 day_type = 2
-subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, day_type, results_folder,'sbwy_route_sun.csv')
+subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, day_type, results_folder,'sbwy_route_sat.csv')
 
 df_subway_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 2]
 df_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 3]
