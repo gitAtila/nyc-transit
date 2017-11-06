@@ -199,80 +199,82 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, day_type, res
 		time_origin = sbwy_trip['dtime']
 		date_destination = sbwy_trip['trip_edate'].split(' ')[0]
 		time_destination = sbwy_trip['atime']
-
+		time_origin_error = False
 		try:
 			date_time_origin = datetime.strptime(date_origin + ' ' + time_origin, '%m/%d/%y %H:%M')
-			date_time_destination = datetime.strptime(date_destination + ' ' + time_destination, '%m/%d/%y %H:%M')
+			#date_time_destination = datetime.strptime(date_destination + ' ' + time_destination, '%m/%d/%y %H:%M')
 		except ValueError:
 			print 'Date Error'
 			date_time_origin = date_origin + ' ' + time_origin
 			date_time_destination = date_destination + ' ' + time_destination
 			print date_time_origin
 			print date_time_destination
+			time_origin_error = True
 
-		list_modes = []
+		if time_origin_error == False:
+			list_modes = []
 
-		print 'ct_origin', ct_origin
-		print 'ct_destination', ct_destination
-		print 'boro_origin', borough_origin
-		print 'boro_destination', borough_destination
-		print 'nbr_sbwy_segments', nbr_sbwy_segments
+			print 'ct_origin', ct_origin
+			print 'ct_destination', ct_destination
+			print 'boro_origin', borough_origin
+			print 'boro_destination', borough_destination
+			print 'nbr_sbwy_segments', nbr_sbwy_segments
 
-		print 'date_time_origin', date_time_origin
-		print 'date_time_destination', date_time_destination
+			print 'date_time_origin', date_time_origin
+			#print 'date_time_destination', date_time_destination
 
-		if borough_origin not in borough_survey_shape.keys() or borough_destination not in borough_survey_shape.keys():
-			print 'Outside region'
-			print ''
-		else:
-			# remove empty mode
-
-			for mode in range(1,17):
-				mode_key = 'MODE'
-				if math.isnan(sbwy_trip[mode_key + str(mode)]) == False:
-					list_modes.append(sbwy_trip[mode_key + str(mode)])
-				else:
-					break
-			number_subway_routes = 0
-			for index in range(len(list_modes)):
-				if index != 1 and list_modes[index] == 3:
-					number_subway_routes += 1
-			print list_modes, number_subway_routes
-
-			# get boarding station in graph
-			sbwy_station_id = float_to_int_str(sbwy_trip['StopAreaNo'])
-			if math.isnan(float(sbwy_station_id)) == False and sbwy_station_id != '0' and sbwy_station_id != '1384':
-				sbwy_boarding_station_name = df_survey_stations[df_survey_stations['Value'] == int(sbwy_station_id)]['Label']
-				gtfs_station_id = df_equivalence_survey_gtfs[df_equivalence_survey_gtfs['survey_stop_id']\
-				 == float(sbwy_station_id)]['gtfs_stop_id'].iloc[0]
-				#df_boarding_station = df_subway_stations[df_subway_stations['stop_id'] == gtfs_station_id]
-
-				print 'gtfs_station_id', gtfs_station_id
-				print 'sbwy_boarding_station_name', sbwy_boarding_station_name.iloc[0]
-				#print 'sf_boarding_station', df_boarding_station['stop_id'].iloc[0],\
-				# df_boarding_station['stop_name'].iloc[0]
-
-				# get census tract of origin and census tract of destination
-				# discover which was the alight station
-				## get the centroid of the census tract
-				gdf_ct_destination = gdf_census_tract[gdf_census_tract['ct2010'] == ct_destination]
-				gs_ct_destination = gdf_ct_destination[gdf_ct_destination['boro_code'] == borough_survey_shape[borough_destination]]
-				destination_centroid = gs_ct_destination.centroid
-
-				if len(destination_centroid) == 0:
-					print 'Destination location was not found'
-				else:
-					# get subway passenger route through graph
-					travel = nyc_transit_graph.station_location_transfers(gtfs_station_id, destination_centroid,\
-					 number_subway_routes, date_time_origin)
-					#break
+			if borough_origin not in borough_survey_shape.keys() or borough_destination not in borough_survey_shape.keys():
+				print 'Outside region'
 				print ''
-
 			else:
-				print 'There is not information of boarding station'
-				print ''
-				sbwy_boarding_station_name = ''
-				sf_boarding_station_name = ''
+				# remove empty mode
+
+				for mode in range(1,17):
+					mode_key = 'MODE'
+					if math.isnan(sbwy_trip[mode_key + str(mode)]) == False:
+						list_modes.append(sbwy_trip[mode_key + str(mode)])
+					else:
+						break
+				number_subway_routes = 0
+				for index in range(len(list_modes)):
+					if index != 1 and list_modes[index] == 3:
+						number_subway_routes += 1
+				print list_modes, number_subway_routes
+
+				# get boarding station in graph
+				sbwy_station_id = float_to_int_str(sbwy_trip['StopAreaNo'])
+				if math.isnan(float(sbwy_station_id)) == False and sbwy_station_id != '0' and sbwy_station_id != '1384':
+					sbwy_boarding_station_name = df_survey_stations[df_survey_stations['Value'] == int(sbwy_station_id)]['Label']
+					gtfs_station_id = df_equivalence_survey_gtfs[df_equivalence_survey_gtfs['survey_stop_id']\
+					 == float(sbwy_station_id)]['gtfs_stop_id'].iloc[0]
+					#df_boarding_station = df_subway_stations[df_subway_stations['stop_id'] == gtfs_station_id]
+
+					print 'gtfs_station_id', gtfs_station_id
+					print 'sbwy_boarding_station_name', sbwy_boarding_station_name.iloc[0]
+					#print 'sf_boarding_station', df_boarding_station['stop_id'].iloc[0],\
+					# df_boarding_station['stop_name'].iloc[0]
+
+					# get census tract of origin and census tract of destination
+					# discover which was the alight station
+					## get the centroid of the census tract
+					gdf_ct_destination = gdf_census_tract[gdf_census_tract['ct2010'] == ct_destination]
+					gs_ct_destination = gdf_ct_destination[gdf_ct_destination['boro_code'] == borough_survey_shape[borough_destination]]
+					destination_centroid = gs_ct_destination.centroid
+
+					if len(destination_centroid) == 0:
+						print 'Destination location was not found'
+					else:
+						# get subway passenger route through graph
+						travel = nyc_transit_graph.station_location_transfers(gtfs_station_id, destination_centroid,\
+						 number_subway_routes, date_time_origin)
+						#break
+					print ''
+
+				else:
+					print 'There is not information of boarding station'
+					print ''
+					sbwy_boarding_station_name = ''
+					sf_boarding_station_name = ''
 
 	df_bus_routes = pd.DataFrame(list_bus_route)
 	print df_bus_routes

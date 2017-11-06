@@ -179,16 +179,24 @@ class GtfsTransitGraph:
                         list_node.append(key)
             elif dict_attribute['routes'] == node_value:
                 for route in list_route:
-                    sslist_node.append(key)
+                    list_node.append(key)
         subgraph = active_graph.subgraph(list_node)
         return subgraph
 
-    def subgraph_active_stops_routes(self, list_route, date_time):
+    # def subgraph_active_stops_routes(self, list_route, date_time):
+    #     list_active_stops = []
+    #     for route in list_route:
+    #         list_active_stops += self.transit_feed.active_stops_route(date_time, route)
+    #     list_active_stops = list(set(list_active_stops))
+    #     subgraph = self.transit_graph.subgraph(list_active_stops)
+    #     return subgraph
+
+    def subgraph_active_stops_routes(self, active_graph, list_route, date_time):
         list_active_stops = []
         for route in list_route:
             list_active_stops += self.transit_feed.active_stops_route(date_time, route)
         list_active_stops = list(set(list_active_stops))
-        subgraph = self.transit_graph.subgraph(list_active_stops)
+        subgraph = active_graph.subgraph(list_active_stops)
         return subgraph
 
     def subgraph_active_stops(self, time):
@@ -298,30 +306,60 @@ class GtfsTransitGraph:
     #     return list_passenger_trip
 
     def trips_from_stations_path(self, active_graph, path_stations):
+        first_routes = active_graph.node[path_stations[0]]['routes']
+        last_routes = active_graph.node[path_stations[1]]['routes']
+        intersection_routes = list(set(first_routes) & set(last_routes))
+        if len(intersection_routes)>0:
+            return [{'boarding': {'station':path_stations[0], 'routes':intersection_routes},\
+                    {'alighting': {'station':path_stations[-1], 'routes':intersection_routes}}]
+
         # stations of integration
         list_passenger_trip = []
-        previous_routes = sorted(active_graph.node[path_stations[0]]['routes'])
-        list_passenger_trip.append({'boarding':{'station': path_stations[0], 'routes': previous_routes}})
+        previous_routes = active_graph.node[path_stations[0]]['routes']
+        #list_passenger_trip.append({'boarding':{'station': path_stations[0], 'routes': previous_routes}})
+        print previous_routes
+        traveling_routes = previous_routes
+        list_passenger_trip.append({'boarding': {'station':path_stations[0], 'routes':previous_routes}})
         for index in range(1, len(path_stations)):
-
             station = path_stations[index]
-            previous_routes = list_passenger_trip[-1]['boarding']['routes']
-            current_routes = sorted(active_graph.node[station]['routes'])
-            intersection_routes = sorted(list(set(previous_routes) & set(current_routes)))
+            current_routes = active_graph.node[station]['routes']
+            intersection_routes = list(set(traveling_routes) & set(current_routes))
 
-            # there is an itegration
-            if len(intersection_routes) == 0:
-                list_passenger_trip[-1]['alighting'] = {'station': path_stations[index-1], 'routes': previous_routes}
-                list_passenger_trip.append({'boarding': {'station': station, 'routes': current_routes}})
+            if len(intersection_routes) > 0:
+                print current_routes, '-',intersection_routes
+                traveling_routes = intersection_routes
+            else:
+                print current_routes, '- integration'
+                # update boarding routes
+                previous_trip_routes = list_passenger_trip[-1]['boarding']['routes']
+                boarding_routes = list(set(previous_trip_routes) & set(previous_routes))
+                list_passenger_trip[-1]['boarding']['routes'] = boarding_routes
+                # insert alight station
+                list_passenger_trip[-1]['alight'] = {'station':path_stations[index-1], 'routes':boarding_routes}
 
-            # remove from the previous trip the routes that it is not in the current trip
-            elif current_routes != previous_routes and previous_routes != intersection_routes:
-                previous_routes = intersection_routes
-                previous_station = list_passenger_trip[-1]['boarding']['station']
-                list_passenger_trip[-1]['boarding'] = {'station': previous_station, 'routes': previous_routes}
+                # insert new boarding
+                alight_routes = list(set(current_routes) & set(previous_routes))
+                if len(alight_routes) > 0: # transfer could happen on the previous station
+                    list_passenger_trip.append({'boarding': {'station':path_stations[index-1], 'routes':alight_routes}})
+                    traveling_routes = alight_routes
+                else:
+                    list_passenger_trip.append({'boarding': {'station':path_stations[index], 'routes':current_routes}})
+                    traveling_routes = current_routes
 
-        #append last aligth
-        list_passenger_trip[-1]['alighting'] = {'station': path_stations[-1], 'routes': previous_routes}
+            previous_routes = current_routes
+
+        previous_trip_station = list_passenger_trip[-1]['boarding']['station']
+        previous_trip_routes = list_passenger_trip[-1]['boarding']['routes']
+        boarding_routes = list(set(previous_trip_routes) & set(previous_routes))
+        if len(boarding_routes) > 0:
+            list_passenger_trip[-1]['boarding'] = {'station':previous_trip_station, 'routes':boarding_routes}
+            list_passenger_trip[-1]['alight'] = {'station':path_stations[-1], 'routes':boarding_routes}
+        else:
+            print 'last station is different'
+
+        for trip in list_passenger_trip:
+            print trip
+
         return list_passenger_trip
 
         def station_location_shortest_walk_distance(self, origin_station, destination_location):
@@ -413,18 +451,19 @@ class GtfsTransitGraph:
     #
     #         return path_stations
 
-    def shortest_path_n_transfers(self, active_graph, origin_station, destination_station, number_of_transfers):
+    def shortest_path_n_transfers(self, active_graph, origin_station, destination_station, number_of_transfers,\
+     date_time_origin):
         print 'number_of_transfers', number_of_transfers
 
         path_stations = []
         if number_of_transfers == 0:
             # create a graph with boarding routes and with active stops for each route
             list_boarding_routes = active_graph.node[origin_station]['routes']
-            #subgraph_routes = self.subgraph_active_stops_routes(list_boarding_routes, date_time_origin)
-            subgraph_routes = self.subgraph_routes_active(active_graph, list_boarding_routes)
+            subgraph_routes = self.subgraph_active_stops_routes(active_graph, list_boarding_routes, date_time_origin)
+            #subgraph_routes = self.subgraph_routes_active(active_graph, list_boarding_routes)
             try:
                 path_stations = nx.shortest_path(subgraph_routes, origin_station, destination_station)
-            except nx.exception.NetworkXNoPath or nx.exception.NetworkXError:
+            except (nx.exception.NetworkXNoPath, nx.exception.NetworkXError) as e:
                 path_stations = []
             return path_stations
         if number_of_transfers == 1:
@@ -433,11 +472,11 @@ class GtfsTransitGraph:
             list_alighting_routes = active_graph.node[destination_station]['routes']
             list_routes = set(list_boarding_routes + list_alighting_routes)
             print list_boarding_routes, list_alighting_routes, list_routes
-            #subgraph_routes = self.subgraph_active_stops_routes(list_routes, date_time_origin)
-            subgraph_routes = self.subgraph_routes_active(active_graph, list_routes)
+            subgraph_routes = self.subgraph_active_stops_routes(active_graph, list_routes, date_time_origin)
+            #subgraph_routes = self.subgraph_routes_active(active_graph, list_routes)
             try:
                 path_stations = nx.shortest_path(subgraph_routes, origin_station, destination_station)
-            except nx.exception.NetworkXNoPath or nx.exception.NetworkXError:
+            except (nx.exception.NetworkXNoPath, nx.exception.NetworkXError) as e:
                 path_stations = []
 
             return path_stations
@@ -461,11 +500,11 @@ class GtfsTransitGraph:
             for new_route in list_unique_routes:
                 # add this route and find the shortest path
                 list_routes = list(list_board_alight_routes) + [new_route]
-                #subgraph_routes = self.subgraph_active_stops_routes(list_routes, date_time_origin)
-                subgraph_routes = self.subgraph_routes_active(active_graph, list_routes)
+                subgraph_routes = self.subgraph_active_stops_routes(active_graph, list_routes, date_time_origin)
+                #subgraph_routes = self.subgraph_routes_active(active_graph, list_routes)
                 try:
                     path_length = nx.shortest_path_length(subgraph_routes, origin_station, destination_station)
-                except nx.exception.NetworkXNoPath or nx.exception.NetworkXError:
+                except (nx.exception.NetworkXNoPath, nx.exception.NetworkXError) as e:
                     path_length = maxint
                 if path_length < min_path_length:
                     print new_route, path_length
@@ -474,8 +513,8 @@ class GtfsTransitGraph:
 
             print best_route
             list_routes = list(list_board_alight_routes) + [best_route]
-            #subgraph_routes = self.subgraph_active_stops_routes(list_routes, date_time_origin)
-            subgraph_routes = self.subgraph_routes_active(active_graph, list_routes)
+            subgraph_routes = self.subgraph_active_stops_routes(active_graph, list_routes, date_time_origin)
+            #subgraph_routes = self.subgraph_routes_active(active_graph, list_routes)
             try:
                 path_stations = nx.shortest_path(subgraph_routes, origin_station, destination_station)
             except nx.exception.NetworkXNoPath or nx.exception.NetworkXError:
@@ -519,7 +558,6 @@ class GtfsTransitGraph:
             # find the moment of boarding
             best_boarding_trip = ''
             df_common_trips = df_common_trips.sort_values(by=['departure_time'])
-            print df_common_trips
             for index, boarding_trip in df_common_trips.iterrows():
                 if origin_time < boarding_trip['departure_time']:
                     best_boarding_trip = boarding_trip
@@ -561,8 +599,13 @@ class GtfsTransitGraph:
                 if route in list_boarding_routes:
                     station = station_distance['station']
                     break
+
             print 'destination_station', station
-            path_stations = self.shortest_path_n_transfers(active_graph, origin_station, station, number_subway_routes-1)
+            path_stations = self.shortest_path_n_transfers(active_graph, origin_station, station, number_subway_routes-1,\
+             date_time_origin)
+            if len(path_stations) == 0:
+                print 'Single line: shortest path far from location.'
+
 
         elif number_subway_routes > 1:
             # find the shortest path nearest to destination station
@@ -578,7 +621,8 @@ class GtfsTransitGraph:
                     if best_destination_route not in list_boarding_routes and best_destination_route in station_graph_routes:
                         print 'destination_station', best_destination_station
                         path_stations = self.shortest_path_n_transfers(active_graph, origin_station, best_destination_station,\
-                         number_subway_routes-1)
+                         number_subway_routes-1,\
+                          date_time_origin)
 
                     best_destination += 1
                     if len(path_stations) > 0 or best_destination > len(list_route_distances):
@@ -586,15 +630,16 @@ class GtfsTransitGraph:
             else:
                 print 'destination_station', list_route_distances[0]
                 path_stations = self.shortest_path_n_transfers(active_graph, origin_station,\
-                 list_route_distances[0][1]['station'], number_subway_routes-1)
+                 list_route_distances[0][1]['station'], number_subway_routes-1,\
+                  date_time_origin)
 
         if len(path_stations) == 0:
             print 'There is no path'
             return []
 
         print path_stations
-        for station in path_stations:
-            print self.transit_graph.node[station]['routes']
+        # for station in path_stations:
+        #     print self.transit_graph.node[station]['routes']
 
         list_passenger_trip = self.trips_from_stations_path(active_graph, path_stations)
 
@@ -602,7 +647,7 @@ class GtfsTransitGraph:
         #     print trip
 
         # compute trip time
-        list_passenger_trip = self.compute_trip_time(list_passenger_trip, date_time_origin)
+        #list_passenger_trip = self.compute_trip_time(list_passenger_trip, date_time_origin)
 
     # gtfs_links_path = argv[1]
     # gtfs_path = argv[2]

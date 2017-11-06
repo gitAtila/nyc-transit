@@ -216,8 +216,8 @@ class TransitFeedProcessing:
         route_trips = self.df_trip_times[self.df_trip_times['route_id'] == route]
         list_trip_id = []
         for index, start_end in route_trips.iterrows():
-            start_time = start_end['start_time'].time()
-            end_time = start_end['end_time'].time()
+            start_time = start_end['start_time']
+            end_time = start_end['end_time']
             in_time = date_time.time()
             if start_time <= end_time:
                 if in_time >= start_time and in_time <= end_time:
