@@ -495,9 +495,11 @@ class GtfsTransitGraph:
                      list_route_distances[0][1]['station'], number_subway_routes-1,\
                       date_time_origin)
 
-            if len(path_stations) == 0:
+            # path must have at least two stations
+            if len(path_stations) <= 1:
                 print 'There is no path'
                 return []
+
 
             print path_stations
             for station in path_stations:
