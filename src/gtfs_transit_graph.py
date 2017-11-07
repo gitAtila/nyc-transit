@@ -252,8 +252,6 @@ class GtfsTransitGraph:
                 previous_routes = current_routes
                 break
 
-
-
             # there are transfers
             if len(intersection_traveling_current_routes) == 0:
 
@@ -466,7 +464,7 @@ class GtfsTransitGraph:
                 path_stations = self.shortest_path_n_transfers(active_graph, origin_station, station, number_subway_routes-1,\
                  date_time_origin)
                 if len(path_stations) == 0:
-                    print 'Single line: shortest path far from location.'
+                    print 'Error: The shortest path is too far from location.'
 
 
             elif number_subway_routes > 1:
@@ -497,9 +495,8 @@ class GtfsTransitGraph:
 
             # path must have at least two stations
             if len(path_stations) <= 1:
-                print 'There is no path'
+                print 'Error: There is not transit path.'
                 return []
-
 
             print path_stations
             for station in path_stations:
@@ -508,12 +505,14 @@ class GtfsTransitGraph:
             list_passenger_trip = self.trips_from_stations_path(active_graph, path_stations)
 
             for trip in list_passenger_trip:
-                print trip
+                if trip['boarding']['station'] == trip['alighting']['station']:
+                    print 'Error: Path with orphan station.'
+                    return trip
 
             # compute trip time
             list_passenger_trip = self.compute_trip_time(list_passenger_trip, date_time_origin)
         else:
-            print 'Error: origin_station not in active_graph'
+            print 'Error: origin_station not in active_graph.'
     # gtfs_links_path = argv[1]
     # gtfs_path = argv[2]
     # trip_times_path = argv[3]

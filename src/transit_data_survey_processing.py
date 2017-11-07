@@ -105,7 +105,7 @@ def subway_trips_shape(df_trips_in_nyc, shapefile_stations_path, shapefile_links
 		print 'nbr_sbwy_segments', nbr_sbwy_segments
 
 		if borough_origin == 6 or boro_destination == 6:
-			print 'Outside region'
+			print 'Error: Origin and destination location out of city.'
 			print ''
 		else:
 
@@ -262,7 +262,7 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, day_type, res
 					destination_centroid = gs_ct_destination.centroid
 
 					if len(destination_centroid) == 0:
-						print 'Destination location was not found'
+						print 'Error: Destination location was not found.'
 					else:
 						# get subway passenger route through graph
 						travel = nyc_transit_graph.station_location_transfers(gtfs_station_id, destination_centroid,\
@@ -271,7 +271,7 @@ def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, day_type, res
 					print ''
 
 				else:
-					print 'There is not information of boarding station'
+					print 'Error: There is not any information about boarding station.'
 					print ''
 					sbwy_boarding_station_name = ''
 					sf_boarding_station_name = ''
