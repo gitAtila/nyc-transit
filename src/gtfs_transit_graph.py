@@ -470,12 +470,12 @@ class GtfsTransitGraph:
             elif number_subway_routes > 1:
                 # find the shortest path nearest to destination station
                 if number_subway_routes == 2:
-                    best_destination = 0
+                    destination_pos = 0
 
                     # add on origin route that is the nearest to destination location
                     while True:
-                        best_destination_station = list_route_distances[best_destination][1]['station']
-                        best_destination_route = list_route_distances[best_destination][0]
+                        best_destination_station = list_route_distances[destination_pos][1]['station']
+                        best_destination_route = list_route_distances[destination_pos][0]
                         station_graph_routes = active_graph.node[best_destination_station]['routes']
 
                         if best_destination_route not in list_boarding_routes and best_destination_route in station_graph_routes:
@@ -484,8 +484,8 @@ class GtfsTransitGraph:
                              number_subway_routes-1,\
                               date_time_origin)
 
-                        best_destination += 1
-                        if len(path_stations) > 0 or best_destination > len(list_route_distances):
+                        destination_pos += 1
+                        if len(path_stations) > 0 or destination_pos >= len(list_route_distances):
                             break
                 else:
                     print 'destination_station', list_route_distances[0]
