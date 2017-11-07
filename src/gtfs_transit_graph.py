@@ -227,20 +227,36 @@ class GtfsTransitGraph:
         for index in range(1, len(path_stations)):
             current_routes = active_graph.node[path_stations[index]]['routes']
 
-            # jump to the last station
-            intersection_last_current_routes = list(set(last_routes) & set(current_routes))
-            intersection_last_traveling_routes = list(set(last_routes) & set(traveling_routes))
-            #if len(intersection_last_current_routes) > 0 and len(intersection_last_traveling_routes) == 0:
-
-                # list_passenger_trip.append({'boarding': {'station':path_stations[index],\
-                #  'routes':intersection_last_current_routes}})
-                # break
-
             intersection_traveling_current_routes = list(set(traveling_routes) & set(current_routes))
+            intersection_last_current_routes = list(set(last_routes) & set(current_routes))
+            #intersection_last_traveling_routes = list(set(last_routes) & set(traveling_routes))
 
-            # there are some transfers
-            if len(intersection_traveling_current_routes) == 0\
-             or (len(intersection_last_current_routes) > 0 and len(intersection_last_traveling_routes) == 0 and index > 1):
+            # jump to the last station
+            if len(intersection_last_current_routes) > 0:# and len(intersection_last_traveling_routes) == 0:
+                # update boarding routes
+                previous_boarding_routes = list_passenger_trip[-1]['boarding']['routes']
+                intersection_boarding_previous_routes = list(set(previous_boarding_routes) & set(previous_routes))
+                list_passenger_trip[-1]['boarding']['routes'] = intersection_boarding_previous_routes
+
+                # add alight
+                if len(intersection_traveling_current_routes) > 0:
+                    list_passenger_trip[-1]['alighting'] = {'station': path_stations[index],\
+                     'routes':traveling_routes}
+                else:
+                    list_passenger_trip[-1]['alighting'] = {'station': path_stations[index-1],\
+                     'routes':traveling_routes}
+
+                # add new boarding
+                list_passenger_trip.append({'boarding': {'station':path_stations[index],\
+                 'routes':intersection_last_current_routes}})
+                previous_routes = current_routes
+                break
+
+
+
+            # there are transfers
+            if len(intersection_traveling_current_routes) == 0:
+
                 # update boarding routes
                 previous_boarding_routes = list_passenger_trip[-1]['boarding']['routes']
                 intersection_boarding_previous_routes = list(set(previous_boarding_routes) & set(previous_routes))
@@ -251,21 +267,12 @@ class GtfsTransitGraph:
                  'routes':intersection_boarding_previous_routes}
 
                 # insert new boarding
-                intersection_current_previus_routes = list(set(current_routes) & set(previous_routes))
-                print 'intersection_current_previus_routes', intersection_current_previus_routes, traveling_routes
                 # transfer could happen on the previous station
+                intersection_current_previus_routes = list(set(current_routes) & set(previous_routes))
                 if len(intersection_current_previus_routes) > 0 and intersection_current_previus_routes in traveling_routes:
-                    print 'station', path_stations[index]
-                    #difference_routes = list(set(current_routes) - set(intersection_current_previus_routes))
                     list_passenger_trip.append({'boarding': {'station':path_stations[index-1],\
                      'routes':intersection_current_previus_routes}})
                     traveling_routes = intersection_current_previus_routes
-                # jump to the last station
-                elif len(intersection_last_current_routes) > 0 and len(intersection_last_traveling_routes) == 0:
-                    list_passenger_trip.append({'boarding': {'station':path_stations[index],\
-                     'routes':intersection_last_current_routes}})
-                    previous_routes = current_routes
-                    break
                 else:
                     list_passenger_trip.append({'boarding': {'station':path_stations[index], 'routes':current_routes}})
                     traveling_routes = current_routes
@@ -370,7 +377,7 @@ class GtfsTransitGraph:
             #subgraph_routes = self.subgraph_routes_active(active_graph, list_routes)
             try:
                 path_stations = nx.shortest_path(subgraph_routes, origin_station, destination_station)
-            except nx.exception.NetworkXNoPath or nx.exception.NetworkXError:
+            except (nx.exception.NetworkXNoPath, nx.exception.NetworkXError) as e:
                 path_stations = []
 
             return path_stations
