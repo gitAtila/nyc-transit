@@ -375,16 +375,16 @@ def subway_passenger_trip(sbwy_trip, nyc_transit_graph):
 				sbwy_boarding_station_name = ''
 				sf_boarding_station_name = ''
 
-def passenger_trip(df_trips_in_nyc, sampn_perno_tripno, day_type):
-	sampn_perno_tripno.split('_')
+def passenger_trip(df_trips_in_nyc, sampn_perno_tripno, day_type, df_trips, gdf_census_tract):
+	sampn_perno_tripno = sampn_perno_tripno.split('_')
+
 	# select subway trips
-	sbwy_trip = df_trips_in_nyc[df_trips_in_nyc['sampn'] == int(sampn_perno_tripno[0])\
-	 and df_trips_in_nyc['perno'] == int(sampn_perno_tripno[1])\
-	 and df_trips_in_nyc['tripno'] == int(sampn_perno_tripno[2])].iloc[0]
-	print sbwy_trip
+	df_trips_in_nyc = df_trips_in_nyc[df_trips_in_nyc['sampn'] == int(sampn_perno_tripno[0])]
+	df_trips_in_nyc = df_trips_in_nyc[df_trips_in_nyc['perno'] == int(sampn_perno_tripno[1])]
+	sbwy_trip = df_trips_in_nyc[df_trips_in_nyc['tripno'] == int(sampn_perno_tripno[2])].iloc[0]
+	#print sbwy_trip
 	# load transit_graph
 	nyc_transit_graph = gtg.GtfsTransitGraph(gtfs_links_path, gtfs_path, trip_times_path, day_type)
-	df_trips_in_nyc = get_transit_trips_in_nyc(df_trips, gdf_census_tract)
 	subway_passenger_trip(sbwy_trip, nyc_transit_graph)
 
 
@@ -393,7 +393,8 @@ def passenger_trip(df_trips_in_nyc, sampn_perno_tripno, day_type):
 day_type = 2
 #subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, day_type, results_folder,'sbwy_route_sat.csv')
 sampn_perno_tripno = '6043639_1_2'
-passenger_trip(df_trips_in_nyc, sampn_perno_tripno, day_type)
+df_trips_in_nyc = get_transit_trips_in_nyc(df_trips, gdf_census_tract)
+passenger_trip(df_trips_in_nyc, sampn_perno_tripno, day_type, df_trips, gdf_census_tract)
 
 df_subway_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 2]
 df_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 3]

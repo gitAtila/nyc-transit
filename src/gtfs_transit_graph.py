@@ -287,16 +287,49 @@ class GtfsTransitGraph:
         else:
             print 'Error: There is not intersection between last boarding station and last station.'
 
+        for passenger_trip in list_passenger_trip:
+            print passenger_trip
+
+        list_compact_trip = []
+
         # remove unnecessary trips
-        # dict_first_occurrence = dict()
-        # for trip_index in range(len(list_passenger_trip)):
-        #     trip_routes = list_passenger_trip[trip_index]['boarding']['routes']
-        #     # add new routes to dict
-        #     for route in trip_routes:
-        #         if route not in dict_first_occurrence.keys():
-        #             dict_first_occurrence[route] = trip_index
-        #         else:
-        return list_passenger_trip
+        index_first_occurrence = dict()
+        list_delection = []
+        for trip_index in range(len(list_passenger_trip)):
+            trip_routes = list_passenger_trip[trip_index]['boarding']['routes']
+            for route in trip_routes:
+                if route not in index_first_occurrence.keys():
+                    index_first_occurrence[route] = trip_index
+                else:
+                    print 'index', trip_index
+                    # get new routes
+                    intersection = list(set(trip_routes) \
+                    & set(list_passenger_trip[index_first_occurrence[route]]['boarding']['routes']))
+                    print 'intersection', intersection
+                    list_passenger_trip[index_first_occurrence[route]]['boarding']['routes'] = intersection
+                    # update new alight
+                    list_passenger_trip[index_first_occurrence[route]]['alighting']['routes'] = intersection
+                    station = list_passenger_trip[trip_index]['alighting']['station']
+                    list_passenger_trip[index_first_occurrence[route]]['alighting']['station'] = station
+                    #list_delection.append(((index_first_occurrence[route]+1),(trip_index+1)))
+                    break
+                    # set betweeness routes as ivalid
+            for deletion_index in range(index_first_occurrence[route]+1, trip_index+1):
+                list_passenger_trip[deletion_index]['boarding']['routes'] = []
+                list_passenger_trip[deletion_index]['alighting']['routes'] = []
+
+        # for index in list_delection:
+        #     print list_passenger_trip[index]
+
+        # for index in range(len(list_delection)):
+        #     if list_passenger_trip[index]
+
+        new_passenger_trip = []
+        for passenger_trip in list_passenger_trip:
+            if len(passenger_trip['boarding']['routes']) != 0:
+                new_passenger_trip.append(passenger_trip)
+
+        return new_passenger_trip
 
         def station_location_shortest_walk_distance(self, origin_station, destination_location):
             ## get the nearest station from destination location
