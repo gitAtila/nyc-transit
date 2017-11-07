@@ -229,7 +229,6 @@ class GtfsTransitGraph:
 
             intersection_traveling_current_routes = list(set(traveling_routes) & set(current_routes))
             intersection_last_current_routes = list(set(last_routes) & set(current_routes))
-            #intersection_last_traveling_routes = list(set(last_routes) & set(traveling_routes))
 
             # jump to the last station
             if len(intersection_last_current_routes) > 0:# and len(intersection_last_traveling_routes) == 0:
@@ -286,8 +285,17 @@ class GtfsTransitGraph:
             list_passenger_trip[-1]['boarding'] = {'station':previous_boarding_station, 'routes':boarding_routes}
             list_passenger_trip[-1]['alighting'] = {'station':path_stations[-1], 'routes':boarding_routes}
         else:
-            print 'Error: Last station is different from boarding station.'
+            print 'Error: There is not intersection between last boarding station and last station.'
 
+        # remove unnecessary trips
+        # dict_first_occurrence = dict()
+        # for trip_index in range(len(list_passenger_trip)):
+        #     trip_routes = list_passenger_trip[trip_index]['boarding']['routes']
+        #     # add new routes to dict
+        #     for route in trip_routes:
+        #         if route not in dict_first_occurrence.keys():
+        #             dict_first_occurrence[route] = trip_index
+        #         else:
         return list_passenger_trip
 
         def station_location_shortest_walk_distance(self, origin_station, destination_location):
@@ -422,12 +430,15 @@ class GtfsTransitGraph:
                     break
 
             print best_boarding_trip
-            df_timestable_alight = dict_timestable_alight[alighting_direction]
-            best_alighting_trip = df_timestable_alight[df_timestable_alight['trip_id'] == best_boarding_trip['trip_id']].iloc[0]
-            print best_alighting_trip
-            print best_alighting_trip.iloc[0]
-            origin_time = best_alighting_trip['departure_time']
-            print ''
+            if type(best_boarding_trip) != str:
+                df_timestable_alight = dict_timestable_alight[alighting_direction]
+                best_alighting_trip = df_timestable_alight[df_timestable_alight['trip_id'] == best_boarding_trip['trip_id']].iloc[0]
+                print best_alighting_trip
+                print best_alighting_trip.iloc[0]
+                origin_time = best_alighting_trip['departure_time']
+                print ''
+            else:
+                print 'Error: There is not any route at this time.'
 
 
     def station_location_transfers(self, origin_station, destination_location, number_subway_routes,\
