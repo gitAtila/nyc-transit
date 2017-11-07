@@ -436,79 +436,82 @@ class GtfsTransitGraph:
         date_time_origin):
 
         print 'looking for active nodes...'
+
         active_graph = self.subgraph_active_stops(date_time_origin.time())
-        # verify if origin station is in actual graph
-        list_boarding_routes = active_graph.node[origin_station]['routes']
 
-        ## get the nearest station from destination location for each route
-        dict_route_stations_near_destination = self.stations_near_point_per_route(active_graph,\
-         destination_location)
+        # verify if origin station is in active graph
+        if origin_station in active_graph.nodes():
 
-        # construct probable trips
-        list_route_distances = []
-        for route_id, dict_station in dict_route_stations_near_destination.iteritems():
-            list_route_distances.append((route_id, dict_station))
-        # sort routes in the increasing order of distance
-        list_route_distances = sorted(list_route_distances, key=lambda tup:tup[1]['distance'])
-        list_boarding_routes = active_graph.node[origin_station]['routes']
-        path_stations = []
+            ## get the nearest station from destination location for each route
+            dict_route_stations_near_destination = self.stations_near_point_per_route(active_graph,\
+             destination_location)
 
-        if number_subway_routes == 1:
-            station = ''
-            for route, station_distance in list_route_distances:
-                if route in list_boarding_routes:
-                    station = station_distance['station']
-                    break
+            # construct probable trips
+            list_route_distances = []
+            for route_id, dict_station in dict_route_stations_near_destination.iteritems():
+                list_route_distances.append((route_id, dict_station))
+            # sort routes in the increasing order of distance
+            list_route_distances = sorted(list_route_distances, key=lambda tup:tup[1]['distance'])
+            list_boarding_routes = active_graph.node[origin_station]['routes']
+            path_stations = []
 
-            print 'destination_station', station
-            path_stations = self.shortest_path_n_transfers(active_graph, origin_station, station, number_subway_routes-1,\
-             date_time_origin)
-            if len(path_stations) == 0:
-                print 'Single line: shortest path far from location.'
-
-
-        elif number_subway_routes > 1:
-            # find the shortest path nearest to destination station
-            if number_subway_routes == 2:
-                best_destination = 0
-
-                # add on origin route that is the nearest to destination location
-                while True:
-                    best_destination_station = list_route_distances[best_destination][1]['station']
-                    best_destination_route = list_route_distances[best_destination][0]
-                    station_graph_routes = active_graph.node[best_destination_station]['routes']
-
-                    if best_destination_route not in list_boarding_routes and best_destination_route in station_graph_routes:
-                        print 'destination_station', best_destination_station
-                        path_stations = self.shortest_path_n_transfers(active_graph, origin_station, best_destination_station,\
-                         number_subway_routes-1,\
-                          date_time_origin)
-
-                    best_destination += 1
-                    if len(path_stations) > 0 or best_destination > len(list_route_distances):
+            if number_subway_routes == 1:
+                station = ''
+                for route, station_distance in list_route_distances:
+                    if route in list_boarding_routes:
+                        station = station_distance['station']
                         break
-            else:
-                print 'destination_station', list_route_distances[0]
-                path_stations = self.shortest_path_n_transfers(active_graph, origin_station,\
-                 list_route_distances[0][1]['station'], number_subway_routes-1,\
-                  date_time_origin)
 
-        if len(path_stations) == 0:
-            print 'There is no path'
-            return []
+                print 'destination_station', station
+                path_stations = self.shortest_path_n_transfers(active_graph, origin_station, station, number_subway_routes-1,\
+                 date_time_origin)
+                if len(path_stations) == 0:
+                    print 'Single line: shortest path far from location.'
 
-        print path_stations
-        for station in path_stations:
-            print self.transit_graph.node[station]['routes']
 
-        list_passenger_trip = self.trips_from_stations_path(active_graph, path_stations)
+            elif number_subway_routes > 1:
+                # find the shortest path nearest to destination station
+                if number_subway_routes == 2:
+                    best_destination = 0
 
-        for trip in list_passenger_trip:
-            print trip
+                    # add on origin route that is the nearest to destination location
+                    while True:
+                        best_destination_station = list_route_distances[best_destination][1]['station']
+                        best_destination_route = list_route_distances[best_destination][0]
+                        station_graph_routes = active_graph.node[best_destination_station]['routes']
 
-        # compute trip time
-        list_passenger_trip = self.compute_trip_time(list_passenger_trip, date_time_origin)
+                        if best_destination_route not in list_boarding_routes and best_destination_route in station_graph_routes:
+                            print 'destination_station', best_destination_station
+                            path_stations = self.shortest_path_n_transfers(active_graph, origin_station, best_destination_station,\
+                             number_subway_routes-1,\
+                              date_time_origin)
 
+                        best_destination += 1
+                        if len(path_stations) > 0 or best_destination > len(list_route_distances):
+                            break
+                else:
+                    print 'destination_station', list_route_distances[0]
+                    path_stations = self.shortest_path_n_transfers(active_graph, origin_station,\
+                     list_route_distances[0][1]['station'], number_subway_routes-1,\
+                      date_time_origin)
+
+            if len(path_stations) == 0:
+                print 'There is no path'
+                return []
+
+            print path_stations
+            for station in path_stations:
+                print self.transit_graph.node[station]['routes']
+
+            list_passenger_trip = self.trips_from_stations_path(active_graph, path_stations)
+
+            for trip in list_passenger_trip:
+                print trip
+
+            # compute trip time
+            list_passenger_trip = self.compute_trip_time(list_passenger_trip, date_time_origin)
+        else:
+            print 'Error: origin_station not in active_graph'
     # gtfs_links_path = argv[1]
     # gtfs_path = argv[2]
     # trip_times_path = argv[3]
