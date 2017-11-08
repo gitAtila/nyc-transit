@@ -391,9 +391,10 @@ def passenger_trip(df_trips_in_nyc, sampn_perno_tripno, day_type, df_trips, gdf_
 # subway_trips_shape(df_trips_in_nyc, shapefile_stations_path, shapefile_links_path, results_folder,\
 #  'sbwy_route_sun.csv')
 day_type = 2
-#subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, day_type, results_folder,'sbwy_route_sat.csv')
-sampn_perno_tripno = '6043639_1_2'
 df_trips_in_nyc = get_transit_trips_in_nyc(df_trips, gdf_census_tract)
+subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, day_type, results_folder,'sbwy_route_sat.csv')
+
+sampn_perno_tripno = '6043639_1_2'
 passenger_trip(df_trips_in_nyc, sampn_perno_tripno, day_type, df_trips, gdf_census_tract)
 
 df_subway_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 2]
