@@ -164,123 +164,10 @@ def subway_trips_shape(df_trips_in_nyc, shapefile_stations_path, shapefile_links
 	print df_bus_routes
 	df_bus_routes.to_csv(results_folder + result_file, index_label='id')
 
-def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, day_type, results_folder,\
- result_file):
-
- 	#transit_feed = gp.TransitFeedProcessing(gtfs_path, trip_times_path, day_type)
-	#df_subway_stations = transit_feed.stops()
-	#df_subway_stations = df_subway_stations[df_subway_stations['location_type'] == 1]
-
-	borough_survey_shape = {1:'1', 2:'4', 3:'2', 4:'3', 5:'5'}
-	list_stations = []
-	list_bus_route = []
-
-	# select subway trips
-	df_subway_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 1]
-
-	# load transit_graph
-	nyc_transit_graph = gtg.GtfsTransitGraph(gtfs_links_path, gtfs_path, trip_times_path, day_type)
-
-	for index, sbwy_trip in df_subway_trips.iterrows():
-
-		# get interested variables
-		sampn_perno_tripno = str(sbwy_trip['sampn']) + '_' + str(sbwy_trip['perno']) + '_' + str(sbwy_trip['tripno'])
-		print 'sampn_perno_tripno', sampn_perno_tripno
-
-		# get census tract code from survey
-		ct_od = get_origin_destination_tract_id(sbwy_trip)
-		ct_origin = ct_od['o_tract_id']
-		ct_destination = ct_od['d_tract_id']
-		borough_origin = sbwy_trip['O_Boro']
-		borough_destination = sbwy_trip['D_Boro']
-		nbr_sbwy_segments = sbwy_trip['NSUB']
-
-		date_origin = sbwy_trip['trip_sdate'].split(' ')[0]
-		time_origin = sbwy_trip['dtime']
-		date_destination = sbwy_trip['trip_edate'].split(' ')[0]
-		time_destination = sbwy_trip['atime']
-		time_origin_error = False
-		try:
-			date_time_origin = datetime.strptime(date_origin + ' ' + time_origin, '%m/%d/%y %H:%M')
-			#date_time_destination = datetime.strptime(date_destination + ' ' + time_destination, '%m/%d/%y %H:%M')
-		except ValueError:
-			print 'Date Error'
-			date_time_origin = date_origin + ' ' + time_origin
-			date_time_destination = date_destination + ' ' + time_destination
-			print date_time_origin
-			print date_time_destination
-			time_origin_error = True
-
-		if time_origin_error == False:
-			list_modes = []
-
-			print 'ct_origin', ct_origin
-			print 'ct_destination', ct_destination
-			print 'boro_origin', borough_origin
-			print 'boro_destination', borough_destination
-			print 'nbr_sbwy_segments', nbr_sbwy_segments
-
-			print 'date_time_origin', date_time_origin
-			#print 'date_time_destination', date_time_destination
-
-			if borough_origin not in borough_survey_shape.keys() or borough_destination not in borough_survey_shape.keys():
-				print 'Outside region'
-				print ''
-			else:
-				# remove empty mode
-
-				for mode in range(1,17):
-					mode_key = 'MODE'
-					if math.isnan(sbwy_trip[mode_key + str(mode)]) == False:
-						list_modes.append(sbwy_trip[mode_key + str(mode)])
-					else:
-						break
-				number_subway_routes = 0
-				for index in range(len(list_modes)):
-					if index != 1 and list_modes[index] == 3:
-						number_subway_routes += 1
-				print list_modes, number_subway_routes
-
-				# get boarding station in graph
-				sbwy_station_id = float_to_int_str(sbwy_trip['StopAreaNo'])
-				if math.isnan(float(sbwy_station_id)) == False and sbwy_station_id != '0' and sbwy_station_id != '1384':
-					sbwy_boarding_station_name = df_survey_stations[df_survey_stations['Value'] == int(sbwy_station_id)]['Label']
-					gtfs_station_id = df_equivalence_survey_gtfs[df_equivalence_survey_gtfs['survey_stop_id']\
-					 == float(sbwy_station_id)]['gtfs_stop_id'].iloc[0]
-					#df_boarding_station = df_subway_stations[df_subway_stations['stop_id'] == gtfs_station_id]
-
-					print 'gtfs_station_id', gtfs_station_id
-					print 'sbwy_boarding_station_name', sbwy_boarding_station_name.iloc[0]
-					#print 'sf_boarding_station', df_boarding_station['stop_id'].iloc[0],\
-					# df_boarding_station['stop_name'].iloc[0]
-
-					# get census tract of origin and census tract of destination
-					# discover which was the alight station
-					## get the centroid of the census tract
-					gdf_ct_destination = gdf_census_tract[gdf_census_tract['ct2010'] == ct_destination]
-					gs_ct_destination = gdf_ct_destination[gdf_ct_destination['boro_code'] == borough_survey_shape[borough_destination]]
-					destination_centroid = gs_ct_destination.centroid
-
-					if len(destination_centroid) == 0:
-						print 'Error: Destination location was not found.'
-					else:
-						# get subway passenger route through graph
-						travel = nyc_transit_graph.station_location_transfers(gtfs_station_id, destination_centroid,\
-						 number_subway_routes, date_time_origin)
-						#break
-					print ''
-
-				else:
-					print 'Error: There is not any information about boarding station.'
-					print ''
-					sbwy_boarding_station_name = ''
-					sf_boarding_station_name = ''
-
-	df_bus_routes = pd.DataFrame(list_bus_route)
-	print df_bus_routes
-	df_bus_routes.to_csv(results_folder + result_file, index_label='id')
-
 def subway_passenger_trip(sbwy_trip, nyc_transit_graph):
+
+	passenger_transit_trip = []
+
 	borough_survey_shape = {1:'1', 2:'4', 3:'2', 4:'3', 5:'5'}
 	# get interested variables
 	sampn_perno_tripno = str(sbwy_trip['sampn']) + '_' + str(sbwy_trip['perno']) + '_' + str(sbwy_trip['tripno'])
@@ -364,16 +251,47 @@ def subway_passenger_trip(sbwy_trip, nyc_transit_graph):
 					print 'Error: Destination location was not found.'
 				else:
 					# get subway passenger route through graph
-					travel = nyc_transit_graph.station_location_transfers(gtfs_station_id, destination_centroid,\
-					 number_subway_routes, date_time_origin)
-					#break
-				print ''
+					passenger_transit_trip = nyc_transit_graph.station_location_transfers(gtfs_station_id,\
+					 destination_centroid, number_subway_routes, date_time_origin)
+
+					for index in range(len(passenger_transit_trip)):
+						passenger_transit_trip[index]['sampn_perno_tripno'] = sampn_perno_tripno
+						passenger_transit_trip[index]['trip_sequence'] = index
+						#print passenger_transit_trip[index]
 
 			else:
 				print 'Error: There is not any information about boarding station.'
 				print ''
 				sbwy_boarding_station_name = ''
 				sf_boarding_station_name = ''
+
+	return passenger_transit_trip
+
+def subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, day_type, results_folder,\
+ result_file):
+
+	borough_survey_shape = {1:'1', 2:'4', 3:'2', 4:'3', 5:'5'}
+	list_subway_passengers_trip = []
+
+	# select subway trips
+	df_subway_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 1]
+	# load transit_graph
+	nyc_transit_graph = gtg.GtfsTransitGraph(gtfs_links_path, gtfs_path, trip_times_path, day_type)
+
+	for index, sbwy_trip in df_subway_trips.iterrows():
+		passenger_transit_trip = subway_passenger_trip(sbwy_trip, nyc_transit_graph)
+
+		for passenger_trip in passenger_transit_trip:
+			if len(passenger_trip) > 0:
+				list_subway_passengers_trip.append(passenger_trip)
+				print passenger_trip
+		#break
+		print ''
+
+	df_subway_passenger_trip = pd.DataFrame(list_subway_passengers_trip)
+	df_subway_passenger_trip = df_subway_passenger_trip[['sampn_perno_tripno','trip_sequence','gtfs_trip_id',\
+	'boarding_stop_id','alighting_stop_id']]
+	df_subway_passenger_trip.to_csv(results_folder + result_file, index_label='id')
 
 def passenger_trip(df_trips_in_nyc, sampn_perno_tripno, day_type, df_trips, gdf_census_tract):
 	sampn_perno_tripno = sampn_perno_tripno.split('_')
@@ -395,7 +313,7 @@ df_trips_in_nyc = get_transit_trips_in_nyc(df_trips, gdf_census_tract)
 subway_trips_gtfs(df_trips_in_nyc, gtfs_links_path, gtfs_path, day_type, results_folder,'sbwy_route_sat.csv')
 
 sampn_perno_tripno = '6043639_1_2'
-passenger_trip(df_trips_in_nyc, sampn_perno_tripno, day_type, df_trips, gdf_census_tract)
+#passenger_trip(df_trips_in_nyc, sampn_perno_tripno, day_type, df_trips, gdf_census_tract)
 
 df_subway_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 2]
 df_bus_trips = df_trips_in_nyc[df_trips_in_nyc['MODE_G10'] == 3]

@@ -287,9 +287,6 @@ class GtfsTransitGraph:
         else:
             print 'Error: There is not intersection between last boarding station and last station.'
 
-        for passenger_trip in list_passenger_trip:
-            print passenger_trip
-
         list_compact_trip = []
 
         # remove unnecessary trips
@@ -317,12 +314,6 @@ class GtfsTransitGraph:
             for deletion_index in range(index_first_occurrence[route]+1, trip_index+1):
                 list_passenger_trip[deletion_index]['boarding']['routes'] = []
                 list_passenger_trip[deletion_index]['alighting']['routes'] = []
-
-        # for index in list_delection:
-        #     print list_passenger_trip[index]
-
-        # for index in range(len(list_delection)):
-        #     if list_passenger_trip[index]
 
         new_passenger_trip = []
         for passenger_trip in list_passenger_trip:
@@ -421,8 +412,8 @@ class GtfsTransitGraph:
 
             return path_stations
 
-    def compute_trip_time(self, list_passenger_trip, date_time_origin):
-
+    def find_passenger_transit_trip(self, list_passenger_trip, date_time_origin):
+        list_passenger_transit_trip = []
         origin_time = date_time_origin.time()
         for passenger_trip in list_passenger_trip:
             print 'origin_time', origin_time
@@ -435,7 +426,8 @@ class GtfsTransitGraph:
 
             # find boarding and alighting common trips
             df_common_trips = pd.DataFrame()
-            alighting_direction = ''
+            alighting_stop_direction = ''
+            boarding_stop_direction = ''
             for boarding_id in dict_timestable_boarding.keys():
                 df_boarding_direction = dict_timestable_boarding[boarding_id]
 
@@ -450,10 +442,12 @@ class GtfsTransitGraph:
                         alighting_time = df_alighting_direction[df_alighting_direction['trip_id'] == trip_id]['departure_time'].iloc[0]
                         # get direction with crescent order
                         if boarding_time < alighting_time:
-                            alighting_direction = alighting_id
+                            alighting_stop_direction = alighting_id
                             break
-                if alighting_direction != '':
+                if alighting_stop_direction != '':
+                    boarding_stop_direction = boarding_id
                     break
+
             # find the moment of boarding
             best_boarding_trip = ''
             df_common_trips = df_common_trips.sort_values(by=['departure_time'])
@@ -464,14 +458,21 @@ class GtfsTransitGraph:
 
             print best_boarding_trip
             if type(best_boarding_trip) != str:
-                df_timestable_alight = dict_timestable_alight[alighting_direction]
+                df_timestable_alight = dict_timestable_alight[alighting_stop_direction]
                 best_alighting_trip = df_timestable_alight[df_timestable_alight['trip_id'] == best_boarding_trip['trip_id']].iloc[0]
                 print best_alighting_trip
                 print best_alighting_trip.iloc[0]
+
+                list_passenger_transit_trip.append({'gtfs_trip_id':best_boarding_trip['trip_id'],\
+                'boarding_stop_id':boarding_stop_direction,\
+                'alighting_stop_id':alighting_stop_direction})
+
                 origin_time = best_alighting_trip['departure_time']
                 print ''
             else:
                 print 'Error: There is not any route at this time.'
+
+        return list_passenger_transit_trip
 
 
     def station_location_transfers(self, origin_station, destination_location, number_subway_routes,\
@@ -549,14 +550,24 @@ class GtfsTransitGraph:
             list_passenger_trip = self.trips_from_stations_path(active_graph, path_stations)
 
             for trip in list_passenger_trip:
+                print trip
+
+            for trip in list_passenger_trip:
                 if trip['boarding']['station'] == trip['alighting']['station']:
                     print 'Error: Path with orphan station.'
-                    return trip
+                    #return trip
 
             # compute trip time
-            list_passenger_trip = self.compute_trip_time(list_passenger_trip, date_time_origin)
+            list_passenger_transit_trip = self.find_passenger_transit_trip(list_passenger_trip, date_time_origin)
+            # for passenger_transit_trip in list_passenger_transit_trip:
+            #     print passenger_transit_trip
+            #
+            # print ''
+            return list_passenger_transit_trip
         else:
             print 'Error: origin_station not in active_graph.'
+            
+        return []
     # gtfs_links_path = argv[1]
     # gtfs_path = argv[2]
     # trip_times_path = argv[3]
