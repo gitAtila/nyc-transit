@@ -510,6 +510,7 @@ class GtfsTransitGraph:
                  date_time_origin)
                 if len(path_stations) == 0:
                     print 'Error: The shortest path is too far from location.'
+                    return []
 
 
             elif number_subway_routes > 1:
@@ -555,7 +556,7 @@ class GtfsTransitGraph:
             for trip in list_passenger_trip:
                 if trip['boarding']['station'] == trip['alighting']['station']:
                     print 'Error: Path with orphan station.'
-                    #return trip
+                    return []
 
             # compute trip time
             list_passenger_transit_trip = self.find_passenger_transit_trip(list_passenger_trip, date_time_origin)
