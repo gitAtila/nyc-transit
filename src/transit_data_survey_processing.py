@@ -104,8 +104,8 @@ def subway_trips_shape(df_trips_in_nyc, shapefile_stations_path, shapefile_links
 		print 'boro_destination', borough_destination
 		print 'nbr_sbwy_segments', nbr_sbwy_segments
 
-		if borough_origin == 6 or boro_destination == 6:
-			print 'Error: Origin and destination location out of city.'
+		if borough_origin == 6 or borough_destination == 6:
+			print 'Error: Origin or destination location out of city.'
 			print ''
 		else:
 
