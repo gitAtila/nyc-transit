@@ -107,6 +107,9 @@ class TransitFeedProcessing:
     def get_stops(self):
         return self.df_stops
 
+    def get_stop_times(self):
+        return self.df_stop_times
+
     def trips(self):
         return self.read_file_in_zip('trips.txt')
 
