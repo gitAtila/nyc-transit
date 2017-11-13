@@ -1,6 +1,6 @@
 # find transit passenger route
 from sys import argv
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pandas as pd
 import math
@@ -17,16 +17,20 @@ gtfs_links_path = argv[2]
 gtfs_path = argv[3]
 equivalence_survey_gtfs_path = argv[4]
 trip_times_path = argv[5]
-day_type = argv[6]
+origin_boarding_walking_path = argv[6]
+day_type = argv[7]
 
-results_folder = argv[7]
+results_folder = argv[8]
 
-def subway_passenger_trip(sbwy_trip, df_equivalence_survey_gtfs, nyc_transit_graph):
+def float_to_int_str(float_number):
+	return str(float_number).split('.')[0]
+
+def subway_passenger_trip(sbwy_trip, origin_time, df_equivalence_survey_gtfs, nyc_transit_graph):
 
 	passenger_transit_trip = []
 
 	# get boarding station in graph
-	sbwy_station_id = float_to_int_str(sbwy_trip['StopAreaNo'])
+	sbwy_station_id = str(sbwy_trip['StopAreaNo']).split('.')[0]
 	if sbwy_station_id != '0':
 		gtfs_station_id = df_equivalence_survey_gtfs[df_equivalence_survey_gtfs['survey_stop_id']\
 		 == float(sbwy_station_id)]['gtfs_stop_id'].iloc[0]
@@ -40,7 +44,7 @@ def subway_passenger_trip(sbwy_trip, df_equivalence_survey_gtfs, nyc_transit_gra
 		# get subway passenger route through graph
 		passenger_transit_trip = nyc_transit_graph.station_location_transfers(gtfs_station_id,\
 		(sbwy_trip['lon_destination'], sbwy_trip['lat_destination']), number_subway_routes,\
-		sbwy_trip['date_time_origin'])
+		origin_time)
 
 		for index in range(len(passenger_transit_trip)):
 			sampn_perno_tripno = str(sbwy_trip['sampn']) + '_' + str(sbwy_trip['perno'])\
@@ -57,20 +61,33 @@ def subway_passenger_trip(sbwy_trip, df_equivalence_survey_gtfs, nyc_transit_gra
 
 	return passenger_transit_trip
 
-def subway_trips_gtfs(df_trips, gtfs_links_path, gtfs_path, day_type, results_folder,\
- result_file):
+def subway_trips_gtfs(df_trips, df_equivalence_survey_gtfs, gtfs_links_path, gtfs_path,\
+gdf_origin_boarding_walking, day_type, results_folder,result_file):
 
 	list_subway_passengers_trip = []
 
 	# select subway trips
 	df_subway_trips = df_trips[df_trips['MODE_G10'] == 1]
 	df_subway_trips = df_subway_trips.dropna(subset=['StopAreaNo','lon_destination','lat_destination'])
-	print df_subway_trips
+	df_subway_trips['date_time_origin'] = pd.to_datetime(df_subway_trips['date_time_origin'])
+	df_subway_trips['date_time_destination'] = pd.to_datetime(df_subway_trips['date_time_destination'])
+	#print df_subway_trips
 	# load transit_graph
 	nyc_transit_graph = gtg.GtfsTransitGraph(gtfs_links_path, gtfs_path, trip_times_path, day_type)
 
 	for index, sbwy_trip in df_subway_trips.iterrows():
-		passenger_transit_trip = subway_passenger_trip(sbwy_trip, nyc_transit_graph)
+
+		sampn_perno_tripno = str(sbwy_trip['sampn']) + '_' + str(sbwy_trip['perno'])\
+		+ '_' + str(sbwy_trip['tripno'])
+		walk_boarding = gdf_origin_boarding_walking[gdf_origin_boarding_walking['sampn_pern'] == sampn_perno_tripno]
+		print walk_boarding
+		if len(walk_boarding) == 0:
+			origin_time = sbwy_trip['date_time_origin']
+		else:
+			origin_time = sbwy_trip['date_time_origin'] + timedelta(seconds = walk_boarding['duration'].iloc[0])
+
+		passenger_transit_trip = subway_passenger_trip(sbwy_trip, origin_time, df_equivalence_survey_gtfs,\
+		nyc_transit_graph)
 
 		for passenger_trip in passenger_transit_trip:
 			if len(passenger_trip) > 0:
@@ -84,7 +101,7 @@ def subway_trips_gtfs(df_trips, gtfs_links_path, gtfs_path, day_type, results_fo
 	'boarding_stop_id','alighting_stop_id']]
 	df_subway_passenger_trip.to_csv(results_folder + result_file, index_label='id')
 
-def passenger_trip(df_trips, sampn_perno_tripno, day_type):
+def passenger_trip(df_trips, df_equivalence_survey_gtfs, sampn_perno_tripno, day_type):
 	sampn_perno_tripno = sampn_perno_tripno.split('_')
 
 	# select subway trips
@@ -94,11 +111,12 @@ def passenger_trip(df_trips, sampn_perno_tripno, day_type):
 	#print sbwy_trip
 	# load transit_graph
 	nyc_transit_graph = gtg.GtfsTransitGraph(gtfs_links_path, gtfs_path, trip_times_path, day_type)
-	subway_passenger_trip(sbwy_trip, nyc_transit_graph)
+	subway_passenger_trip(sbwy_trip, df_equivalence_survey_gtfs, nyc_transit_graph)
 
 
 df_trips = pd.read_csv(survey_trips_path)
 df_equivalence_survey_gtfs = pd.read_csv(equivalence_survey_gtfs_path)
+gdf_origin_boarding_walking = gpd.read_file(origin_boarding_walking_path)
 
 if day_type == 1:
 	result_file = 'sbwy_route_wkdy.csv'
@@ -107,7 +125,8 @@ elif day_type == 2:
 else:
 	result_file = 'sbwy_route_sun.csv'
 
-subway_trips_gtfs(df_trips, gtfs_links_path, gtfs_path, day_type, results_folder,result_file)
+subway_trips_gtfs(df_trips, df_equivalence_survey_gtfs, gtfs_links_path, gtfs_path,\
+gdf_origin_boarding_walking, day_type, results_folder,result_file)
 
 sampn_perno_tripno = '6043639_1_2'
 #passenger_trip(df_trips, sampn_perno_tripno, day_type)
