@@ -172,7 +172,7 @@ plt.plot(ecdf_informed_duration.x, ecdf_informed_duration.y, label='informed dur
 #ax.xaxis.set_major_locator(ticker.MultipleLocator(60)) # set x sticks interal
 plt.grid()
 plt.legend()
-ax.set_title('Subway Trips on Sunday')
+ax.set_title('Subway Trips on Weekday')
 ax.set_xlabel('Travel Duration in Minutes')
 ax.set_ylabel('ECDF')
 plt.tight_layout()

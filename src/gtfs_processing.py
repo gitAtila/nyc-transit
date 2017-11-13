@@ -196,6 +196,8 @@ class TransitFeedProcessing:
             list_service_id = df_calendar[df_calendar.iloc[:,6] == 1]['service_id'].tolist()
         elif day_type == 3: # sunday
             list_service_id = df_calendar[df_calendar.iloc[:,7] == 1]['service_id'].tolist()
+        elif day_type == 0:
+            list_service_id = df_calendar['service_id'].tolist()
         else:
             return None
         return list_service_id
