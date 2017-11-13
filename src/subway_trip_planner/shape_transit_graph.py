@@ -10,7 +10,7 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
-import gtfs_processing as gp
+#import gtfs_processing as gp
 
 # trunk_colors = {'1':'#ee352e', '4':'#00933c', '7':'#b933ad', 'A':'#2850ad', 'B':'#ff6319',\
 #  'G':'#6cbe45', 'J':'#996633', 'L':'#a7a9ac', 'N':'#fccc0a', 'T':'#000000'}
@@ -80,7 +80,7 @@ class TransitGraph:
             else:
                 for item in value:
                     list_values.append(item)
-        
+
         return set(list_values)
 
     def unique_edge_values(self, edge_key):
