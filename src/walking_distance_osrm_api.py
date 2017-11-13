@@ -46,7 +46,16 @@ for index, trip in df_sbwy_routes.iterrows():
     boarding_position = df_stop_postions[df_stop_postions['stop_id'] == trip['boarding_stop_id']]
     alighting_position = df_stop_postions[df_stop_postions['stop_id'] == trip['alighting_stop_id']]
 
-    
+    print 'origin_boarding'
+    print od_positions['lon_origin'].iloc[0], od_positions['lat_origin'].iloc[0]
+    print boarding_position['stop_lon'].iloc[0], boarding_position['stop_lat'].iloc[0]
+
+    print 'alighting_destination'
+    print alighting_position['stop_lon'].iloc[0], alighting_position['stop_lat'].iloc[0]
+    print od_positions['lon_destination'].iloc[0], od_positions['lat_destination'].iloc[0]
+
+    print ''
+    #break
 
 # request route, distance and durantion
 #   from origin to boarding station
