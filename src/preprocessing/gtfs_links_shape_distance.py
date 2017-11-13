@@ -1,27 +1,31 @@
 '''
     Get subway links from GTFS and compute distance from Shapefile
 '''
-from sys import argv
+
+from sys import argv, path
+import os
+path.insert(0, os.path.abspath("../subway_trip_planner"))
 import pandas as pd
 import geopandas as gpd
 import networkx as nx
 
-import transit_graph as tg
+import shape_transit_graph as tg
 import gtfs_processing as gp
 
 shapefile_stations_path = argv[1]
 shapefile_links_path = argv[2]
 equivalence_gtfs_shape_stops_path = argv[3]
 gtfs_path = argv[4]
-day_type = argv[5]
+trip_times_path = argv[5]
+day_type = argv[6]
 
-results_file_name = argv[6]
+results_file_name = argv[7]
 
 def links_distance(equivalence_gtfs_shape_stops_path, shapefile_stations_path,\
- shapefile_links_path, gtfs_path, day_type):
+shapefile_links_path, gtfs_path, day_type):
     list_gtfs_links_distance = []
 
-    gtfs_nyc_subway = gp.TransitFeedProcessing(gtfs_path)
+    gtfs_nyc_subway = gp.TransitFeedProcessing(gtfs_path, trip_times_path, int(day_type))
     gdf_subway_stations = gpd.GeoDataFrame.from_file(shapefile_stations_path)
     df_equivalence_gtfs_shape_stops = pd.read_csv(equivalence_gtfs_shape_stops_path)
     del df_equivalence_gtfs_shape_stops['name']
@@ -30,7 +34,7 @@ def links_distance(equivalence_gtfs_shape_stops_path, shapefile_stations_path,\
     nyc_transit_graph = tg.TransitGraph(shapefile_stations_path, shapefile_links_path)
 
     gdf_shape_links = gpd.GeoDataFrame.from_file(shapefile_links_path)
-    df_gtfs_links = gtfs_nyc_subway.distinct_links_between_stations(day_type)
+    df_gtfs_links = gtfs_nyc_subway.links_between_stations()
     # add gtfs stop_id and line on links
     for index, gtfs_link in df_gtfs_links.iterrows():
     	line = gtfs_link['route_id']

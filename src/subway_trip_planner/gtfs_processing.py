@@ -29,8 +29,13 @@ class TransitFeedProcessing:
 
         print 'Formating trip_times...'
         # format datetime
-        self.df_trip_times['start_time'] = pd.to_datetime(self.df_trip_times['start_time'], format='%H:%M:%S').dt.time
-        self.df_trip_times['end_time'] = pd.to_datetime(self.df_trip_times['end_time'], format='%H:%M:%S').dt.time
+        # self.df_trip_times['start_time'] = pd.to_datetime(self.df_trip_times['start_time'],\
+        # format='%H:%M:%S').dt.time
+        # self.df_trip_times['end_time'] = pd.to_datetime(self.df_trip_times['end_time'],\
+        # format='%H:%M:%S').dt.time
+        self.df_trip_times['start_time'] = self.df_trip_times['start_time'].apply(self.format_hour)
+        self.df_trip_times['end_time'] = self.df_trip_times['end_time'].apply(self.format_hour)
+
 
     def read_file_in_zip(self, file_name):
         zip_file = zipfile.ZipFile(self.gtfs_zip_folder)
@@ -323,6 +328,9 @@ class TransitFeedProcessing:
         list_distinct_links = []
         link_attributes = []
 
+        gdf_stops = self.geo_stops()
+        gdf_shapes = self.geo_shape_lines()
+
         previous_stop = self.df_stop_times.iloc[0]
         for index, current_stop in self.df_stop_times.loc[1:].iterrows():
             # edges are consecutive stations of a line
@@ -331,7 +339,7 @@ class TransitFeedProcessing:
 
                 from_stop_id = previous_stop['stop_id']
                 to_stop_id = current_stop['stop_id']
-                link_id = from_stop_id + '_' + to_stop_id
+                link_id = str(from_stop_id) + '_' + str(to_stop_id)
 
                 if link_id not in list_distinct_links:
 
@@ -385,6 +393,7 @@ class TransitFeedProcessing:
                 s_line = gdf_shapes[gdf_shapes['shape_id'] == s_trip['shape_id'].iloc[0]]
 
                 # cut linestring by stations
+                #print s_line['geometry']
                 link_linestring = self.cut_line_at_points(s_line['geometry'].iloc[0], [from_stop['geometry'].iloc[0],\
                  to_stop['geometry'].iloc[0]])[1]
 

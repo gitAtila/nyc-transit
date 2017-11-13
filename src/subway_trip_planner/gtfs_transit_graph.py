@@ -186,8 +186,8 @@ class GtfsTransitGraph:
             shortest_distance = maxint
             best_station = -1
             for node_key, dict_attribute in subgraph_route.nodes_iter(data=True):
-                distance =  self.distance_points(dict_attribute['posxy'],\
-                 (destination_location.iloc[0].x, destination_location.iloc[0].y))
+                distance =  self.distance_points(dict_attribute['posxy'], destination_location)
+                 #(destination_location.iloc[0].x, destination_location.iloc[0].y))
                 if distance < shortest_distance:
                     shortest_distance = distance
                     best_station = node_key
@@ -567,7 +567,7 @@ class GtfsTransitGraph:
             return list_passenger_transit_trip
         else:
             print 'Error: origin_station not in active_graph.'
-            
+
         return []
     # gtfs_links_path = argv[1]
     # gtfs_path = argv[2]
