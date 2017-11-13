@@ -4,6 +4,7 @@
 from sys import argv
 from datetime import datetime, timedelta
 import pandas as pd
+import geopandas as gpd
 
 import gtfs_processing as gp
 
@@ -14,20 +15,15 @@ from statsmodels.distributions.empirical_distribution import ECDF
 sbwy_passenger_trips_path = argv[1]
 sbwy_gtfs_path = argv[2]
 sbwy_trip_times_path = argv[3]
-day_type = argv[4]
-survey_trips_path = argv[5]
-chart_name = argv[6]
 
-# read gtfs
-sbwy_feed = gp.TransitFeedProcessing(sbwy_gtfs_path, sbwy_trip_times_path, int(day_type))
-# read subway passenger trips
-df_sbwy_passenger_trips = pd.read_csv(sbwy_passenger_trips_path)
+origin_boarding_times_path = argv[4]
+alighting_destination_times_path = argv[5]
 
-df_stop_times = sbwy_feed.get_stop_times()
-# filter used subway trips
-list_gtfs_trip_id = list(set(df_sbwy_passenger_trips['gtfs_trip_id'].tolist()))
-df_stop_times = df_stop_times[df_stop_times['trip_id'].isin(list_gtfs_trip_id)]
-#print df_stop_times
+day_type = argv[6]
+survey_trips_path = argv[7]
+chart_name = argv[8]
+
+max_duration = 300
 
 # reconstruct passenger_route
 def reconstruct_passenger_route(df_sbwy_passenger_trips, df_stop_times):
@@ -54,6 +50,20 @@ def reconstruct_passenger_route(df_sbwy_passenger_trips, df_stop_times):
 
     return dict_passenger_routes
 
+# read gtfs
+sbwy_feed = gp.TransitFeedProcessing(sbwy_gtfs_path, sbwy_trip_times_path, int(day_type))
+# read subway passenger trips
+df_sbwy_passenger_trips = pd.read_csv(sbwy_passenger_trips_path)
+
+df_stop_times = sbwy_feed.get_stop_times()
+# filter used subway trips
+list_gtfs_trip_id = list(set(df_sbwy_passenger_trips['gtfs_trip_id'].tolist()))
+df_stop_times = df_stop_times[df_stop_times['trip_id'].isin(list_gtfs_trip_id)]
+
+# read walking distances
+gdf_origin_boarding_walking = gpd.read_file(origin_boarding_times_path)
+gdf_alighting_destination_walking = gpd.read_file(alighting_destination_times_path)
+
 # read subway survey
 df_survey_trips = pd.read_csv(survey_trips_path)
 df_survey_trips[df_survey_trips['MODE_G10'] == 1]
@@ -64,6 +74,7 @@ list_sbwy_computed_route_duration = []
 list_sbwy_informed_route_duration = []
 for sampn_perno_tripno, list_sbwy_trip_route in dict_sbwy_passenger_routes.iteritems():
     if len(list_sbwy_trip_route[0]) > 0 and len(list_sbwy_trip_route[-1]) > 0:
+        # subway computed travel duration
         computed_origin_time = list_sbwy_trip_route[0][0]['departure_time']
         computed_destination_time = list_sbwy_trip_route[-1][-1]['departure_time']
 
@@ -75,7 +86,18 @@ for sampn_perno_tripno, list_sbwy_trip_route in dict_sbwy_passenger_routes.iteri
         if computed_destination_time < computed_origin_time:
             computed_destination_time += timedelta(hours=24)
 
-        computed_duration = (computed_destination_time - computed_origin_time).total_seconds()/60
+        sbwy_computed_duration = (computed_destination_time - computed_origin_time).total_seconds()/60
+
+        # compute walking duration
+        origin_boarding_duration = gdf_origin_boarding_walking[gdf_origin_boarding_walking['sampn_pern'] == sampn_perno_tripno]
+        origin_boarding_duration = float(origin_boarding_duration['duration'].iloc[0])
+
+        alighting_destination_duration = gdf_alighting_destination_walking[gdf_alighting_destination_walking['sampn_pern'] == sampn_perno_tripno]
+        alighting_destination_duration = float(alighting_destination_duration['duration'].iloc[0])
+
+        walking_route_duration = (origin_boarding_duration + alighting_destination_duration)/60
+
+        computed_duration = sbwy_computed_duration + walking_route_duration
         list_sbwy_computed_route_duration.append(computed_duration)
 
         splited_sampn_perno_tripno = sampn_perno_tripno.split('_')
@@ -130,12 +152,12 @@ print len(list_sbwy_computed_route_duration)
 print len(list_sbwy_informed_route_duration)
 
 for index in range(len(list_sbwy_computed_route_duration)):
-    if list_sbwy_computed_route_duration[index] > 300:
-        list_sbwy_computed_route_duration[index] = 300
+    if list_sbwy_computed_route_duration[index] > max_duration:
+        list_sbwy_computed_route_duration[index] = max_duration
 
 for index in range(len(list_sbwy_informed_route_duration)):
-    if list_sbwy_informed_route_duration[index] > 300:
-        list_sbwy_informed_route_duration[index] = 300
+    if list_sbwy_informed_route_duration[index] > max_duration:
+        list_sbwy_informed_route_duration[index] = max_duration
 
 list_sbwy_computed_route_duration.sort()
 ecdf_computed_duration = ECDF(list_sbwy_computed_route_duration)
