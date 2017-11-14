@@ -27,11 +27,16 @@ def float_to_int_str(float_number):
 
 def subway_passenger_trip(sbwy_trip, origin_time, df_equivalence_survey_gtfs, nyc_transit_graph):
 
+	sampn_perno_tripno = str(sbwy_trip['sampn']) + '_' + str(sbwy_trip['perno'])\
+	+ '_' + str(sbwy_trip['tripno'])
+	print 'sampn_perno_tripno', sampn_perno_tripno
+
 	passenger_transit_trip = []
 
 	# get boarding station in graph
 	sbwy_station_id = str(sbwy_trip['StopAreaNo']).split('.')[0]
-	if sbwy_station_id != '0':
+	print 'sbwy_station_id', sbwy_station_id
+	if sbwy_station_id != '0' and sbwy_station_id != '1384':
 		gtfs_station_id = df_equivalence_survey_gtfs[df_equivalence_survey_gtfs['survey_stop_id']\
 		 == float(sbwy_station_id)]['gtfs_stop_id'].iloc[0]
 		#df_boarding_station = df_subway_stations[df_subway_stations['stop_id'] == gtfs_station_id]
@@ -47,9 +52,6 @@ def subway_passenger_trip(sbwy_trip, origin_time, df_equivalence_survey_gtfs, ny
 		origin_time)
 
 		for index in range(len(passenger_transit_trip)):
-			sampn_perno_tripno = str(sbwy_trip['sampn']) + '_' + str(sbwy_trip['perno'])\
-			+ '_' + str(sbwy_trip['tripno'])
-			print 'sampn_perno_tripno', sampn_perno_tripno
 
 			passenger_transit_trip[index]['sampn_perno_tripno'] = sampn_perno_tripno
 			passenger_transit_trip[index]['trip_sequence'] = index
@@ -93,7 +95,7 @@ gdf_origin_boarding_walking, day_type, results_folder,result_file):
 			if len(passenger_trip) > 0:
 				list_subway_passengers_trip.append(passenger_trip)
 				print passenger_trip
-		break
+		#break
 		print ''
 
 	df_subway_passenger_trip = pd.DataFrame(list_subway_passengers_trip)
@@ -137,5 +139,5 @@ else:
 subway_trips_gtfs(df_trips, df_equivalence_survey_gtfs, gtfs_links_path, gtfs_path,\
 gdf_origin_boarding_walking, day_type, results_folder,result_file)
 
-# sampn_perno_tripno = '6076464_2_2'
+# sampn_perno_tripno = '6018175_1_3'
 # passenger_trip(df_trips, df_equivalence_survey_gtfs, sampn_perno_tripno, day_type, gdf_origin_boarding_walking)

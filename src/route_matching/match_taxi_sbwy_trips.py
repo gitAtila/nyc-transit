@@ -1,7 +1,7 @@
 '''
     Match taxi and subway passenger trips
 '''
-from sys import argv, path
+from sys import argv, path, maxint
 import os
 path.insert(0, os.path.abspath("../subway_trip_planner"))
 
@@ -84,22 +84,22 @@ def spatial_temporal_route(origin_time, total_distance, total_duration, linestri
          previous_time = current_time
     return list_position_time
 
-def combine_walking_subway_route(list_sbwy_trip_route, list_st_origin_walking,\
-list_st_destination_walking, df_stops):
+def combine_walking_subway_route(arrival_boarding_datetime, list_sbwy_trip_route,\
+list_st_origin_walking, list_st_destination_walking, df_stops):
     list_sbwy_complete_route = []
     for pos_time in list_st_origin_walking:
         list_sbwy_complete_route.append({'position': pos_time['position'], 'date_time': pos_time['date_time'], 'stop_id': ''})
-    arrival_datetime = list_sbwy_complete_route[-1]['date_time']
+    #arrival_datetime = list_sbwy_complete_route[-1]['date_time']
     #print arrival_datetime
     for list_stop in list_sbwy_trip_route:
         for stop in list_stop:
             stop_data = df_stops[df_stops['stop_id'] == stop['stop_id']].iloc[0]
             # add date to stop time
             stop_time = stop['departure_time']
-            if stop_time > arrival_datetime.time():
-                stop_datetime = datetime.combine(arrival_datetime.date(), stop_time)
+            if stop_time > arrival_boarding_datetime.time():
+                stop_datetime = datetime.combine(arrival_boarding_datetime.date(), stop_time)
             else:
-                stop_date = arrival_datetime.date() + timedelta(day=1)
+                stop_date = arrival_boarding_datetime.date() + timedelta(days=1)
                 stop_datetime = datetime.combine(stop_date, stop_time)
             #print stop_datetime
             position = (stop_data['stop_lon'], stop_data['stop_lat'])
@@ -113,10 +113,9 @@ list_st_destination_walking, df_stops):
 def time_overlaped_routes(list_st_taxi_route, list_sbwy_complete_route):
 
     taxi_first_index = 0
-    sbwy_frist_index = 0
+    sbwy_first_index = 0
     # taxi stats first
 
-    print list_st_taxi_route[0]['date_time'], list_sbwy_complete_route[0]['date_time']
     if list_st_taxi_route[0]['date_time'] < list_sbwy_complete_route[0]['date_time']:
         for index in range(1, len(list_st_taxi_route)):
             if list_st_taxi_route[index]['date_time'] >= list_sbwy_complete_route[0]['date_time']:
@@ -143,18 +142,27 @@ def time_overlaped_routes(list_st_taxi_route, list_sbwy_complete_route):
                 taxi_last_index = index
             else:
                 break
-    # print 'list_st_taxi_route', len(list_st_taxi_route)
-    # print 'list_sbwy_complete_route', len(list_sbwy_complete_route)
-    # print 'taxi_first_index',taxi_first_index, list_st_taxi_route[taxi_first_index]
-    # print 'taxi_last_index',taxi_last_index, list_st_taxi_route[taxi_last_index]
-    # print 'sbwy_first_index', sbwy_first_index, list_sbwy_complete_route[sbwy_first_index]
-    # print 'sbwy_last_index', sbwy_last_index, list_sbwy_complete_route[sbwy_last_index]
 
     overlaped_taxi_indexes = (taxi_first_index, taxi_last_index)
     overlaped_sbwy_indexes = (sbwy_first_index, sbwy_last_index)
 
     return overlaped_taxi_indexes, overlaped_sbwy_indexes
 
+def integration_positions(list_taxi_trip, list_sbwy_trip):
+    shortest_distance = maxint
+    sbwy_integration_index = 0
+    taxi_integration_index = 0
+    for sbwy_pos in range(len(list_sbwy_trip)):
+        for taxi_pos in range(len(list_taxi_trip)):
+            distance = vincenty(list_sbwy_trip[sbwy_pos]['position'],\
+            list_taxi_trip[taxi_pos]['position']).meters
+            if distance < shortest_distance:
+                shortest_distance = distance
+                sbwy_integration_index = sbwy_pos
+                taxi_integration_index = taxi_pos
+
+    return {'shortest_distance': shortest_distance, 'sbwy_index': sbwy_integration_index,\
+    'taxi_index': taxi_integration_index}
 # read trips
 df_trips = pd.read_csv(trips_position_time_path)
 df_trips = df_trips[(df_trips['MODE_G10'] == 1)|(df_trips['MODE_G10'] == 7)]
@@ -242,16 +250,24 @@ for index, computed_taxi_passenger_route in gdf_computed_taxi_passenger_routes.i
             computed_taxi_passenger_route['distance'], computed_taxi_passenger_route['duration'],\
             computed_taxi_passenger_route['geometry'])
 
-            list_st_origin_walking = spatial_temporal_route(informed_sbwy_origin_time,\
-            origin_boarding_walking['distance'].iloc[0], origin_boarding_walking['duration'].iloc[0],\
-            origin_boarding_walking['geometry'].iloc[0])
+            if origin_boarding_walking['distance'].iloc[0] > 0:
+                list_st_origin_walking = spatial_temporal_route(informed_sbwy_origin_time,\
+                origin_boarding_walking['distance'].iloc[0], origin_boarding_walking['duration'].iloc[0],\
+                origin_boarding_walking['geometry'].iloc[0])
+            else:
+                list_st_origin_walking = []
 
-            list_st_destination_walking = spatial_temporal_route(computed_sbwy_alighting_time,\
-            alighting_destination_walking['distance'].iloc[0], alighting_destination_walking['duration'].iloc[0],\
-            alighting_destination_walking['geometry'].iloc[0])
+            if alighting_destination_walking['distance'].iloc[0] > 0:
+                list_st_destination_walking = spatial_temporal_route(computed_sbwy_alighting_time,\
+                alighting_destination_walking['distance'].iloc[0], alighting_destination_walking['duration'].iloc[0],\
+                alighting_destination_walking['geometry'].iloc[0])
+                arrival_boarding_datetime = list_st_destination_walking[-1]['date_time']
+            else:
+                list_st_destination_walking = []
+                arrival_boarding_datetime = informed_sbwy_origin_time
 
-            list_sbwy_complete_route = combine_walking_subway_route(list_sbwy_trip_route,\
-            list_st_origin_walking, list_st_destination_walking, df_stops)
+            list_sbwy_complete_route = combine_walking_subway_route(arrival_boarding_datetime,\
+            list_sbwy_trip_route, list_st_origin_walking, list_st_destination_walking, df_stops)
 
             # compute overlaped routes
             overlaped_taxi_indexes, overlaped_sbwy_indexes = time_overlaped_routes(list_st_taxi_route,\
@@ -260,12 +276,15 @@ for index, computed_taxi_passenger_route in gdf_computed_taxi_passenger_routes.i
             overlaped_taxi_time = list_st_taxi_route[overlaped_taxi_indexes[0]: overlaped_taxi_indexes[1]]
 
             # verify if taxi route and subway route overlap each other spatially
-            
+            dict_shortest_distance = integration_positions(overlaped_taxi_time, overlaped_sbwy_time)
+            shortest_distance = dict_shortest_distance['shortest_distance']
 
+            if shortest_distance < computed_taxi_passenger_route['distance']:
+                print 'Shareble'
 
-            stop
+            #stop
 
-    #print ''
+    print ''
         #print list_sbwy_trip_route
         #break
     #break
