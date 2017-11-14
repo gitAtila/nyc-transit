@@ -163,6 +163,7 @@ def integration_positions(list_taxi_trip, list_sbwy_trip):
 
     return {'shortest_distance': shortest_distance, 'sbwy_index': sbwy_integration_index,\
     'taxi_index': taxi_integration_index}
+    
 # read trips
 df_trips = pd.read_csv(trips_position_time_path)
 df_trips = df_trips[(df_trips['MODE_G10'] == 1)|(df_trips['MODE_G10'] == 7)]
