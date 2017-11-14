@@ -128,5 +128,5 @@ else:
 subway_trips_gtfs(df_trips, df_equivalence_survey_gtfs, gtfs_links_path, gtfs_path,\
 gdf_origin_boarding_walking, day_type, results_folder,result_file)
 
-sampn_perno_tripno = '6043639_1_2'
+sampn_perno_tripno = '6076464_2_2'
 #passenger_trip(df_trips, sampn_perno_tripno, day_type)

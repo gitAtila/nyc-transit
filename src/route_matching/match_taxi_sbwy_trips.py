@@ -1,7 +1,10 @@
 '''
     Match taxi and subway passenger trips
 '''
-from sys import argv
+from sys import argv, path
+import os
+path.insert(0, os.path.abspath("../subway_trip_planner"))
+
 import pandas as pd
 import geopandas as gpd
 from geopy.distance import vincenty
@@ -69,18 +72,68 @@ def spatial_temporal_route(origin_time, total_distance, total_duration, linestri
     previous_pos = linestring.coords[0]
     previous_time = origin_time
     sum_distance = 0
-    list_position_time.append({'time': previous_time, 'position': previous_pos})
+    list_position_time.append({'date_time': previous_time, 'position': previous_pos})
     for index in range(1, len(linestring.coords)):
          current_pos = linestring.coords[index]
          distance = vincenty((previous_pos[0], previous_pos[1]), (current_pos[0], current_pos[1])).meters
          sum_distance += distance
          time_interval = distance/average_speed
          current_time = previous_time + timedelta(seconds=time_interval)
-         list_position_time.append({'time': current_time, 'position': current_pos})
+         list_position_time.append({'date_time': current_time, 'position': current_pos})
          previous_pos = current_pos
          previous_time = current_time
     return list_position_time
 
+def combine_walking_subway_route(list_sbwy_trip_route, list_st_origin_walking,\
+list_st_destination_walking, df_stops):
+    list_sbwy_complete_route = []
+    for pos_time in list_st_origin_walking:
+        list_sbwy_complete_route.append({'position': pos_time['position'], 'date_time': pos_time['date_time'], 'stop_id': ''})
+    for list_stop in list_sbwy_trip_route:
+        for stop in list_stop:
+            stop_data = df_stops[df_stops['stop_id'] == stop['stop_id']].iloc[0]
+            position = (stop_data['stop_lon'], stop_data['stop_lat'])
+            list_sbwy_complete_route.append({'position': position, 'date_time': stop['departure_time'],\
+            'stop_id': stop['stop_id']})
+    for pos_time in list_st_destination_walking:
+        list_sbwy_complete_route.append({'position': pos_time['position'], 'date_time': pos_time['date_time'], 'stop_id': ''})
+
+    return list_sbwy_complete_route
+
+def time_overlaped_routes(list_st_taxi_route, list_sbwy_complete_route):
+
+    taxi_first_index = 0
+    sbwy_frist_index = 0
+    # taxi stats first
+
+    print list_st_taxi_route[0]['date_time'], list_sbwy_complete_route[0]['date_time']
+    if list_st_taxi_route[0]['date_time'] < list_sbwy_complete_route[0]['date_time']:
+        for index in range(1, len(list_st_taxi_route)):
+            if list_st_taxi_route[index]['date_time'] >= list_sbwy_complete_route[0]['date_time']:
+                taxi_frist_index = index
+                break
+    else: # sbwy starts first
+        for index in range(1, len(list_sbwy_complete_route)):
+            if list_sbwy_complete_route[index]['date_time'] >= list_st_taxi_route[0]['date_time']:
+                sbwy_first_index = index
+                break
+
+    taxi_last_index = len(list_st_taxi_route)-1
+    sbwy_last_index = len(list_sbwy_complete_route)-1
+    # taxi fineshed first
+    if list_st_taxi_route[-1]['date_time'] < list_sbwy_complete_route[-1]['date_time']:
+        for index in range(len(list_sbwy_complete_route)):
+            if list_sbwy_complete_route[index]['date_time'] <= list_st_taxi_route[-1]['date_time']:
+                sbwy_last_index = index
+            else:
+                break
+    else: #sbwy ends first
+        for index in range(len(list_st_taxi_route)):
+            if list_st_taxi_route[index]['date_time'] <= list_sbwy_complete_route[-1]['date_time']:
+                taxi_last_index = index
+            else:
+                break
+    print taxi_first_index, taxi_last_index, sbwy_first_index, sbwy_last_index
 
 # read trips
 df_trips = pd.read_csv(trips_position_time_path)
@@ -94,6 +147,8 @@ sbwy_feed = gp.TransitFeedProcessing(sbwy_gtfs_path, sbwy_trip_times_path, int(d
 df_sbwy_passenger_trips = pd.read_csv(sbwy_passenger_trips_path)
 
 df_stop_times = sbwy_feed.get_stop_times()
+df_stops = sbwy_feed.get_stops()
+
 # filter used subway trips
 list_gtfs_trip_id = list(set(df_sbwy_passenger_trips['gtfs_trip_id'].tolist()))
 df_stop_times = df_stop_times[df_stop_times['trip_id'].isin(list_gtfs_trip_id)]
@@ -107,8 +162,6 @@ gdf_alighting_destination_walking = gpd.read_file(alighting_destination_times_pa
 
 # read taxi passenger trips
 gdf_computed_taxi_passenger_routes = gpd.read_file(computed_taxi_passenger_routes_path)
-
-#print gdf_computed_taxi_passenger_routes
 
 # match routes
 # iterating over taxi passenger routes
@@ -180,13 +233,20 @@ for index, computed_taxi_passenger_route in gdf_computed_taxi_passenger_routes.i
             list_st_origin_walking = spatial_temporal_route(informed_sbwy_origin_time,\
             origin_boarding_walking['distance'].iloc[0], origin_boarding_walking['duration'].iloc[0],\
             origin_boarding_walking['geometry'].iloc[0])
-            print list_st_origin_walking
+            #print list_st_origin_walking
 
             print alighting_destination_walking
-            list_st_alighting_destination = spatial_temporal_route(computed_sbwy_alighting_time,\
+            list_st_destination_walking = spatial_temporal_route(computed_sbwy_alighting_time,\
             alighting_destination_walking['distance'].iloc[0], alighting_destination_walking['duration'].iloc[0],\
             alighting_destination_walking['geometry'].iloc[0])
-            print list_st_alighting_destination
+            #print list_st_destination_walking
+
+            list_sbwy_complete_route = combine_walking_subway_route(list_sbwy_trip_route,\
+            list_st_origin_walking, list_st_destination_walking, df_stops)
+            print list_sbwy_trip_route
+            
+            time_overlaped_routes(list_st_taxi_route, list_sbwy_complete_route)
+
 
             stop
 
