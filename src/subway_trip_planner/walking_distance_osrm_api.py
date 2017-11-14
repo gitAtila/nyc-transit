@@ -54,10 +54,7 @@ def routing_osrm_api(lon_origin, lat_origin, lon_destination, lat_destination, m
         #print taxi_trip['sampn_perno_tripno']
         geometry = LineString(json_route['routes'][0]['geometry']['coordinates'])
         duration = json_route['routes'][0]['duration']
-        distance = json_route['routes'][0]['dipassenger_subway_route_pathstance']
-        # print duration
-        # print distance
-        # print geometry
+        distance = json_route['routes'][0]['distance']
 
         return {'duration': duration, 'distance':distance, 'geometry': geometry}
 
@@ -84,7 +81,8 @@ gtfs_zip_folder, result_path):
 		 == float(trip['StopAreaNo'])]['gtfs_stop_id'].iloc[0]
         boarding_position = df_stop_postions[df_stop_postions['stop_id'] == gtfs_station_id]
 
-        print 'origin_boarding'print gdf_destination_route
+        print 'origin_boarding'
+        #print gdf_destination_route
         origin_route = routing_osrm_api(trip['lon_origin'], trip['lat_origin'],\
         boarding_position['stop_lon'].iloc[0], boarding_position['stop_lat'].iloc[0], 'walking')
         origin_route['sampn_perno_tripno'] = sampn_perno_tripno
@@ -134,3 +132,5 @@ gtfs_zip_folder, result_path):
     gdf_destination_route = gpd.GeoDataFrame(list_destination_route, geometry='geometry')
     print gdf_destination_route
     gdf_destination_route.to_file(result_path + 'alighting_destination_walking_route_wkdy.shp')
+
+compute_alighting_destination_route(survey_trips_path, passenger_subway_route_path, gtfs_zip_folder, result_path)

@@ -22,6 +22,7 @@ alighting_destination_times_path = argv[6]
 day_type = argv[7]
 
 computed_taxi_passenger_routes_path = argv[8]
+result_path = argv[9]
 
 # reconstruct passenger_route
 def reconstruct_passenger_route(df_sbwy_passenger_trips, df_stop_times):
@@ -163,7 +164,7 @@ def integration_positions(list_taxi_trip, list_sbwy_trip):
 
     return {'shortest_distance': shortest_distance, 'sbwy_index': sbwy_integration_index,\
     'taxi_index': taxi_integration_index}
-    
+
 # read trips
 df_trips = pd.read_csv(trips_position_time_path)
 df_trips = df_trips[(df_trips['MODE_G10'] == 1)|(df_trips['MODE_G10'] == 7)]
@@ -196,6 +197,7 @@ gdf_computed_taxi_passenger_routes = gpd.read_file(computed_taxi_passenger_route
 # iterating over taxi passenger routes
 count_iterations = 0
 count_overlaped = 0
+list_matches = []
 for index, computed_taxi_passenger_route in gdf_computed_taxi_passenger_routes.iterrows():
     taxi_sampn_perno_tripno = computed_taxi_passenger_route['sampn_pern']
     #print 'Taxi trip', taxi_sampn_perno_tripno
@@ -236,15 +238,6 @@ for index, computed_taxi_passenger_route in gdf_computed_taxi_passenger_routes.i
         # verify if taxi route and subway route overlap each other temporally
         if informed_sbwy_origin_time < computed_taxi_passenger_dropoff_time\
         and informed_taxi_pickup_time < computed_sbwy_destination_time:
-            count_overlaped += 1
-            print 'Overlaping routes'
-            print 'Taxi trip', taxi_sampn_perno_tripno
-            print informed_taxi_pickup_time
-            print computed_taxi_passenger_dropoff_time
-            print 'Subway trip', sbwy_sampn_perno_tripno
-            print informed_sbwy_origin_time
-            print computed_sbwy_destination_time
-            print '============================='
 
             # reconstruct taxi and subway spatial and temporal routes
             list_st_taxi_route = spatial_temporal_route(informed_taxi_pickup_time,\
@@ -281,15 +274,28 @@ for index, computed_taxi_passenger_route in gdf_computed_taxi_passenger_routes.i
             shortest_distance = dict_shortest_distance['shortest_distance']
 
             if shortest_distance < computed_taxi_passenger_route['distance']:
-                print 'Shareble'
+                count_overlaped += 1
+                real_sbwy_intergration_index = overlaped_sbwy_indexes[0] + dict_shortest_distance['sbwy_index']
+                real_taxi_intergration_index = overlaped_taxi_indexes[0] + dict_shortest_distance['taxi_index']
+                sbwy_integration_pos = list_sbwy_complete_route[real_sbwy_intergration_index]
+                taxi_integration_pos = list_st_taxi_route[real_taxi_intergration_index]
+                #print 'Shareble'
+                print '=>Taxi trip', taxi_sampn_perno_tripno
+                print '=>Subway trip', sbwy_sampn_perno_tripno
+                print 'distance', shortest_distance
+                dict_match = {'taxi_trip_id': taxi_sampn_perno_tripno, 'sbwy_trip_id': sbwy_sampn_perno_tripno,\
+                'stop_id': sbwy_integration_pos['stop_id'], 'distance': shortest_distance,\
+                'sbwy_lon': sbwy_integration_pos['position'][0], 'sbwy_lat': sbwy_integration_pos['position'][1],\
+                'taxi_lon': taxi_integration_pos['position'][0], 'taxi_lat': taxi_integration_pos['position'][1],\
+                'sbwy_datetime': sbwy_integration_pos['date_time'],'taxi_date_time': taxi_integration_pos['date_time']}
+                list_matches.append(dict_match)
+                print '============================='
+    #             break
+    #
+    # if count_overlaped > 0:
+    #     break
 
-            #stop
-
-    print ''
-        #print list_sbwy_trip_route
-        #break
-    #break
-print 'gdf_computed_taxi_passenger_routes', len(gdf_computed_taxi_passenger_routes)
-print 'dict_sbwy_passenger_routes', len(dict_sbwy_passenger_routes)
-print 'count_iterations', count_iterations
-print 'count_overlaped', count_overlaped
+df_matches = pd.DataFrame(list_matches)
+df_matches = df_matches[['taxi_trip_id','sbwy_trip_id','stop_id','distance','sbwy_datetime',\
+'sbwy_lon','sbwy_lat','taxi_date_time', 'taxi_lon','taxi_lat']]
+df_matches.to_csv(result_path, index_label='id')
