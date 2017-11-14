@@ -93,7 +93,7 @@ gdf_origin_boarding_walking, day_type, results_folder,result_file):
 			if len(passenger_trip) > 0:
 				list_subway_passengers_trip.append(passenger_trip)
 				print passenger_trip
-		#break
+		break
 		print ''
 
 	df_subway_passenger_trip = pd.DataFrame(list_subway_passengers_trip)
@@ -101,17 +101,26 @@ gdf_origin_boarding_walking, day_type, results_folder,result_file):
 	'boarding_stop_id','alighting_stop_id']]
 	df_subway_passenger_trip.to_csv(results_folder + result_file, index_label='id')
 
-def passenger_trip(df_trips, df_equivalence_survey_gtfs, sampn_perno_tripno, day_type):
-	sampn_perno_tripno = sampn_perno_tripno.split('_')
+def passenger_trip(df_trips, df_equivalence_survey_gtfs, sampn_perno_tripno, day_type, gdf_origin_boarding_walking):
+
+	splitted_sampn_perno_tripno = sampn_perno_tripno.split('_')
 
 	# select subway trips
-	df_trips = df_trips[df_trips['sampn'] == int(sampn_perno_tripno[0])]
-	df_trips = df_trips[df_trips['perno'] == int(sampn_perno_tripno[1])]
-	sbwy_trip = df_trips[df_trips['tripno'] == int(sampn_perno_tripno[2])].iloc[0]
+	df_trips = df_trips[df_trips['sampn'] == int(splitted_sampn_perno_tripno[0])]
+	df_trips = df_trips[df_trips['perno'] == int(splitted_sampn_perno_tripno[1])]
+	sbwy_trip = df_trips[df_trips['tripno'] == int(splitted_sampn_perno_tripno[2])].iloc[0]
+	sbwy_trip['date_time_origin'] = pd.to_datetime(sbwy_trip['date_time_origin'])
+	sbwy_trip['date_time_destination'] = pd.to_datetime(sbwy_trip['date_time_destination'])
 	#print sbwy_trip
+	walk_boarding = gdf_origin_boarding_walking[gdf_origin_boarding_walking['sampn_pern'] == sampn_perno_tripno]
+	print walk_boarding
+	if len(walk_boarding) == 0:
+		origin_time = sbwy_trip['date_time_origin']
+	else:
+		origin_time = sbwy_trip['date_time_origin'] + timedelta(seconds = walk_boarding['duration'].iloc[0])
 	# load transit_graph
 	nyc_transit_graph = gtg.GtfsTransitGraph(gtfs_links_path, gtfs_path, trip_times_path, day_type)
-	subway_passenger_trip(sbwy_trip, df_equivalence_survey_gtfs, nyc_transit_graph)
+	subway_passenger_trip(sbwy_trip, origin_time, df_equivalence_survey_gtfs, nyc_transit_graph)
 
 
 df_trips = pd.read_csv(survey_trips_path)
@@ -128,5 +137,5 @@ else:
 subway_trips_gtfs(df_trips, df_equivalence_survey_gtfs, gtfs_links_path, gtfs_path,\
 gdf_origin_boarding_walking, day_type, results_folder,result_file)
 
-sampn_perno_tripno = '6076464_2_2'
-#passenger_trip(df_trips, sampn_perno_tripno, day_type)
+# sampn_perno_tripno = '6076464_2_2'
+# passenger_trip(df_trips, df_equivalence_survey_gtfs, sampn_perno_tripno, day_type, gdf_origin_boarding_walking)
