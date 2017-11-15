@@ -11,7 +11,7 @@ from geopy.distance import vincenty
 from datetime import datetime, timedelta
 import gtfs_processing as gp
 
-trips_position_time_path = argv[1]
+survey_processed_trips_path = argv[1]
 sbwy_passenger_trips_path = argv[2]
 sbwy_gtfs_path = argv[3]
 sbwy_trip_times_path = argv[4]
@@ -166,7 +166,7 @@ def integration_positions(list_taxi_trip, list_sbwy_trip):
     'taxi_index': taxi_integration_index}
 
 # read trips
-df_trips = pd.read_csv(trips_position_time_path)
+df_trips = pd.read_csv(survey_processed_trips_path)
 df_trips = df_trips[(df_trips['MODE_G10'] == 1)|(df_trips['MODE_G10'] == 7)]
 df_trips['date_time_origin'] = pd.to_datetime(df_trips['date_time_origin'])
 df_trips['date_time_destination'] = pd.to_datetime(df_trips['date_time_destination'])
@@ -223,6 +223,7 @@ for index, computed_taxi_passenger_route in gdf_computed_taxi_passenger_routes.i
 
         # compute walking duration
         origin_boarding_walking = gdf_origin_boarding_walking[gdf_origin_boarding_walking['sampn_pern'] == sbwy_sampn_perno_tripno]
+        print origin_boarding_walking
         origin_boarding_duration = float(origin_boarding_walking['duration'].iloc[0])
 
         alighting_destination_walking = gdf_alighting_destination_walking[gdf_alighting_destination_walking['sampn_pern'] == sbwy_sampn_perno_tripno]

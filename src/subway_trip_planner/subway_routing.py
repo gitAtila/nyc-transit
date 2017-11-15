@@ -18,7 +18,7 @@ gtfs_path = argv[3]
 equivalence_survey_gtfs_path = argv[4]
 trip_times_path = argv[5]
 origin_boarding_walking_path = argv[6]
-day_type = argv[7]
+day_type = int(argv[7])
 
 results_folder = argv[8]
 
@@ -36,7 +36,7 @@ def subway_passenger_trip(sbwy_trip, origin_time, df_equivalence_survey_gtfs, ny
 	# get boarding station in graph
 	sbwy_station_id = str(sbwy_trip['StopAreaNo']).split('.')[0]
 	print 'sbwy_station_id', sbwy_station_id
-	if sbwy_station_id != '0' and sbwy_station_id != '1384':
+	if sbwy_station_id != '0':
 		gtfs_station_id = df_equivalence_survey_gtfs[df_equivalence_survey_gtfs['survey_stop_id']\
 		 == float(sbwy_station_id)]['gtfs_stop_id'].iloc[0]
 		#df_boarding_station = df_subway_stations[df_subway_stations['stop_id'] == gtfs_station_id]
@@ -133,7 +133,7 @@ if day_type == 1:
 	result_file = 'sbwy_route_wkdy.csv'
 elif day_type == 2:
 	result_file = 'sbwy_route_sat.csv'
-else:
+elif day_type == 3:
 	result_file = 'sbwy_route_sun.csv'
 
 subway_trips_gtfs(df_trips, df_equivalence_survey_gtfs, gtfs_links_path, gtfs_path,\

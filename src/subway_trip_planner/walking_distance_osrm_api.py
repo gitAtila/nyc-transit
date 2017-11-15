@@ -66,6 +66,7 @@ gtfs_zip_folder, result_path):
     df_survey_trips = pd.read_csv(survey_trips_path)
     # select those made by subway
     df_survey_trips = df_survey_trips[df_survey_trips['MODE_G10'] == 1]
+    df_survey_trips = df_survey_trips.dropna(subset=['StopAreaNo','lon_origin','lat_origin'])
     # get station positions
     df_stop_postions = read_file_in_zip(gtfs_zip_folder, 'stops.txt')
 
@@ -75,19 +76,21 @@ gtfs_zip_folder, result_path):
     for index, trip in df_survey_trips.iterrows():
     	sampn_perno_tripno = str(trip['sampn']) + '_' + str(trip['perno'])\
     	+ '_' + str(trip['tripno'])
-
+        print sampn_perno_tripno
+        print trip['StopAreaNo']
         # get boarding postions
-        gtfs_station_id = df_equivalence_survey_gtfs[df_equivalence_survey_gtfs['survey_stop_id']\
-		 == float(trip['StopAreaNo'])]['gtfs_stop_id'].iloc[0]
-        boarding_position = df_stop_postions[df_stop_postions['stop_id'] == gtfs_station_id]
-
-        print 'origin_boarding'
-        #print gdf_destination_route
-        origin_route = routing_osrm_api(trip['lon_origin'], trip['lat_origin'],\
-        boarding_position['stop_lon'].iloc[0], boarding_position['stop_lat'].iloc[0], 'walking')
-        origin_route['sampn_perno_tripno'] = sampn_perno_tripno
-        list_origin_route.append(origin_route)
-        print origin_route
+        if trip['StopAreaNo'] != 0:
+            gtfs_station_id = df_equivalence_survey_gtfs[df_equivalence_survey_gtfs['survey_stop_id']\
+    		 == float(trip['StopAreaNo'])]['gtfs_stop_id'].iloc[0]
+            boarding_position = df_stop_postions[df_stop_postions['stop_id'] == gtfs_station_id]
+    
+            print 'origin_boarding'
+            #print gdf_destination_route
+            origin_route = routing_osrm_api(trip['lon_origin'], trip['lat_origin'],\
+            boarding_position['stop_lon'].iloc[0], boarding_position['stop_lat'].iloc[0], 'walking')
+            origin_route['sampn_perno_tripno'] = sampn_perno_tripno
+            list_origin_route.append(origin_route)
+            print origin_route
 
     gdf_origin_route = gpd.GeoDataFrame(list_origin_route, geometry='geometry')
     print gdf_origin_route
@@ -133,4 +136,6 @@ gtfs_zip_folder, result_path):
     print gdf_destination_route
     gdf_destination_route.to_file(result_path + 'alighting_destination_walking_route_wkdy.shp')
 
-compute_alighting_destination_route(survey_trips_path, passenger_subway_route_path, gtfs_zip_folder, result_path)
+df_equivalence_survey_gtfs = pd.read_csv(equivalence_survey_gtfs_path)
+compute_origin_boarding_route(survey_trips_path, df_equivalence_survey_gtfs, gtfs_zip_folder, result_path)
+#compute_alighting_destination_route(survey_trips_path, passenger_subway_route_path, gtfs_zip_folder, result_path)
