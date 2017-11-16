@@ -67,6 +67,10 @@ def spatial_temporal_route(origin_time, total_distance, total_duration, linestri
          distance = vincenty((previous_pos[0], previous_pos[1]), (current_pos[0], current_pos[1])).meters
          sum_distance += distance
          previous_pos = current_pos
+         
+    print 'total_distance', total_distance
+    print 'sum_distance', sum_distance
+
     total_distance = sum_distance
 
     average_speed = total_distance/total_duration
@@ -283,6 +287,16 @@ for index, computed_taxi_passenger_route in gdf_computed_taxi_passenger_routes.i
                 real_taxi_intergration_index = overlaped_taxi_indexes[0] + dict_shortest_distance['taxi_index']
                 sbwy_integration_pos = list_sbwy_complete_route[real_sbwy_intergration_index]
                 taxi_integration_pos = list_st_taxi_route[real_taxi_intergration_index]
+
+                print '----->', sbwy_integration_pos
+                print real_taxi_intergration_index
+
+                # compute walking distance and duration
+                for sbwy_position in range(real_taxi_intergration_index+1):
+                    print list_sbwy_complete_route[sbwy_position]
+
+                # compute subway distance and duration
+
                 #print 'Shareble'
                 print '=>Taxi trip', taxi_sampn_perno_tripno
                 print '=>Subway trip', sbwy_sampn_perno_tripno
@@ -292,14 +306,15 @@ for index, computed_taxi_passenger_route in gdf_computed_taxi_passenger_routes.i
                 'sbwy_lon': sbwy_integration_pos['position'][0], 'sbwy_lat': sbwy_integration_pos['position'][1],\
                 'taxi_lon': taxi_integration_pos['position'][0], 'taxi_lat': taxi_integration_pos['position'][1],\
                 'sbwy_date_time': sbwy_integration_pos['date_time'],'taxi_date_time': taxi_integration_pos['date_time']}
+
                 list_matches.append(dict_match)
                 print '============================='
-    #             break
-    #
-    # if count_overlaped > 0:
-    #     break
+                #break
 
-df_matches = pd.DataFrame(list_matches)
-df_matches = df_matches[['taxi_trip_id','sbwy_trip_id','stop_id','integration_distance','sbwy_date_time',\
-'sbwy_lon','sbwy_lat','taxi_date_time', 'taxi_lon','taxi_lat']]
-df_matches.to_csv(result_path, index_label='id')
+    if count_overlaped > 0:
+        break
+
+# df_matches = pd.DataFrame(list_matches)
+# df_matches = df_matches[['taxi_trip_id','sbwy_trip_id','stop_id','integration_distance','sbwy_date_time',\
+# 'sbwy_lon','sbwy_lat','taxi_date_time', 'taxi_lon','taxi_lat']]
+# df_matches.to_csv(result_path, index_label='id')
