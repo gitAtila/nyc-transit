@@ -223,7 +223,7 @@ for index, computed_taxi_passenger_route in gdf_computed_taxi_passenger_routes.i
 
         # compute walking duration
         origin_boarding_walking = gdf_origin_boarding_walking[gdf_origin_boarding_walking['sampn_pern'] == sbwy_sampn_perno_tripno]
-        
+
         if len(origin_boarding_walking) > 0:
             origin_boarding_duration = float(origin_boarding_walking['duration'].iloc[0])
         else:
@@ -288,10 +288,10 @@ for index, computed_taxi_passenger_route in gdf_computed_taxi_passenger_routes.i
                 print '=>Subway trip', sbwy_sampn_perno_tripno
                 print 'distance', shortest_distance
                 dict_match = {'taxi_trip_id': taxi_sampn_perno_tripno, 'sbwy_trip_id': sbwy_sampn_perno_tripno,\
-                'stop_id': sbwy_integration_pos['stop_id'], 'distance': shortest_distance,\
+                'stop_id': sbwy_integration_pos['stop_id'], 'integration_distance': shortest_distance,\
                 'sbwy_lon': sbwy_integration_pos['position'][0], 'sbwy_lat': sbwy_integration_pos['position'][1],\
                 'taxi_lon': taxi_integration_pos['position'][0], 'taxi_lat': taxi_integration_pos['position'][1],\
-                'sbwy_datetime': sbwy_integration_pos['date_time'],'taxi_date_time': taxi_integration_pos['date_time']}
+                'sbwy_date_time': sbwy_integration_pos['date_time'],'taxi_date_time': taxi_integration_pos['date_time']}
                 list_matches.append(dict_match)
                 print '============================='
     #             break
@@ -300,6 +300,6 @@ for index, computed_taxi_passenger_route in gdf_computed_taxi_passenger_routes.i
     #     break
 
 df_matches = pd.DataFrame(list_matches)
-df_matches = df_matches[['taxi_trip_id','sbwy_trip_id','stop_id','distance','sbwy_datetime',\
+df_matches = df_matches[['taxi_trip_id','sbwy_trip_id','stop_id','integration_distance','sbwy_date_time',\
 'sbwy_lon','sbwy_lat','taxi_date_time', 'taxi_lon','taxi_lat']]
 df_matches.to_csv(result_path, index_label='id')
