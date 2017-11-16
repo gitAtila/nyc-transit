@@ -77,14 +77,16 @@ class OSRM_routing:
             list_steps = json_route['routes'][0]['legs'][0]['steps']
             list_distance_duration_location = []
             list_distance_duration_location.append({'distance': 0,\
-            'duration': 0, 'location': list_steps[0]['maneuver']['location']})
+            'duration': 0, 'longitude': list_steps[0]['maneuver']['location'][0],\
+            'latitude': list_steps[0]['maneuver']['location'][1]})
             total_distance = 0
             total_duration = 0
             for index in range(1,len(list_steps)):
                 total_duration += list_steps[index-1]['duration']
                 total_distance += list_steps[index-1]['distance']
                 list_distance_duration_location.append({'distance': total_distance,\
-                'duration': total_duration, 'location': list_steps[index]['maneuver']['location']})
+                'duration': total_duration, 'longitude': list_steps[index]['maneuver']['location'][0],\
+                'latitude': list_steps[index]['maneuver']['location'][1]})
             return list_distance_duration_location
 
         return []

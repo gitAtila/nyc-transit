@@ -57,7 +57,7 @@ def trip_from_sampn_perno_tripno(df_trips, sampn_perno_tripno):
      & (df_trips['tripno'] == int(sampn_perno_tripno[2]))]
     return informed_trip
 
-def spatial_temporal_route(origin_time, total_distance, total_duration, linestring):
+def spatial_temporal_route(origin_time, list_steps):
     list_position_time = []
 
     sum_distance = 0
@@ -67,7 +67,7 @@ def spatial_temporal_route(origin_time, total_distance, total_duration, linestri
          distance = vincenty((previous_pos[0], previous_pos[1]), (current_pos[0], current_pos[1])).meters
          sum_distance += distance
          previous_pos = current_pos
-         
+
     print 'total_distance', total_distance
     print 'sum_distance', sum_distance
 
@@ -169,6 +169,14 @@ def integration_positions(list_taxi_trip, list_sbwy_trip):
     return {'shortest_distance': shortest_distance, 'sbwy_index': sbwy_integration_index,\
     'taxi_index': taxi_integration_index}
 
+def group_trip_positions(df_trip_positions):
+    dict_trip_positions = dict()
+    for index, position in df_trip_positions.iterrows():
+        dict_trip_positions.setdefault(position['sampn_perno_tripno'], [])\
+        .append({'distance': position['distance'],'duration': position['duration'],
+        'latitude': position['latitude'], 'longitude': position['longitude']})
+    return dict_trip_positions
+
 # read trips
 df_trips = pd.read_csv(survey_processed_trips_path)
 df_trips = df_trips[(df_trips['MODE_G10'] == 1)|(df_trips['MODE_G10'] == 7)]
@@ -191,26 +199,24 @@ df_stop_times = df_stop_times[df_stop_times['trip_id'].isin(list_gtfs_trip_id)]
 dict_sbwy_passenger_routes = reconstruct_passenger_route(df_sbwy_passenger_trips, df_stop_times)
 
 # read walking distances
-gdf_origin_boarding_walking = gpd.read_file(origin_boarding_times_path)
-gdf_alighting_destination_walking = gpd.read_file(alighting_destination_times_path)
+dict_origin_boarding_walking = group_trip_positions(pd.read_csv(origin_boarding_times_path))
+dict_alighting_destination_walking = group_trip_positions(pd.read_csv(alighting_destination_times_path))
 
 # read taxi passenger trips
-gdf_computed_taxi_passenger_routes = gpd.read_file(computed_taxi_passenger_routes_path)
+dict_computed_taxi_passenger_routes = group_trip_positions(pd.read_csv(computed_taxi_passenger_routes_path))
 
 # match routes
 # iterating over taxi passenger routes
 count_iterations = 0
 count_overlaped = 0
 list_matches = []
-for index, computed_taxi_passenger_route in gdf_computed_taxi_passenger_routes.iterrows():
-    taxi_sampn_perno_tripno = computed_taxi_passenger_route['sampn_pern']
-    #print 'Taxi trip', taxi_sampn_perno_tripno
+for taxi_sampn_perno_tripno, computed_taxi_passenger_route in dict_computed_taxi_passenger_routes.iteritems():
 
     informed_taxi_trip = trip_from_sampn_perno_tripno(df_trips, taxi_sampn_perno_tripno)
     informed_taxi_pickup_time = informed_taxi_trip['date_time_origin'].iloc[0]
     informed_taxi_dropoff_time = informed_taxi_trip['date_time_destination'].iloc[0]
 
-    computed_trip_duration = computed_taxi_passenger_route['duration']
+    computed_trip_duration = computed_taxi_passenger_route[-1]['duration']
     computed_taxi_passenger_dropoff_time = informed_taxi_pickup_time + timedelta(seconds=computed_trip_duration)
 
     # iterating over subway passenger routes
@@ -248,21 +254,15 @@ for index, computed_taxi_passenger_route in gdf_computed_taxi_passenger_routes.i
         and informed_taxi_pickup_time < computed_sbwy_destination_time:
 
             # reconstruct taxi and subway spatial and temporal routes
-            list_st_taxi_route = spatial_temporal_route(informed_taxi_pickup_time,\
-            computed_taxi_passenger_route['distance'], computed_taxi_passenger_route['duration'],\
-            computed_taxi_passenger_route['geometry'])
+            list_st_taxi_route = spatial_temporal_route(informed_taxi_pickup_time, computed_taxi_passenger_route)
 
             if len(origin_boarding_walking) > 0 and origin_boarding_walking['distance'].iloc[0] > 0:
-                list_st_origin_walking = spatial_temporal_route(informed_sbwy_origin_time,\
-                origin_boarding_walking['distance'].iloc[0], origin_boarding_walking['duration'].iloc[0],\
-                origin_boarding_walking['geometry'].iloc[0])
+                list_st_origin_walking = spatial_temporal_route(informed_sbwy_origin_time, origin_boarding_walking)
             else:
                 list_st_origin_walking = []
 
             if alighting_destination_walking['distance'].iloc[0] > 0:
-                list_st_destination_walking = spatial_temporal_route(computed_sbwy_alighting_time,\
-                alighting_destination_walking['distance'].iloc[0], alighting_destination_walking['duration'].iloc[0],\
-                alighting_destination_walking['geometry'].iloc[0])
+                list_st_destination_walking = spatial_temporal_route(computed_sbwy_alighting_time, alighting_destination_walking)
                 arrival_boarding_datetime = list_st_destination_walking[-1]['date_time']
             else:
                 list_st_destination_walking = []
