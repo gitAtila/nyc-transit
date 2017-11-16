@@ -83,7 +83,7 @@ gtfs_zip_folder, result_path):
             gtfs_station_id = df_equivalence_survey_gtfs[df_equivalence_survey_gtfs['survey_stop_id']\
     		 == float(trip['StopAreaNo'])]['gtfs_stop_id'].iloc[0]
             boarding_position = df_stop_postions[df_stop_postions['stop_id'] == gtfs_station_id]
-    
+
             print 'origin_boarding'
             #print gdf_destination_route
             origin_route = routing_osrm_api(trip['lon_origin'], trip['lat_origin'],\
@@ -94,7 +94,7 @@ gtfs_zip_folder, result_path):
 
     gdf_origin_route = gpd.GeoDataFrame(list_origin_route, geometry='geometry')
     print gdf_origin_route
-    gdf_origin_route.to_file(result_path + 'origin_boarding_walking_route_wkdy.shp')
+    gdf_origin_route.to_file(result_path + 'origin_boarding_walking_route.shp')
 
 def compute_alighting_destination_route(survey_trips_path, passenger_subway_route_path,\
 gtfs_zip_folder, result_path):
@@ -134,8 +134,8 @@ gtfs_zip_folder, result_path):
     # save route and distance
     gdf_destination_route = gpd.GeoDataFrame(list_destination_route, geometry='geometry')
     print gdf_destination_route
-    gdf_destination_route.to_file(result_path + 'alighting_destination_walking_route_wkdy.shp')
+    gdf_destination_route.to_file(result_path + 'alighting_destination_walking_route.shp')
 
-df_equivalence_survey_gtfs = pd.read_csv(equivalence_survey_gtfs_path)
-compute_origin_boarding_route(survey_trips_path, df_equivalence_survey_gtfs, gtfs_zip_folder, result_path)
-#compute_alighting_destination_route(survey_trips_path, passenger_subway_route_path, gtfs_zip_folder, result_path)
+#df_equivalence_survey_gtfs = pd.read_csv(equivalence_survey_gtfs_path)
+#compute_origin_boarding_route(survey_trips_path, df_equivalence_survey_gtfs, gtfs_zip_folder, result_path)
+compute_alighting_destination_route(survey_trips_path, passenger_subway_route_path, gtfs_zip_folder, result_path)

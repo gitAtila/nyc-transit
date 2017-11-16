@@ -223,8 +223,11 @@ for index, computed_taxi_passenger_route in gdf_computed_taxi_passenger_routes.i
 
         # compute walking duration
         origin_boarding_walking = gdf_origin_boarding_walking[gdf_origin_boarding_walking['sampn_pern'] == sbwy_sampn_perno_tripno]
-        print origin_boarding_walking
-        origin_boarding_duration = float(origin_boarding_walking['duration'].iloc[0])
+        
+        if len(origin_boarding_walking) > 0:
+            origin_boarding_duration = float(origin_boarding_walking['duration'].iloc[0])
+        else:
+            origin_boarding_duration = 0
 
         alighting_destination_walking = gdf_alighting_destination_walking[gdf_alighting_destination_walking['sampn_pern'] == sbwy_sampn_perno_tripno]
         alighting_destination_duration = float(alighting_destination_walking['duration'].iloc[0])
@@ -245,7 +248,7 @@ for index, computed_taxi_passenger_route in gdf_computed_taxi_passenger_routes.i
             computed_taxi_passenger_route['distance'], computed_taxi_passenger_route['duration'],\
             computed_taxi_passenger_route['geometry'])
 
-            if origin_boarding_walking['distance'].iloc[0] > 0:
+            if len(origin_boarding_walking) > 0 and origin_boarding_walking['distance'].iloc[0] > 0:
                 list_st_origin_walking = spatial_temporal_route(informed_sbwy_origin_time,\
                 origin_boarding_walking['distance'].iloc[0], origin_boarding_walking['duration'].iloc[0],\
                 origin_boarding_walking['geometry'].iloc[0])
