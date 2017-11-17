@@ -74,29 +74,32 @@ gtfs_zip_folder, result_path):
 
     # read passenger subway route
     df_sbwy_routes = pd.read_csv(passenger_subway_route_path)
+    # keep just the last trip of each travel
+    dict_sbwy_passenger_routes = dict()
+    for intex, route in df_sbwy_routes.iterrows():
+        dict_sbwy_passenger_routes[route['sampn_perno_tripno']] = route['alighting_stop_id']
 
     # get station positions
     df_stop_postions = read_file_in_zip(gtfs_zip_folder, 'stops.txt')
 
     list_origin_route = []
     list_destination_route = []
-    for index, trip in df_sbwy_routes.iterrows():
+    for sampn_perno_tripno, alighting_stop_id in dict_sbwy_passenger_routes.iteritems():
         # get origin destination positions
-        sampn_perno_tripno = trip['sampn_perno_tripno']
-        sampn_perno_tripno = sampn_perno_tripno.split('_')
-        od_positions = df_od_positions[(df_od_positions['sampn'] == int(sampn_perno_tripno[0]))\
-        & (df_od_positions['perno'] == int(sampn_perno_tripno[1]))\
-        & (df_od_positions['tripno'] == int(sampn_perno_tripno[2]))]
+        splitted_sampn_perno_tripno = sampn_perno_tripno.split('_')
+        od_positions = df_od_positions[(df_od_positions['sampn'] == int(splitted_sampn_perno_tripno[0]))\
+        & (df_od_positions['perno'] == int(splitted_sampn_perno_tripno[1]))\
+        & (df_od_positions['tripno'] == int(splitted_sampn_perno_tripno[2]))]
 
         # get boarding alighting postions
-        alighting_position = df_stop_postions[df_stop_postions['stop_id'] == trip['alighting_stop_id']]
+        alighting_position = df_stop_postions[df_stop_postions['stop_id'] == alighting_stop_id]
 
         print 'alighting_destination'
         destination_route = osm.street_routing_steps(alighting_position['stop_lon'].iloc[0],\
         alighting_position['stop_lat'].iloc[0], od_positions['lon_destination'].iloc[0],\
         od_positions['lat_destination'].iloc[0])
         for step in destination_route:
-            step['sampn_perno_tripno'] = trip['sampn_perno_tripno']
+            step['sampn_perno_tripno'] = sampn_perno_tripno
             list_destination_route.append(step)
 
     # save route and distance
