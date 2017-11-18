@@ -6,6 +6,7 @@ import os
 path.insert(0, os.path.abspath("../subway_trip_planner"))
 
 import pandas as pd
+import math
 import geopandas as gpd
 from geopy.distance import vincenty
 from datetime import datetime, timedelta
@@ -146,6 +147,7 @@ dict_sbwy_trips = group_df_rows(df_sbwy_trips, 'sampn_perno_tripno')
 # match routes
 # iterating over taxi passenger routes
 list_matches = []
+count_matching = 0
 for taxi_sampn_perno_tripno, computed_taxi_trip in dict_taxi_trips.iteritems():
 
     informed_taxi_trip = trip_from_sampn_perno_tripno(df_trips, taxi_sampn_perno_tripno)
@@ -190,26 +192,102 @@ for taxi_sampn_perno_tripno, computed_taxi_trip in dict_taxi_trips.iteritems():
                 sbwy_integration_pos = computed_sbwy_trip[real_sbwy_intergration_index]
                 taxi_integration_pos = computed_taxi_trip[real_taxi_intergration_index]
 
+                sbwy_origin_integration = computed_sbwy_trip[:real_sbwy_intergration_index+1]
+                taxi_origin_integration = computed_taxi_trip[:real_taxi_intergration_index+1]
+
                 # compute walking distance and duration
-                # for sbwy_position in range(real_sbwy_intergration_index+1):
-                #     print computed_sbwy_trip[sbwy_position]
-
                 # compute subway distance and duration
+                first_origin_walking = {}
+                last_origin_walking = {}
+                first_sbwy_travel = {}
+                last_sbwy_travel = {}
+                first_destination_walking = {}
+                last_destination_walking = {}
+                boarded = False
+                for current_position in sbwy_origin_integration:
+                    if (type(current_position['stop_id']) == float and math.isnan(current_position['stop_id'])) == False:
+                        boarded = True
+
+                    # origin-boarding positions
+                    if boarded == False and current_position['stop_id']:
+                        if len(first_origin_walking) == 0:
+                            first_origin_walking = current_position
+                        last_origin_walking = current_position
+
+                    # traveling positions
+                    elif boarded == True and type(current_position['stop_id']) == str:
+                        if len(first_sbwy_travel) == 0:
+                            first_sbwy_travel = current_position
+                        last_sbwy_travel = current_position
+
+                    # alighting-destination positions
+                    elif boarded == True:
+                        if len(first_destination_walking) == 0:
+                            first_destination_walking = current_position
+                        last_destination_walking = current_position
 
 
-                #print 'Shareble'
-                print '=>Taxi trip', taxi_sampn_perno_tripno
+                if len(first_origin_walking) > 0:
+                    first_origin_walking['sequence'] = 1
+                    last_origin_walking['sequence'] = 2
+                    first_origin_walking['match_id'] = count_matching
+                    last_origin_walking['match_id'] = count_matching
+                    first_origin_walking['sampn_perno_tripno'] = sbwy_sampn_perno_tripno
+                    last_origin_walking['sampn_perno_tripno'] = sbwy_sampn_perno_tripno
+                    list_matches.append(first_origin_walking)
+                    list_matches.append(last_origin_walking)
+
+                if len(first_sbwy_travel) > 0:
+                    first_sbwy_travel['sequence'] = 3
+                    last_sbwy_travel['sequence'] = 4
+                    first_sbwy_travel['match_id'] = count_matching
+                    last_sbwy_travel['match_id'] = count_matching
+                    first_sbwy_travel['sampn_perno_tripno'] = sbwy_sampn_perno_tripno
+                    last_sbwy_travel['sampn_perno_tripno'] = sbwy_sampn_perno_tripno
+                    list_matches.append(first_sbwy_travel)
+                    list_matches.append(last_sbwy_travel)
+
+                if len(first_destination_walking) > 0:
+                    first_destination_walking['sequence'] = 5
+                    last_destination_walking['sequence'] = 6
+                    first_destination_walking['match_id'] = count_matching
+                    last_destination_walking['match_id'] = count_matching
+                    first_destination_walking['sampn_perno_tripno'] = sbwy_sampn_perno_tripno
+                    last_destination_walking['sampn_perno_tripno'] = sbwy_sampn_perno_tripno
+                    list_matches.append(first_destination_walking)
+                    list_matches.append(last_destination_walking)
+
+
+                first_taxi_travel = taxi_origin_integration[0]
+                last_taxi_travel = taxi_origin_integration[-1]
+                first_taxi_travel['stop_id'] = ''
+                last_taxi_travel['stop_id'] = ''
+                first_taxi_travel['sequence'] = 7
+                last_taxi_travel['sequence'] = 8
+                first_taxi_travel['match_id'] = count_matching
+                last_taxi_travel['match_id'] = count_matching
+                first_taxi_travel['sampn_perno_tripno'] = taxi_sampn_perno_tripno
+                last_taxi_travel['sampn_perno_tripno'] = taxi_sampn_perno_tripno
+                list_matches.append(first_taxi_travel)
+                list_matches.append(last_taxi_travel)
+
+                count_matching += 1
+
                 print '=>Subway trip', sbwy_sampn_perno_tripno
-                print 'distance', shortest_distance
-                dict_match = {'taxi_trip_id': taxi_sampn_perno_tripno, 'sbwy_trip_id': sbwy_sampn_perno_tripno,\
-                'stop_id': sbwy_integration_pos['stop_id'], 'integration_distance': shortest_distance,\
-                'sbwy_lon': sbwy_integration_pos['longitude'], 'sbwy_lat': sbwy_integration_pos['latitude'],\
-                'taxi_lon': taxi_integration_pos['longitude'], 'taxi_lat': taxi_integration_pos['latitude'],\
-                'sbwy_date_time': sbwy_integration_pos['date_time'],'taxi_date_time': taxi_integration_pos['date_time']}
+                print first_origin_walking
+                print last_origin_walking
+                print first_sbwy_travel
+                print last_sbwy_travel
+                print first_destination_walking
+                print last_destination_walking
 
-                list_matches.append(dict_match)
+                print '=>Taxi trip', taxi_sampn_perno_tripno
+                print first_taxi_travel
+                print last_taxi_travel
+
                 print '============================='
-                #break
 
-    # if count_overlaped > 0:
-    #     break
+df_matches = pd.DataFrame(list_matches)
+df_matches = df_matches[['match_id', 'sampn_perno_tripno', 'sequence', 'date_time', 'distance', 'longitude', 'latitude', 'stop_id']]
+df_matches = df_matches.sort_values(by=['match_id', 'sequence'])
+df_matches.to_csv(result_path, index=False)

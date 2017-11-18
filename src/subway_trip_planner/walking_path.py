@@ -17,7 +17,7 @@ from shapely.geometry import LineString
 
 survey_trips_path = argv[1]
 passenger_subway_route_path = argv[2] # empty if not computed
-equivalence_survey_gtfs_path = argv[3]
+equivalence_survey_gtfs_path = argv[3] # usend only in origin-boarding
 gtfs_zip_folder = argv[4]
 result_path = argv[5]
 
