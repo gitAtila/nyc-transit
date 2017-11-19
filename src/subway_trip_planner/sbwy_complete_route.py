@@ -153,11 +153,14 @@ dict_alighting_destination_walking = group_trip_positions(pd.read_csv(alighting_
 list_all_subway_routes = []
 for sbwy_sampn_perno_tripno, list_sbwy_trip_route in dict_sbwy_passenger_routes.iteritems():
 
-    if len(list_sbwy_trip_route) > 0:
+    if len(list_sbwy_trip_route[0]) > 0:
+
         # get informed travel data
         informed_sbwy_trip = trip_from_sampn_perno_tripno(df_trips, sbwy_sampn_perno_tripno)
         informed_sbwy_origin_time = informed_sbwy_trip['date_time_origin'].iloc[0]
         informed_sbwy_destination_time = informed_sbwy_trip['date_time_destination'].iloc[0]
+
+        print list_sbwy_trip_route
 
         # compute subway travel data
         computed_sbwy_boarding_time = datetime.combine(informed_sbwy_origin_time.date(),\

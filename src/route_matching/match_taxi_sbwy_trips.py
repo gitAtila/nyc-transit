@@ -211,22 +211,22 @@ for taxi_sampn_perno_tripno, computed_taxi_trip in dict_taxi_trips.iteritems():
                     # origin-boarding positions
                     if boarded == False and current_position['stop_id']:
                         if len(first_origin_walking) == 0:
-                            first_origin_walking = current_position
-                        last_origin_walking = current_position
+                            first_origin_walking = current_position.copy()
+                        last_origin_walking = current_position.copy()
 
                     # traveling positions
                     elif boarded == True and type(current_position['stop_id']) == str:
                         if len(first_sbwy_travel) == 0:
-                            first_sbwy_travel = current_position
-                        last_sbwy_travel = current_position
+                            first_sbwy_travel = current_position.copy()
+                        last_sbwy_travel = current_position.copy()
 
                     # alighting-destination positions
                     elif boarded == True:
                         if len(first_destination_walking) == 0:
-                            first_destination_walking = current_position
-                        last_destination_walking = current_position
+                            first_destination_walking = current_position.copy()
+                        last_destination_walking = current_position.copy()
 
-
+                list_route_match = []
                 if len(first_origin_walking) > 0:
                     first_origin_walking['sequence'] = 1
                     last_origin_walking['sequence'] = 2
@@ -236,6 +236,9 @@ for taxi_sampn_perno_tripno, computed_taxi_trip in dict_taxi_trips.iteritems():
                     last_origin_walking['sampn_perno_tripno'] = sbwy_sampn_perno_tripno
                     list_matches.append(first_origin_walking)
                     list_matches.append(last_origin_walking)
+
+                    list_route_match.append(first_origin_walking)
+                    list_route_match.append(last_origin_walking)
 
                 if len(first_sbwy_travel) > 0:
                     first_sbwy_travel['sequence'] = 3
@@ -247,6 +250,9 @@ for taxi_sampn_perno_tripno, computed_taxi_trip in dict_taxi_trips.iteritems():
                     list_matches.append(first_sbwy_travel)
                     list_matches.append(last_sbwy_travel)
 
+                    list_route_match.append(first_sbwy_travel)
+                    list_route_match.append(last_sbwy_travel)
+
                 if len(first_destination_walking) > 0:
                     first_destination_walking['sequence'] = 5
                     last_destination_walking['sequence'] = 6
@@ -257,9 +263,12 @@ for taxi_sampn_perno_tripno, computed_taxi_trip in dict_taxi_trips.iteritems():
                     list_matches.append(first_destination_walking)
                     list_matches.append(last_destination_walking)
 
+                    list_route_match.append(first_destination_walking)
+                    list_route_match.append(last_destination_walking)
 
-                first_taxi_travel = taxi_origin_integration[0]
-                last_taxi_travel = taxi_origin_integration[-1]
+
+                first_taxi_travel = taxi_origin_integration[0].copy()
+                last_taxi_travel = taxi_origin_integration[-1].copy()
                 first_taxi_travel['stop_id'] = ''
                 last_taxi_travel['stop_id'] = ''
                 first_taxi_travel['sequence'] = 7
@@ -271,23 +280,34 @@ for taxi_sampn_perno_tripno, computed_taxi_trip in dict_taxi_trips.iteritems():
                 list_matches.append(first_taxi_travel)
                 list_matches.append(last_taxi_travel)
 
+                list_route_match.append(first_taxi_travel)
+                list_route_match.append(last_taxi_travel)
+
                 count_matching += 1
 
-                print '=>Subway trip', sbwy_sampn_perno_tripno
-                print first_origin_walking
-                print last_origin_walking
-                print first_sbwy_travel
-                print last_sbwy_travel
-                print first_destination_walking
-                print last_destination_walking
+                for route in list_route_match:
+                    print route['match_id'], route['sampn_perno_tripno'], route['sequence']
 
-                print '=>Taxi trip', taxi_sampn_perno_tripno
-                print first_taxi_travel
-                print last_taxi_travel
+                print ''
+
+                # print '=>Subway trip', sbwy_sampn_perno_tripno
+                # print first_origin_walking
+                # print last_origin_walking
+                # print first_sbwy_travel
+                # print last_sbwy_travel
+                # print first_destination_walking
+                # print last_destination_walking
+                #
+                # print '=>Taxi trip', taxi_sampn_perno_tripno
+                # print first_taxi_travel
+                # print last_taxi_travel
 
                 print '============================='
 
+    # if count_matching > 6:
+    #     break
+
 df_matches = pd.DataFrame(list_matches)
 df_matches = df_matches[['match_id', 'sampn_perno_tripno', 'sequence', 'date_time', 'distance', 'longitude', 'latitude', 'stop_id']]
-df_matches = df_matches.sort_values(by=['match_id', 'sampn_perno_tripno', 'sequence'])
+df_matches = df_matches.sort_values(by=['match_id', 'sequence'])
 df_matches.to_csv(result_path, index=False)
