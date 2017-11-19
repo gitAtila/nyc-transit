@@ -289,5 +289,5 @@ for taxi_sampn_perno_tripno, computed_taxi_trip in dict_taxi_trips.iteritems():
 
 df_matches = pd.DataFrame(list_matches)
 df_matches = df_matches[['match_id', 'sampn_perno_tripno', 'sequence', 'date_time', 'distance', 'longitude', 'latitude', 'stop_id']]
-df_matches = df_matches.sort_values(by=['match_id', 'sequence'])
+df_matches = df_matches.sort_values(by=['match_id', 'sampn_perno_tripno', 'sequence'])
 df_matches.to_csv(result_path, index=False)
