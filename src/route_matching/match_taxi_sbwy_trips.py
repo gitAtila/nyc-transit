@@ -58,6 +58,7 @@ def time_overlaped_routes(list_taxi_route, computed_sbwy_trip):
     taxi_first_index = 0
     sbwy_first_index = 0
     # taxi stats first
+    print ''
 
     if list_taxi_route[0]['date_time'] < computed_sbwy_trip[0]['date_time']:
         for index in range(1, len(list_taxi_route)):
