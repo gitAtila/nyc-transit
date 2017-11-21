@@ -37,17 +37,21 @@ def reconstruct_passenger_route(df_sbwy_passenger_trips, df_stop_times):
         for index, passenger_trip in df_sbwy_passenger_route.iterrows():
             # select timestable of subway trip
             df_sbwy_trip = df_stop_times[df_stop_times['trip_id'] == passenger_trip['gtfs_trip_id']]
+            test = df_sbwy_trip
             # select times and stops of passenger boading until alight
             boarding_stop = df_sbwy_trip[df_sbwy_trip['stop_id'] == passenger_trip['boarding_stop_id']]
             alighting_stop = df_sbwy_trip[df_sbwy_trip['stop_id'] == passenger_trip['alighting_stop_id']]
             boarding_index = int(boarding_stop.index[0])
             alighting_index = int(alighting_stop.index[0])
-            df_sbwy_trip = df_sbwy_trip.loc[boarding_index: alighting_index]
-            # convert stop times in a list of dictionaries
-            list_passenger_trip = df_sbwy_trip[['departure_time', 'stop_id', 'stop_sequence']].T.to_dict().values()
-            list_passenger_trips.append(sorted(list_passenger_trip, key=lambda stop: stop['stop_sequence']))
 
-        dict_passenger_routes[passenger_trip_id] = list_passenger_trips
+            if boarding_index < alighting_index:
+                df_sbwy_trip = df_sbwy_trip.loc[boarding_index: alighting_index]
+                # convert stop times in a list of dictionaries
+                list_passenger_trip = df_sbwy_trip[['departure_time', 'stop_id', 'stop_sequence']].T.to_dict().values()
+                list_passenger_trips.append(sorted(list_passenger_trip, key=lambda stop: stop['stop_sequence']))
+
+        if len(list_passenger_trips) > 0:
+            dict_passenger_routes[passenger_trip_id] = list_passenger_trips
 
     return dict_passenger_routes
 
@@ -152,62 +156,61 @@ dict_alighting_destination_walking = group_trip_positions(pd.read_csv(alighting_
 # iterating over subway passenger routes
 list_all_subway_routes = []
 for sbwy_sampn_perno_tripno, list_sbwy_trip_route in dict_sbwy_passenger_routes.iteritems():
+    print sbwy_sampn_perno_tripno
 
-    if len(list_sbwy_trip_route[0]) > 0:
+    # get informed travel data
+    informed_sbwy_trip = trip_from_sampn_perno_tripno(df_trips, sbwy_sampn_perno_tripno)
+    informed_sbwy_origin_time = informed_sbwy_trip['date_time_origin'].iloc[0]
+    informed_sbwy_destination_time = informed_sbwy_trip['date_time_destination'].iloc[0]
 
-        # get informed travel data
-        informed_sbwy_trip = trip_from_sampn_perno_tripno(df_trips, sbwy_sampn_perno_tripno)
-        informed_sbwy_origin_time = informed_sbwy_trip['date_time_origin'].iloc[0]
-        informed_sbwy_destination_time = informed_sbwy_trip['date_time_destination'].iloc[0]
+    print list_sbwy_trip_route
 
-        print list_sbwy_trip_route
+    # compute subway travel data
+    computed_sbwy_boarding_time = datetime.combine(informed_sbwy_origin_time.date(),\
+    list_sbwy_trip_route[0][0]['departure_time'])
 
-        # compute subway travel data
-        computed_sbwy_boarding_time = datetime.combine(informed_sbwy_origin_time.date(),\
-        list_sbwy_trip_route[0][0]['departure_time'])
+    if list_sbwy_trip_route[0][0]['departure_time'] <= list_sbwy_trip_route[-1][-1]['departure_time']:
+        computed_sbwy_alighting_time = datetime.combine(informed_sbwy_origin_time.date(),\
+        list_sbwy_trip_route[-1][-1]['departure_time'])
+    else:
+        alighting_date_time = informed_sbwy_origin_time + timedelta(days=1)
+        computed_sbwy_alighting_time = datetime.combine(alighting_date_time.date(),\
+        list_sbwy_trip_route[-1][-1]['departure_time'])
 
-        if list_sbwy_trip_route[0][0]['departure_time'] <= list_sbwy_trip_route[-1][-1]['departure_time']:
-            computed_sbwy_alighting_time = datetime.combine(informed_sbwy_origin_time.date(),\
-            list_sbwy_trip_route[-1][-1]['departure_time'])
-        else:
-            alighting_date_time = informed_sbwy_origin_time + timedelta(days=1)
-            computed_sbwy_alighting_time = datetime.combine(alighting_date_time.date(),\
-            list_sbwy_trip_route[-1][-1]['departure_time'])
+    subway_travel_duration = (computed_sbwy_alighting_time - computed_sbwy_boarding_time).total_seconds()
 
-        subway_travel_duration = (computed_sbwy_alighting_time - computed_sbwy_boarding_time).total_seconds()
+    # compute walking duration
+    origin_boarding_duration = 0
+    list_origin_boarding_walking = []
+    if sbwy_sampn_perno_tripno in dict_origin_boarding_walking.keys():
+        list_origin_boarding_walking = dict_origin_boarding_walking[sbwy_sampn_perno_tripno]
+        origin_boarding_duration = list_origin_boarding_walking[-1]['duration']
 
-        # compute walking duration
-        origin_boarding_duration = 0
-        list_origin_boarding_walking = []
-        if sbwy_sampn_perno_tripno in dict_origin_boarding_walking.keys():
-            list_origin_boarding_walking = dict_origin_boarding_walking[sbwy_sampn_perno_tripno]
-            origin_boarding_duration = list_origin_boarding_walking[-1]['duration']
+    list_alighting_destination_walking = dict_alighting_destination_walking[sbwy_sampn_perno_tripno]
 
-        list_alighting_destination_walking = dict_alighting_destination_walking[sbwy_sampn_perno_tripno]
+    alighting_destination_duration = list_alighting_destination_walking[-1]['duration']
 
-        alighting_destination_duration = list_alighting_destination_walking[-1]['duration']
+    # compute subway destination time
+    total_subway_route_duration = origin_boarding_duration + subway_travel_duration + alighting_destination_duration
+    computed_sbwy_destination_time = informed_sbwy_origin_time + timedelta(seconds=total_subway_route_duration)
 
-        # compute subway destination time
-        total_subway_route_duration = origin_boarding_duration + subway_travel_duration + alighting_destination_duration
-        computed_sbwy_destination_time = informed_sbwy_origin_time + timedelta(seconds=total_subway_route_duration)
+    if len(list_origin_boarding_walking) > 0:
+        list_origin_boarding_walking = add_time_to_date(informed_sbwy_origin_time,\
+        list_origin_boarding_walking)
+        arrival_boarding_datetime = list_origin_boarding_walking[-1]['date_time']
+    else:
+        arrival_boarding_datetime = informed_sbwy_origin_time
 
-        if len(list_origin_boarding_walking) > 0:
-            list_origin_boarding_walking = add_time_to_date(informed_sbwy_origin_time,\
-            list_origin_boarding_walking)
-            arrival_boarding_datetime = list_origin_boarding_walking[-1]['date_time']
-        else:
-            arrival_boarding_datetime = informed_sbwy_origin_time
+    list_alighting_destination_walking = add_time_to_date(computed_sbwy_alighting_time,\
+    list_alighting_destination_walking)
 
-        list_alighting_destination_walking = add_time_to_date(computed_sbwy_alighting_time,\
-        list_alighting_destination_walking)
+    list_sbwy_complete_route = combine_walking_subway_route(arrival_boarding_datetime,\
+    list_sbwy_trip_route, list_origin_boarding_walking, list_alighting_destination_walking,\
+    df_stops, df_transit_links)
 
-        list_sbwy_complete_route = combine_walking_subway_route(arrival_boarding_datetime,\
-        list_sbwy_trip_route, list_origin_boarding_walking, list_alighting_destination_walking,\
-        df_stops, df_transit_links)
-
-        for sbwy_trip in list_sbwy_complete_route:
-            sbwy_trip['sampn_perno_tripno'] = sbwy_sampn_perno_tripno
-            list_all_subway_routes.append(sbwy_trip)
+    for sbwy_trip in list_sbwy_complete_route:
+        sbwy_trip['sampn_perno_tripno'] = sbwy_sampn_perno_tripno
+        list_all_subway_routes.append(sbwy_trip)
 
 df_complete_routes = pd.DataFrame(list_all_subway_routes)
 df_complete_routes = df_complete_routes[['sampn_perno_tripno' ,'date_time',  'longitude', 'latitude', 'stop_id', 'distance']]
