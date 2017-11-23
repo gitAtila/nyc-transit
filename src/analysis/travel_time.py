@@ -14,6 +14,7 @@ taxi_individual_trip_path = argv[2]
 sbwy_taxi_maching_path = argv[3]
 taxisharing_trip_path = argv[4]
 chart_name = argv[5]
+title_name = argv[6]
 
 def group_df_rows(df, key_label):
     dict_grouped = dict()
@@ -103,6 +104,8 @@ count_good_taxisharing = 0
 list_time_saving = []
 list_good_duration_individual = []
 list_good_duration_taxisharing = []
+list_bad_duration_individual = []
+list_bad_duration_taxisharing = []
 for index, durations in df_sbwy_duration.iterrows():
     if durations['duration_taxisharing'] < durations['duration_individual']:
         count_good_taxisharing += 1
@@ -111,6 +114,9 @@ for index, durations in df_sbwy_duration.iterrows():
 
         list_good_duration_taxisharing.append(durations['duration_taxisharing'])
         list_good_duration_individual.append(durations['duration_individual'])
+    else:
+        list_bad_duration_taxisharing.append(durations['duration_taxisharing'])
+        list_bad_duration_individual.append(durations['duration_individual'])
 
 print len(df_sbwy_duration)
 print count_good_taxisharing
@@ -126,8 +132,11 @@ print 'max', np.max(list_time_saving)
 # list_sbwy_individual_route_duration = df_sbwy_duration['duration_individual'].tolist()
 # list_sbwy_taxisharing_route_duration = df_sbwy_duration['duration_taxisharing'].tolist()
 
-list_sbwy_individual_route_duration = list_good_duration_individual
-list_sbwy_taxisharing_route_duration = list_good_duration_taxisharing
+# list_sbwy_individual_route_duration = list_good_duration_individual
+# list_sbwy_taxisharing_route_duration = list_good_duration_taxisharing
+
+list_sbwy_individual_route_duration = list_bad_duration_individual
+list_sbwy_taxisharing_route_duration = list_bad_duration_taxisharing
 
 list_sbwy_individual_route_duration = [duration/60 for duration in list_sbwy_individual_route_duration]
 list_sbwy_taxisharing_route_duration = [duration/60 for duration in list_sbwy_taxisharing_route_duration]
@@ -139,13 +148,13 @@ list_sbwy_individual_route_duration.sort()
 ecdf_individual_duration = ECDF(list_sbwy_individual_route_duration)
 
 fig, ax = plt.subplots()
-plt.plot(ecdf_taxisharing_duration.x, ecdf_taxisharing_duration.y, label='taxisharing duration')
-plt.plot(ecdf_individual_duration.x, ecdf_individual_duration.y, label='individual duration')
+plt.plot(ecdf_taxisharing_duration.x, ecdf_taxisharing_duration.y, label='taxisharing')
+plt.plot(ecdf_individual_duration.x, ecdf_individual_duration.y, label='individual')
 
 #ax.xaxis.set_major_locator(ticker.MultipleLocator(60)) # set x sticks interal
 plt.grid()
-plt.legend()
-ax.set_title('Subway Trips on Sunday')
+plt.legend(loc=4)
+ax.set_title(title_name)
 ax.set_xlabel('Travel Duration in Minutes')
 ax.set_ylabel('ECDF')
 plt.tight_layout()
