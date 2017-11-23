@@ -129,14 +129,14 @@ print 'min', np.min(list_time_saving)
 print 'max', np.max(list_time_saving)
 
 # plot cdf
-# list_sbwy_individual_route_duration = df_sbwy_duration['duration_individual'].tolist()
-# list_sbwy_taxisharing_route_duration = df_sbwy_duration['duration_taxisharing'].tolist()
+list_sbwy_individual_route_duration = df_sbwy_duration['duration_individual'].tolist()
+list_sbwy_taxisharing_route_duration = df_sbwy_duration['duration_taxisharing'].tolist()
 
 # list_sbwy_individual_route_duration = list_good_duration_individual
 # list_sbwy_taxisharing_route_duration = list_good_duration_taxisharing
 
-list_sbwy_individual_route_duration = list_bad_duration_individual
-list_sbwy_taxisharing_route_duration = list_bad_duration_taxisharing
+# list_sbwy_individual_route_duration = list_bad_duration_individual
+# list_sbwy_taxisharing_route_duration = list_bad_duration_taxisharing
 
 list_sbwy_individual_route_duration = [duration/60 for duration in list_sbwy_individual_route_duration]
 list_sbwy_taxisharing_route_duration = [duration/60 for duration in list_sbwy_taxisharing_route_duration]

@@ -57,9 +57,8 @@ def time_overlaped_routes(list_taxi_route, computed_sbwy_trip):
 
     taxi_first_index = 0
     sbwy_first_index = 0
-    # taxi stats first
-    print ''
 
+    # taxi starts first
     if list_taxi_route[0]['date_time'] < computed_sbwy_trip[0]['date_time']:
         for index in range(1, len(list_taxi_route)):
             if list_taxi_route[index]['date_time'] >= computed_sbwy_trip[0]['date_time']:
@@ -123,12 +122,6 @@ def add_date_time(origin_time, list_steps):
         step['date_time'] = step_time
     return list_steps
 
-def compute_traveling_walking_duration_distance(computed_sbwy_trip):
-    walking_duration = 0
-    walking_distance = 0
-    traveling_duration = 0
-    traveling_distance = 0
-
 # read trips
 df_trips = pd.read_csv(survey_trips_path)
 df_trips = df_trips[(df_trips['MODE_G10'] == 1)|(df_trips['MODE_G10'] == 7)]
@@ -161,10 +154,21 @@ for taxi_sampn_perno_tripno, computed_taxi_trip in dict_taxi_trips.iteritems():
     # iterating over subway passenger routes
     for sbwy_sampn_perno_tripno, computed_sbwy_trip in dict_sbwy_trips.iteritems():
 
+        # do not consider walking positions after alighting stop
+        first_walking = True
+        first_alight_walking_pos = -1
+        for sbwy_pos in range(len(computed_sbwy_trip)):
+            if type(computed_sbwy_trip[sbwy_pos]['stop_id']) == str:
+                first_walking = False
+            elif first_walking == False:
+                first_alight_walking_pos = sbwy_pos
+                break
+
+        computed_sbwy_trip = computed_sbwy_trip[:first_alight_walking_pos]
+
         # get informed travel data
         informed_sbwy_trip = trip_from_sampn_perno_tripno(df_trips, sbwy_sampn_perno_tripno)
         informed_sbwy_origin_time = informed_sbwy_trip['date_time_origin'].iloc[0]
-        informed_sbwy_destination_time = informed_sbwy_trip['date_time_destination'].iloc[0]
 
         computed_sbwy_destination_time = computed_sbwy_trip[-1]['date_time']
 
@@ -179,13 +183,22 @@ for taxi_sampn_perno_tripno, computed_taxi_trip in dict_taxi_trips.iteritems():
             overlaped_taxi_indexes, overlaped_sbwy_indexes = time_overlaped_routes(computed_taxi_trip,\
             computed_sbwy_trip)
 
-            overlaped_sbwy_time = computed_sbwy_trip[overlaped_sbwy_indexes[0]: overlaped_sbwy_indexes[1]]
-            overlaped_taxi_time = computed_taxi_trip[overlaped_taxi_indexes[0]: overlaped_taxi_indexes[1]]
+            overlaped_sbwy_time = computed_sbwy_trip[overlaped_sbwy_indexes[0]: overlaped_sbwy_indexes[1]+1]
+            overlaped_taxi_time = computed_taxi_trip[overlaped_taxi_indexes[0]: overlaped_taxi_indexes[1]+1]
 
             # verify if taxi route is close to subway route
             dict_shortest_distance = integration_positions(overlaped_taxi_time, overlaped_sbwy_time)
             shortest_distance = dict_shortest_distance['shortest_distance']
 
+            # print ''
+            # print computed_taxi_trip
+            # print overlaped_sbwy_indexes
+            # print overlaped_taxi_time
+            # print computed_taxi_trip[overlaped_taxi_indexes[0]], computed_taxi_trip[overlaped_taxi_indexes[1]]
+
+            # if overlaped_sbwy_indexes[0] == overlaped_sbwy_indexes[1]:
+            #     taxi_integration_last_distance = overlaped_sbwy_indexes[0]
+            # else:
             taxi_integration_last_distance = overlaped_taxi_time[-1]['distance'] - overlaped_taxi_time[0]['distance']
 
             if shortest_distance < taxi_integration_last_distance:
