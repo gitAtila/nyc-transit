@@ -98,8 +98,9 @@ print 'unique individual sbwy', len(df_sbwy_individual_trip['sampn_perno_tripno'
 print 'unique individual taxi', len(df_taxi_individual_trip['sampn_perno_tripno'].unique())
 
 df_sbwy_duration = sbwy_duration(df_sbwy_individual_trip, df_taxi_individual_trip, dict_matching, df_taxisharing_trip)
-#print df_sbwy_duration
+print df_sbwy_duration
 
+list_ids = []
 count_good_taxisharing = 0
 list_time_saving = []
 list_good_duration_individual = []
@@ -111,12 +112,15 @@ for index, durations in df_sbwy_duration.iterrows():
         count_good_taxisharing += 1
         time_saving = (durations['duration_individual'] - durations['duration_taxisharing'])/60
         list_time_saving.append(time_saving)
-
+        list_ids.append({'taxi_trip_id':durations['taxi_trip_id'], 'sbwy_trip_id': durations['sbwy_trip_id']})
         list_good_duration_taxisharing.append(durations['duration_taxisharing'])
         list_good_duration_individual.append(durations['duration_individual'])
     else:
         list_bad_duration_taxisharing.append(durations['duration_taxisharing'])
         list_bad_duration_individual.append(durations['duration_individual'])
+
+df_good_matching = pd.DataFrame(list_ids)
+df_good_matching.to_csv(sbwy_taxi_maching_path.split('.')[0]+'_good.csv')
 
 print len(df_sbwy_duration)
 print count_good_taxisharing
@@ -133,7 +137,7 @@ list_sbwy_individual_route_duration = df_sbwy_duration['duration_individual'].to
 list_sbwy_taxisharing_route_duration = df_sbwy_duration['duration_taxisharing'].tolist()
 
 # list_sbwy_individual_route_duration = list_good_duration_individual
-# list_sbwy_taxisharing_route_duration = list_good_duration_taxisharing
+# list_sbwy_taxisharing_route_duration = list_good_duration_taxisharing 
 
 # list_sbwy_individual_route_duration = list_bad_duration_individual
 # list_sbwy_taxisharing_route_duration = list_bad_duration_taxisharing
@@ -158,4 +162,4 @@ ax.set_title(title_name)
 ax.set_xlabel('Travel Duration in Minutes')
 ax.set_ylabel('ECDF')
 plt.tight_layout()
-fig.savefig(chart_name)
+#fig.savefig(chart_name)
