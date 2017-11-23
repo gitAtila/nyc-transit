@@ -186,7 +186,9 @@ for taxi_sampn_perno_tripno, computed_taxi_trip in dict_taxi_trips.iteritems():
             dict_shortest_distance = integration_positions(overlaped_taxi_time, overlaped_sbwy_time)
             shortest_distance = dict_shortest_distance['shortest_distance']
 
-            if shortest_distance < computed_taxi_trip[-1]['distance']:
+            taxi_integration_last_distance = overlaped_taxi_time[-1]['distance'] - overlaped_taxi_time[0]['distance']
+
+            if shortest_distance < taxi_integration_last_distance:
 
                 real_sbwy_intergration_index = overlaped_sbwy_indexes[0] + dict_shortest_distance['sbwy_index']
                 real_taxi_intergration_index = overlaped_taxi_indexes[0] + dict_shortest_distance['taxi_index']
