@@ -28,7 +28,7 @@ def sbwy_duration(df_sbwy_individual_trip, df_taxi_individual_trip, dict_matchin
 
     list_sbwy_duration = []
     for match_id, match_route in dict_matching.iteritems():
-        #print match_id
+
         # select subway and taxi matching trips
         sbwy_matching_trip = [position for position in match_route if position['sequence'] < 7]
         taxi_matching_trip = [position for position in match_route if position['sequence'] >= 7]
@@ -81,14 +81,24 @@ def sbwy_duration(df_sbwy_individual_trip, df_taxi_individual_trip, dict_matchin
 
     return df_sbwy_duration
 
+def remove_outliers(list_data):
+    std_data = np.std(list_data)
+    list_new_data = []
+    for data in list_data:
+        if data <= std_data*2:
+            list_new_data.append(data)
+    return list_new_data
+
+# read individual routes and format datetime
 df_sbwy_individual_trip = pd.read_csv(sbwy_individual_trip_path)
 df_taxi_individual_trip = pd.read_csv(taxi_individual_trip_path)
-
 df_sbwy_individual_trip['date_time'] = pd.to_datetime(df_sbwy_individual_trip['date_time'])
 
+# read group matches
 df_sbwy_taxi_matching = pd.read_csv(sbwy_taxi_maching_path)
 dict_matching = group_df_rows(df_sbwy_taxi_matching, 'match_id')
 
+# read format taxisharing trips
 df_taxisharing_trip = pd.read_csv(taxisharing_trip_path)
 df_taxisharing_trip['first_destination_time'] = pd.to_datetime(df_taxisharing_trip['first_destination_time'])
 df_taxisharing_trip['last_destination_time'] = pd.to_datetime(df_taxisharing_trip['last_destination_time'])
@@ -97,69 +107,49 @@ df_taxisharing_trip['last_destination_time'] = pd.to_datetime(df_taxisharing_tri
 print 'unique individual sbwy', len(df_sbwy_individual_trip['sampn_perno_tripno'].unique())
 print 'unique individual taxi', len(df_taxi_individual_trip['sampn_perno_tripno'].unique())
 
+# subway individual taxisharing duration
 df_sbwy_duration = sbwy_duration(df_sbwy_individual_trip, df_taxi_individual_trip, dict_matching, df_taxisharing_trip)
-print df_sbwy_duration
 
-list_ids = []
+# find good and bad rideshaing
+list_good_ids = []
 count_good_taxisharing = 0
 list_time_saving = []
-list_good_duration_individual = []
-list_good_duration_taxisharing = []
-list_bad_duration_individual = []
-list_bad_duration_taxisharing = []
+list_time_wasting = []
 for index, durations in df_sbwy_duration.iterrows():
     if durations['duration_taxisharing'] < durations['duration_individual']:
         count_good_taxisharing += 1
         time_saving = (durations['duration_individual'] - durations['duration_taxisharing'])/60
         list_time_saving.append(time_saving)
-        list_ids.append({'taxi_trip_id':durations['taxi_trip_id'], 'sbwy_trip_id': durations['sbwy_trip_id']})
-        list_good_duration_taxisharing.append(durations['duration_taxisharing'])
-        list_good_duration_individual.append(durations['duration_individual'])
+        list_good_ids.append({'sbwy_trip_id':durations['sbwy_trip_id'], 'taxi_trip_id':durations['taxi_trip_id']})
     else:
-        list_bad_duration_taxisharing.append(durations['duration_taxisharing'])
-        list_bad_duration_individual.append(durations['duration_individual'])
+        time_wasting = (durations['duration_taxisharing'] - durations['duration_individual'])/60
+        list_time_wasting.append(time_wasting)
 
-df_good_matching = pd.DataFrame(list_ids)
-df_good_matching.to_csv(sbwy_taxi_maching_path.split('.')[0]+'_good.csv')
+df_good_ids = pd.DataFrame(list_good_ids)
+print df_good_ids
 
-print len(df_sbwy_duration)
-print count_good_taxisharing
-print float(count_good_taxisharing)/len(df_sbwy_duration)
-print 'statistics'
-print 'mean', np.mean(list_time_saving)
-print 'std', np.std(list_time_saving)
-print 'var', np.var(list_time_saving)
-print 'min', np.min(list_time_saving)
-print 'max', np.max(list_time_saving)
-
-# plot cdf
-list_sbwy_individual_route_duration = df_sbwy_duration['duration_individual'].tolist()
-list_sbwy_taxisharing_route_duration = df_sbwy_duration['duration_taxisharing'].tolist()
-
-# list_sbwy_individual_route_duration = list_good_duration_individual
-# list_sbwy_taxisharing_route_duration = list_good_duration_taxisharing 
-
-# list_sbwy_individual_route_duration = list_bad_duration_individual
-# list_sbwy_taxisharing_route_duration = list_bad_duration_taxisharing
-
-list_sbwy_individual_route_duration = [duration/60 for duration in list_sbwy_individual_route_duration]
-list_sbwy_taxisharing_route_duration = [duration/60 for duration in list_sbwy_taxisharing_route_duration]
-
-list_sbwy_taxisharing_route_duration.sort()
-ecdf_taxisharing_duration = ECDF(list_sbwy_taxisharing_route_duration)
-
-list_sbwy_individual_route_duration.sort()
-ecdf_individual_duration = ECDF(list_sbwy_individual_route_duration)
-
-fig, ax = plt.subplots()
-plt.plot(ecdf_taxisharing_duration.x, ecdf_taxisharing_duration.y, label='taxisharing')
-plt.plot(ecdf_individual_duration.x, ecdf_individual_duration.y, label='individual')
-
-#ax.xaxis.set_major_locator(ticker.MultipleLocator(60)) # set x sticks interal
-plt.grid()
-plt.legend(loc=4)
-ax.set_title(title_name)
-ax.set_xlabel('Travel Duration in Minutes')
-ax.set_ylabel('ECDF')
-plt.tight_layout()
-#fig.savefig(chart_name)
+df_good_taxisharing = df_taxisharing_trip[df_taxisharing_trip['taxi_sampn_perno_tripno'].isin(df_good_ids['taxi_trip_id'].tolist())\
+& df_taxisharing_trip['sbwy_sampn_perno_tripno'].isin(df_good_ids['sbwy_trip_id'].tolist())]
+print df_good_taxisharing
+## plot saving and wasting
+# list_time_saving = remove_outliers(list_time_saving)
+# list_time_wasting = remove_outliers(list_time_wasting)
+#
+# list_time_saving.sort()
+# ecdf_time_saving = ECDF(list_time_saving)
+#
+# list_time_wasting.sort()
+# ecdf_time_wasting = ECDF(list_time_wasting)
+#
+# fig, ax = plt.subplots()
+# plt.plot(ecdf_time_saving.x, ecdf_time_saving.y, label='time saving')
+# plt.plot(ecdf_time_wasting.x, ecdf_time_wasting.y, label='waste of time')
+#
+# #ax.xaxis.set_major_locator(ticker.MultipleLocator(30)) # set x sticks interal
+# plt.grid()
+# plt.legend(loc=4)
+# ax.set_title(title_name)
+# ax.set_xlabel('time in minutes')
+# ax.set_ylabel('ECDF')
+# plt.tight_layout()
+# fig.savefig(chart_name)
