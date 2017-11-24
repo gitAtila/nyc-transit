@@ -130,7 +130,10 @@ print df_good_ids
 
 df_good_taxisharing = df_taxisharing_trip[df_taxisharing_trip['taxi_sampn_perno_tripno'].isin(df_good_ids['taxi_trip_id'].tolist())\
 & df_taxisharing_trip['sbwy_sampn_perno_tripno'].isin(df_good_ids['sbwy_trip_id'].tolist())]
-print df_good_taxisharing
+dict_good_taxisharing = df_good_taxisharing.T.to_dict()
+for key, taxisharing in dict_good_taxisharing.iteritems():
+    print taxisharing['taxi_sampn_perno_tripno'], taxisharing['sbwy_sampn_perno_tripno'], taxisharing['destination_destination_distance'],\
+    taxisharing['taxi_sbwy_integration_distance'], taxisharing['sbwy_destination_first'], taxisharing['integration_destination_distance']
 ## plot saving and wasting
 # list_time_saving = remove_outliers(list_time_saving)
 # list_time_wasting = remove_outliers(list_time_wasting)
