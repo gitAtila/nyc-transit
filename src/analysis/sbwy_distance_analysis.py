@@ -57,9 +57,10 @@ list_sbwy_last_walking_distances = []
 for sampn_perno_tripno in list_sampn_perno_tripno:
     df_sbwy_trip = df_sbwy_individual_trip[df_sbwy_individual_trip['sampn_perno_tripno'] == sampn_perno_tripno]
     dict_distances = walking_subway_distances(df_sbwy_trip)
-    list_sbwy_first_walking_distances.append(dict_distances['walking_distance'][0])
-    list_sbwy_last_walking_distances.append(dict_distances['walking_distance'][1])
-    list_sbwy_distances.append(dict_distances['sbwy_distance'])
+    if dict_distances['walking_distance'][0] > 0:
+        list_sbwy_first_walking_distances.append(dict_distances['walking_distance'][0])
+        list_sbwy_last_walking_distances.append(dict_distances['walking_distance'][1])
+        list_sbwy_distances.append(dict_distances['sbwy_distance'])
 
 print df_sbwy_individual_trip
 
