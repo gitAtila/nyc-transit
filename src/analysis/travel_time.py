@@ -93,7 +93,6 @@ def sbwy_duration(df_sbwy_individual_trip, df_taxi_individual_trip, dict_matchin
                 break
 
         sbwy_walking_trip = sbwy_individual_trip.iloc[integration_position:]
-        print sbwy_walking_trip
 
         sbwy_integration_position = sbwy_individual_trip[sbwy_individual_trip['date_time'] == sbwy_matching_trip[-1]['date_time']]
         sbwy_integration_time = sbwy_integration_position['date_time'].iloc[0]
@@ -118,15 +117,16 @@ def sbwy_duration(df_sbwy_individual_trip, df_taxi_individual_trip, dict_matchin
 
         #print 'sbwy_passenger_taxisharing_destination', sbwy_taxisharing_destination_time
         dict_sbwy_durantion = {'sbwy_trip_id': sbwy_trip_id, 'taxi_trip_id': taxi_trip_id,\
-        'origin_date_time': sbwy_origin_time, 'duration_individual': duration_individual,\
-        'duration_taxisharing': duration_taxisharing}
+        'origin_date_time': sbwy_origin_time, 'first_walking_distance': dict_walking_sbwy_distances['walking_distance'][0],\
+        'sbwy_distance': dict_walking_sbwy_distances['sbwy_distance'], 'last_walking_distance': dict_walking_sbwy_distances['walking_distance'][1],\
+        'duration_individual': duration_individual, 'duration_taxisharing': duration_taxisharing}
         list_sbwy_duration.append(dict_sbwy_durantion)
         #print dict_sbwy_durantion
         #break
 
     df_sbwy_duration = pd.DataFrame(list_sbwy_duration)
     df_sbwy_duration = df_sbwy_duration[['sbwy_trip_id', 'taxi_trip_id', 'origin_date_time',\
-    'duration_individual', 'duration_taxisharing']]
+    'duration_individual', 'duration_taxisharing', 'first_walking_distance', 'sbwy_distance', 'last_walking_distance']]
 
     return df_sbwy_duration
 
@@ -171,19 +171,19 @@ for index, durations in df_sbwy_duration.iterrows():
         time_saving = (durations['duration_individual'] - durations['duration_taxisharing'])/60
         list_time_saving.append(time_saving)
         list_good_ids.append({'sbwy_trip_id':durations['sbwy_trip_id'], 'taxi_trip_id':durations['taxi_trip_id']})
+        print durations
     else:
         time_wasting = (durations['duration_taxisharing'] - durations['duration_individual'])/60
         list_time_wasting.append(time_wasting)
 
-df_good_ids = pd.DataFrame(list_good_ids)
-print df_good_ids
-
-df_good_taxisharing = df_taxisharing_trip[df_taxisharing_trip['taxi_sampn_perno_tripno'].isin(df_good_ids['taxi_trip_id'].tolist())\
-& df_taxisharing_trip['sbwy_sampn_perno_tripno'].isin(df_good_ids['sbwy_trip_id'].tolist())]
-dict_good_taxisharing = df_good_taxisharing.T.to_dict()
-for key, taxisharing in dict_good_taxisharing.iteritems():
-    print taxisharing['taxi_sampn_perno_tripno'], taxisharing['sbwy_sampn_perno_tripno'], taxisharing['destination_destination_distance'],\
-    taxisharing['taxi_sbwy_integration_distance'], taxisharing['sbwy_destination_first'], taxisharing['integration_destination_distance']
+# df_good_ids = pd.DataFrame(list_good_ids)
+#
+# df_good_taxisharing = df_taxisharing_trip[df_taxisharing_trip['taxi_sampn_perno_tripno'].isin(df_good_ids['taxi_trip_id'].tolist())\
+# & df_taxisharing_trip['sbwy_sampn_perno_tripno'].isin(df_good_ids['sbwy_trip_id'].tolist())]
+# dict_good_taxisharing = df_good_taxisharing.T.to_dict()
+# for key, taxisharing in dict_good_taxisharing.iteritems():
+#     print taxisharing['taxi_sampn_perno_tripno'], taxisharing['sbwy_sampn_perno_tripno'], taxisharing['destination_destination_distance'],\
+#     taxisharing['taxi_sbwy_integration_distance'], taxisharing['sbwy_destination_first'], taxisharing['integration_destination_distance']
 
 ## plot saving and wasting
 # list_time_saving = remove_outliers(list_time_saving)
