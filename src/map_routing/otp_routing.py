@@ -1,8 +1,12 @@
 '''
     Compute map routing through OpenTripPlanning API
 '''
+<<<<<<< HEAD
 # start server
 # java -Xmx2G -jar otp-1.2.0-shaded.jar --graphs /home/vod/amsj/remote_data/map/otp/graphs/ --router nyc --inMemory
+=======
+
+>>>>>>> a79151de9908544cb99268f13321be49804dbfd9
 import urllib2
 import json
 import math
