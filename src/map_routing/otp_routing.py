@@ -23,7 +23,7 @@ class OTP_routing:
         list_positions = []
 
         list_positions.append({'date_time': origin_datetime, 'longitude': list_lon_lat_positions[0][0],\
-        'latitude': list_lon_lat_positions[0][1], 'distance': 0.0})
+        'latitude': list_lon_lat_positions[0][1], 'distance': 0.0, 'stop_id': ''})
 
         total_distance = 0
         previous_datetime = origin_datetime
@@ -39,6 +39,7 @@ class OTP_routing:
         return list_positions
 
     def request_json(self, url):
+        print url
         json_response = {}
         try:
             opener = urllib2.build_opener()
@@ -48,7 +49,7 @@ class OTP_routing:
             opener.close()
 
         except urllib2.URLError:
-            print 'URLError', len(url)
+            print 'URLError', url
 
         return json_response
 
@@ -57,8 +58,6 @@ class OTP_routing:
 
         url_stops = self.url_head + 'index/trips/' + tripId + '/stops/'
         url_stoptimes = self.url_head + 'index/trips/' + tripId + '/stoptimes/'
-        print url_stops
-        print url_stoptimes
 
         json_stops = self.request_json(url_stops)
         json_stoptimes = self.request_json(url_stoptimes)
@@ -80,7 +79,7 @@ class OTP_routing:
             one_day = timedelta(days=1).total_seconds()
             departure_time = json_stoptimes[index]['realtimeDeparture']
             nro_days = int(departure_time/one_day)
-            # if departure_time > one_day:
+
             departure_time = departure_time - nro_days*one_day
             date_time = datetime.fromtimestamp(date + departure_time)
 
@@ -106,61 +105,83 @@ class OTP_routing:
          + '&toPlace=' + str(lat_destination) + ',' + str(lon_destination)
 
         url = url_plan + coordinates + url_tail
-        print url
+        # print url
 
         json_route = self.request_json(url)
-        # print json_route['plan'].keys()
+        if 'plan' in json_route.keys():
 
-        itinerary = json_route['plan']['itineraries'][0]
-        # print itinerary.keys()
-        for leg in itinerary['legs']:
-            list_positions = []
-            print 'mode:', leg['mode']
+            itinerary = json_route['plan']['itineraries'][0]
+            # print itinerary.keys()
 
-            print 'origin_datetime:', datetime.fromtimestamp(leg['startTime']/1000.0) - timedelta(hours=3)
-            origin_datetime = datetime.fromtimestamp(leg['startTime']/1000.0) - timedelta(hours=3)
-            print 'destination_datetime:', datetime.fromtimestamp(leg['endTime']/1000.0) - timedelta(hours=3)
+            difference_api_real = 0
+            first_iteration = True
+            trip_sequence = 1
+            for leg in itinerary['legs']:
 
-            if leg['mode'] == 'SUBWAY':
+                list_positions = []
+                # print 'mode:', leg['mode']
 
-                tripId = leg['tripId']
-                from_stopId = leg['from']['stopId']
-                to_stopId = leg['to']['stopId']
-                list_positions = self.subway_intemediate_stations(origin_datetime, tripId, from_stopId, to_stopId)
+                origin_datetime = datetime.fromtimestamp(leg['startTime']/1000.0)
+                destination_datetime = datetime.fromtimestamp(leg['endTime']/1000.0)
 
-            elif leg['mode'] == 'WALK' or leg['mode'] == 'CAR':
+                # adapt timezone
+                api_time = origin_datetime
+                date_time = date + ' ' + time
+                real_time = datetime.strptime(date_time, '%m-%d-%Y %I:%M%p')
+                difference_api_real = (api_time - real_time).total_seconds()
+                if difference_api_real >=  3600.0:
+                    difference_api_real = int(difference_api_real/3600.0)
+                else:
+                    raise Exception('API timezone different from server')
+                # print api_time, real_time, difference_api_real
+                origin_datetime -= timedelta(hours=difference_api_real)
+                destination_datetime -= timedelta(hours=difference_api_real)
+                first_iteration = False
 
-                origin_datetime = datetime.fromtimestamp(leg['startTime']/1000.0) - timedelta(hours=3)
-                destination_datetime = datetime.fromtimestamp(leg['endTime']/1000.0) - timedelta(hours=3)
+                if leg['mode'] == 'SUBWAY':
 
-                origin_position = (leg['from']['lon'], leg['from']['lat'])
-                destination_position = (leg['to']['lon'], leg['to']['lat'])
+                    tripId = leg['tripId']
+                    from_stopId = leg['from']['stopId']
+                    to_stopId = leg['to']['stopId']
+                    list_positions = self.subway_intemediate_stations(origin_datetime, tripId, from_stopId, to_stopId)
 
-                total_distance = leg['distance']
-                total_duration = (destination_datetime - origin_datetime).total_seconds()
-                average_speed = total_distance/total_duration
+                elif leg['mode'] == 'WALK' or leg['mode'] == 'CAR':
 
-                list_distance = []
-                list_lon_lat_positions = []
-                #list_lon_lat_positions.append(origin_position)
-                for step in leg['steps']:
-                    list_distance.append(step['distance'])
-                    list_lon_lat_positions.append((step['lon'], step['lat']))
-                list_lon_lat_positions.append(destination_position)
+                    origin_position = (leg['from']['lon'], leg['from']['lat'])
+                    destination_position = (leg['to']['lon'], leg['to']['lat'])
 
-                list_positions = self.walking_intermediate_times(origin_datetime, destination_datetime,\
-                list_distance, list_lon_lat_positions, average_speed)
+                    total_distance = leg['distance']
+                    total_duration = (destination_datetime - origin_datetime).total_seconds()
+                    average_speed = total_distance/total_duration
 
-            else:
-                print 'mode dont known'
+                    list_distance = []
+                    list_lon_lat_positions = []
+                    #list_lon_lat_positions.append(origin_position)
+                    for step in leg['steps']:
+                        list_distance.append(step['distance'])
+                        list_lon_lat_positions.append((step['lon'], step['lat']))
+                    list_lon_lat_positions.append(destination_position)
 
-            for position in list_positions:
-                route_position_times.append(position)
-                print position['date_time']
+                    list_positions = self.walking_intermediate_times(origin_datetime, destination_datetime,\
+                    list_distance, list_lon_lat_positions, average_speed)
 
+                else:
+                    raise Exception('mode dont known')
+
+                pos_sequence = 1
+                for position in list_positions:
+                    position['pos_sequence'] = pos_sequence
+                    position['trip_sequence'] = trip_sequence
+                    route_position_times.append(position)
+                    pos_sequence += 1
+                    # print position['date_time']
+                trip_sequence += 1
+        else:
+            print json_route['error']['message']
+            return []
         return route_position_times
 
 
-otp = OTP_routing('nyc')
-otp.route_positions(40.71799, -74.00682,40.70290, -73.89439, 'CAR', '11-30-2017', '1:00am')
+# otp = OTP_routing('nyc')
+# otp.route_positions(40.71799, -74.00682,40.70290, -73.89439, 'SUBWAY,WALK', '11-30-2010', '1:00am')
 # otp.subway_positions(40.71799, -74.00682,40.70290, -73.89439, '11-30-2017', '1:00am')
