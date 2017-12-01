@@ -10,9 +10,10 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from statsmodels.distributions.empirical_distribution import ECDF
 
-sbwy_computed_trips_path = argv[1]
-sbwy_informed_trips_path = argv[2]
-chart_results_path = argv[3]
+computed_trips_path = argv[1]
+informed_trips_path = argv[2]
+mode_code = int(argv[3])
+chart_results_path = argv[4]
 
 def group_df_rows(df, key_label):
     dict_grouped = dict()
@@ -73,10 +74,11 @@ def walking_subway_distances(df_sbwy_trip):
 
     return {'walking_distance': list_walking_distances, 'sbwy_distance':sbwy_distance}
 
-df_computed_trips = pd.read_csv(sbwy_computed_trips_path)
+df_computed_trips = pd.read_csv(computed_trips_path)
 df_computed_trips['date_time'] = pd.to_datetime(df_computed_trips['date_time'])
 
-df_informed_trips = pd.read_csv(sbwy_informed_trips_path)
+df_informed_trips = pd.read_csv(informed_trips_path)
+df_informed_trips = df_informed_trips[df_informed_trips['MODE_G10'] == mode_code]
 df_informed_trips['date_time_origin'] = pd.to_datetime(df_informed_trips['date_time_origin'])
 df_informed_trips['date_time_destination'] = pd.to_datetime(df_informed_trips['date_time_destination'])
 
@@ -91,10 +93,11 @@ for sampn_perno_tripno, computed_positions in dict_computed_trips.iteritems():
 
     # compute informed duration
     informed_trip = trip_from_sampn_perno_tripno(df_informed_trips, sampn_perno_tripno)
-    informed_duration = (informed_trip['date_time_destination'].iloc[0] - informed_trip['date_time_origin'].iloc[0]).total_seconds()
-    #print informed_duration
-    informed_duration /= 60
-    list_informed_durations.append(informed_duration)
+    if informed_trip['date_time_destination'].iloc[0] > informed_trip['date_time_origin'].iloc[0]:
+        informed_duration = (informed_trip['date_time_destination'].iloc[0] - informed_trip['date_time_origin'].iloc[0]).total_seconds()
+        #print informed_duration
+        informed_duration /= 60
+        list_informed_durations.append(informed_duration)
 
     # compute computed duration
     sorted_positions = sorted(computed_positions, key=lambda position:position['date_time'])

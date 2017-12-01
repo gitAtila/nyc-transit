@@ -112,8 +112,8 @@ def sbwy_taxi_durations(df_sbwy_individual_trip, df_taxi_individual_trip):
     dict_taxi_individual_trip = group_df_rows(df_taxi_individual_trip, 'sampn_perno_tripno')
     list_taxi_durations = []
     for sampn_perno_tripno, positions in dict_taxi_individual_trip.iteritems():
-        sorted_durations = sorted(positions, key=lambda position:position['duration'])
-        list_taxi_durations.append(sorted_durations[-1]['duration']/60)
+        sorted_durations = sorted(positions, key=lambda position:position['pos_sequence'])
+        list_taxi_durations.append((sorted_durations[-1]['date_time'] - sorted_durations[0]['date_time']).total_seconds()/60)
 
     return list_sbwy_durations, list_taxi_durations
 
@@ -121,6 +121,7 @@ df_sbwy_individual_trip = pd.read_csv(sbwy_individual_trip_path)
 df_sbwy_individual_trip['date_time'] = pd.to_datetime(df_sbwy_individual_trip['date_time'])
 
 df_taxi_individual_trip = pd.read_csv(taxi_individual_trip_path)
+df_taxi_individual_trip['date_time'] = pd.to_datetime(df_taxi_individual_trip['date_time'])
 
 #list_sbwy_distances, list_taxi_distances = sbwy_taxi_distances(df_sbwy_individual_trip, df_taxi_individual_trip)
 # plot_cdf_two_curves(list_sbwy_distances, list_taxi_distances, 'subway', 'taxi', 'distance km', chart_results_path)
