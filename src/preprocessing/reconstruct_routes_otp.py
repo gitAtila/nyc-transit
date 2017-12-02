@@ -51,12 +51,12 @@ def trip_route_otp(df_trips, modes, gtfs_year, router_id, result_file):
 
 			# origin position were informed
 			if math.isnan(trip['lon_origin']) == False and math.isnan(trip['lon_destination']) == False:
-				date = new_date_time_origin.strftime('%m-%d-%Y')
-				time = new_date_time_origin.strftime('%I:%M%p')
+				# date = new_date_time_origin.strftime('%m-%d-%Y')
+				# time = new_date_time_origin.strftime('%I:%M%p')
 
 				# print date, time
 				passenger_otp_trip = otp.route_positions(trip['lat_origin'], trip['lon_origin'],\
-				trip['lat_destination'], trip['lon_destination'], modes, date, time)
+				trip['lat_destination'], trip['lon_destination'], modes, new_date_time_origin)
 
 				for passenger_trip in passenger_otp_trip:
 					if len(passenger_trip) > 0:
