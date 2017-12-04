@@ -39,7 +39,7 @@ class OTP_routing:
         return list_positions
 
     def request_json(self, url):
-        print url
+        # print url
         json_response = {}
         try:
             opener = urllib2.build_opener()
@@ -73,7 +73,7 @@ class OTP_routing:
         json_stops = json_stops[first_stop:last_stop+1]
         json_stoptimes = json_stoptimes[first_stop:last_stop+1]
 
-        print origin_datetime.date()
+        #print origin_datetime.date()
         date = time.mktime(origin_datetime.date().timetuple())
         for index in range(len(json_stops)):
             one_day = timedelta(days=1).total_seconds()
@@ -181,6 +181,7 @@ class OTP_routing:
                 trip_sequence += 1
         else:
             print json_route['error']['message']
+            print url
             return []
         return route_position_times
 

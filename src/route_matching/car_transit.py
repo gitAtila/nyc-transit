@@ -141,17 +141,24 @@ def car_trips_happening(dict_car_trips, initial_time, last_time):
             list_car_keys.append(key)
     return list_car_keys
 
-def find_best_integration(computed_transit_trip, computed_car_trip, router_id):
+def integration_position_times(computed_transit_trip, computed_car_trip, router_id):
     otp = OTP_routing(router_id)
 
+    list_possible_integrations = []
+    best_saving_time = -maxint
     for transit_position in computed_transit_trip[:-1]:
+        # print ''
+        # print transit_position
         for car_position in computed_car_trip[:-1]:
+            # print car_position
 
+            # integration_car -> integration_transit
             integration_car_trip = otp.route_positions(car_position['latitude'], car_position['longitude'],\
             transit_position['latitude'], transit_position['longitude'], 'CAR', car_position['date_time'])
+            if len(integration_car_trip) == 0: continue
 
             car_arrival_time_transit_stop = integration_car_trip[-1]['date_time']
-            car_arrival_time_destination = computed_car_trip[-1]['date_time']
+            car_passenger_destination_time = computed_car_trip[-1]['date_time']
             transit_arrival_time_stop = transit_position['date_time']
             transit_passenger_destination_time = computed_transit_trip[-1]['date_time']
 
@@ -159,23 +166,61 @@ def find_best_integration(computed_transit_trip, computed_car_trip, router_id):
             if transit_arrival_time_stop > car_arrival_time_transit_stop:
                 car_departure_time_transit_stop = transit_arrival_time_stop
 
-            transit_route_by_car = otp.route_positions(transit_position['latitude'], transit_position['longitude'],\
-            computed_transit_trip[-1]['latitude'], computed_transit_trip[-1]['longitude'], 'CAR', car_departure_time_transit_stop)
+            if car_departure_time_transit_stop < car_passenger_destination_time:
 
-            transit_route_by_car_destination_time = transit_route_by_car[-1]['date_time']
+                # integration_transit -> destination_transit
+                integration_transit_destination_trip = otp.route_positions(transit_position['latitude'], transit_position['longitude'],\
+                computed_transit_trip[-1]['latitude'], computed_transit_trip[-1]['longitude'], 'CAR', car_departure_time_transit_stop)
+                if len(integration_transit_destination_trip) == 0: continue
+                integration_transit_destination_time = integration_transit_destination_trip[-1]['date_time']
 
-            if car_departure_time_transit_stop < car_arrival_time_destination\
-            and transit_route_by_car_destination_time < transit_passenger_destination_time:
-                print 'There is an integration'
-                print transit_route_by_car_destination_time
-                print transit_passenger_destination_time
-                car_integration_time = (car_departure_time_transit_stop - car_position['date_time']).total_seconds()
-                print car_integration_time/60
-                # print car_arrival_time_transit_stop
-                # print transit_position
-                # print car_position
+                # integration_transit -> destination_car
+                integration_car_destination_trip = otp.route_positions(transit_position['latitude'], transit_position['longitude'],\
+                computed_car_trip[-1]['latitude'], computed_car_trip[-1]['longitude'], 'CAR', car_departure_time_transit_stop)
+                if len(integration_car_destination_trip) == 0: continue
+                integration_car_destination_time = integration_car_destination_trip[-1]['date_time']
 
+                if integration_car_destination_time < integration_transit_destination_time:
 
+                    # destination_car -> destination_transit
+                    destination_car_destination_transit_trip = otp.route_positions(integration_car_destination_trip[-1]['latitude'],\
+                    integration_car_destination_trip[-1]['longitude'], integration_transit_destination_trip[-1]['latitude'],\
+                    integration_transit_destination_trip[-1]['longitude'], 'CAR', integration_car_destination_time)
+                    if len(destination_car_destination_transit_trip) == 0: continue
+                    integration_transit_destination_time = destination_car_destination_transit_trip[-1]['date_time']
+
+                if integration_transit_destination_time < transit_passenger_destination_time:
+
+                    # car wasting time
+                    if integration_car_destination_time >= integration_transit_destination_time:
+                        # destination_transit -> destination_car
+                        destination_transit_destination_car_trip = otp.route_positions(integration_transit_destination_trip[-1]['latitude'],\
+                        integration_transit_destination_trip[-1]['longitude'], integration_car_destination_trip[-1]['latitude'],\
+                        integration_car_destination_trip[-1]['longitude'],  'CAR', integration_transit_destination_time)
+                        if len(destination_transit_destination_car_trip) == 0: continue
+                        integration_car_destination_time = destination_transit_destination_car_trip[-1]['date_time']
+
+                    print 'There is an integration'
+                    # print transit_position
+                    # print car_position
+                    print car_departure_time_transit_stop
+                    print transit_passenger_destination_time
+                    print integration_transit_destination_time
+                    transit_saving_time = (transit_passenger_destination_time - integration_transit_destination_time).total_seconds()/60
+                    print 'transit_saving_time', transit_saving_time
+                    print integration_car_destination_time
+                    print car_passenger_destination_time
+                    car_extra_time = (integration_car_destination_time - car_passenger_destination_time).total_seconds()/60
+                    print 'car_extra_time', car_extra_time
+                    dict_costs = {'car':{'trip_sequence': car_position['trip_sequence'], 'pos_sequence': car_position['pos_sequence'],\
+                    'destination_time': integration_car_destination_time},\
+                    'transit': {'trip_sequence': transit_position['trip_sequence'], 'pos_sequence': transit_position['pos_sequence'],\
+                    'destination_time': integration_transit_destination_time},\
+                    'car_arrival_time_transit_stop': car_arrival_time_transit_stop}
+                    list_possible_integrations.append(dict_costs)
+                    print '======================================'
+
+    return list_possible_integrations
 
 # format modes
 list_car_modes = list_modes(car_mode_codes)
@@ -207,6 +252,7 @@ dict_transit_trips = group_df_rows(df_transit_trips, 'sampn_perno_tripno', 'date
 
 # for each transit passenger trip,
 # find similar car trips that would help the transit passenger arrive at their destination earlier
+list_matches = []
 for transit_trip_id, computed_transit_trip in dict_transit_trips.iteritems():
 
     # do not consider walking positions after last alighting stop as integrable positions
@@ -232,200 +278,28 @@ for transit_trip_id, computed_transit_trip in dict_transit_trips.iteritems():
 
         # find the best integration point if it exists
         for car_trip_id, computed_car_trip in dict_car_trips_happening.iteritems():
-            print transit_trip_id, car_trip_id
-            find_best_integration(computed_transit_trip, computed_car_trip, router_id)
+            integration_times = integration_position_times(computed_transit_trip, computed_car_trip, router_id)
 
-        print len(dict_car_trips_happening)
-        break
-stop
+            if len(integration_times) > 0:
+                # earlier_transit_arrival_time = integration_times[0]['transit']['destination_time']
+                dict_earlier_transit_arrival_time = integration_times[0]
 
-# match routes
-# iterating over car passenger routes
-list_matches = []
-count_matching = 0
-for car_sampn_perno_tripno, computed_car_trip in dict_car_trips.iteritems():
+                for dict_integration in integration_times:
+                    dict_match = {'car_trip_id': car_trip_id, 'transit_trip_id': transit_trip_id,\
+                    'car_trip_sequence': dict_integration['car']['trip_sequence'],\
+                    'car_pos_sequence': dict_integration['car']['pos_sequence'],\
+                    'car_destination_time': dict_integration['car']['destination_time'],\
+                    'transit_trip_sequence': dict_integration['transit']['trip_sequence'],\
+                    'transit_pos_sequence': dict_integration['transit']['pos_sequence'],\
+                    'transit_destination_time': dict_integration['transit']['destination_time'],\
+                    'car_arrival_time_transit_stop': dict_integration['car_arrival_time_transit_stop']}
+                    list_matches.append(dict_match)
 
-    informed_car_trip = trip_from_sampn_perno_tripno(df_trips, car_sampn_perno_tripno)
-    informed_car_pickup_time = informed_car_trip['date_time_origin'].iloc[0]
-    informed_car_dropoff_time = informed_car_trip['date_time_destination'].iloc[0]
-
-    computed_trip_duration = computed_car_trip[-1]['duration']
-    computed_car_passenger_dropoff_time = informed_car_pickup_time + timedelta(seconds=computed_trip_duration)
-
-    # iterating over transit passenger routes
-    for transit_sampn_perno_tripno, computed_transit_trip in dict_transit_trips.iteritems():
-
-        # do not consider walking positions after alighting stop
-        first_walking = True
-        first_alight_walking_pos = -1
-        for transit_pos in range(len(computed_transit_trip)):
-            if type(computed_transit_trip[transit_pos]['stop_id']) == str:
-                first_walking = False
-            elif first_walking == False:
-                first_alight_walking_pos = transit_pos
-                break
-
-        computed_transit_trip = computed_transit_trip[:first_alight_walking_pos]
-
-        # get informed travel data
-        informed_transit_trip = trip_from_sampn_perno_tripno(df_trips, transit_sampn_perno_tripno)
-        informed_transit_origin_time = informed_transit_trip['date_time_origin'].iloc[0]
-
-        computed_transit_destination_time = computed_transit_trip[-1]['date_time']
-
-        # verify if car route and transit route overlap each other temporally
-        if informed_transit_origin_time < computed_car_passenger_dropoff_time\
-        and informed_car_pickup_time < computed_transit_destination_time:
-
-            # reconstruct car temporal routes
-            computed_car_trip = add_date_time(informed_car_pickup_time, computed_car_trip)
-
-            # compute overlaping of routes
-            overlaped_car_indexes, overlaped_transit_indexes = time_overlaped_routes(computed_car_trip,\
-            computed_transit_trip)
-
-            overlaped_transit_time = computed_transit_trip[overlaped_transit_indexes[0]: overlaped_transit_indexes[1]+1]
-            overlaped_car_time = computed_car_trip[overlaped_car_indexes[0]: overlaped_car_indexes[1]+1]
-
-            # verify if car route is close to transit route
-            dict_shortest_distance = integration_positions(overlaped_car_time, overlaped_transit_time)
-            shortest_distance = dict_shortest_distance['shortest_distance']
-
-            # print ''
-            # print computed_car_trip
-            # print overlaped_transit_indexes
-            # print overlaped_car_time
-            # print computed_car_trip[overlaped_car_indexes[0]], computed_car_trip[overlaped_car_indexes[1]]
-
-            # if overlaped_transit_indexes[0] == overlaped_transit_indexes[1]:
-            #     car_integration_last_distance = overlaped_transit_indexes[0]
-            # else:
-            car_integration_last_distance = overlaped_car_time[-1]['distance'] - overlaped_car_time[0]['distance']
-
-            if shortest_distance < car_integration_last_distance:
-
-                real_transit_intergration_index = overlaped_transit_indexes[0] + dict_shortest_distance['transit_index']
-                real_car_intergration_index = overlaped_car_indexes[0] + dict_shortest_distance['car_index']
-                transit_integration_pos = computed_transit_trip[real_transit_intergration_index]
-                car_integration_pos = computed_car_trip[real_car_intergration_index]
-
-                transit_origin_integration = computed_transit_trip[:real_transit_intergration_index+1]
-                car_origin_integration = computed_car_trip[:real_car_intergration_index+1]
-
-                # compute walking distance and duration
-                # compute transit distance and duration
-                first_origin_walking = {}
-                last_origin_walking = {}
-                first_transit_travel = {}
-                last_transit_travel = {}
-                first_destination_walking = {}
-                last_destination_walking = {}
-                boarded = False
-                for current_position in transit_origin_integration:
-                    if (type(current_position['stop_id']) == float and math.isnan(current_position['stop_id'])) == False:
-                        boarded = True
-
-                    # origin-boarding positions
-                    if boarded == False and current_position['stop_id']:
-                        if len(first_origin_walking) == 0:
-                            first_origin_walking = current_position.copy()
-                        last_origin_walking = current_position.copy()
-
-                    # traveling positions
-                    elif boarded == True and type(current_position['stop_id']) == str:
-                        if len(first_transit_travel) == 0:
-                            first_transit_travel = current_position.copy()
-                        last_transit_travel = current_position.copy()
-
-                    # alighting-destination positions
-                    elif boarded == True:
-                        if len(first_destination_walking) == 0:
-                            first_destination_walking = current_position.copy()
-                        last_destination_walking = current_position.copy()
-
-                list_route_match = []
-                if len(first_origin_walking) > 0:
-                    first_origin_walking['sequence'] = 1
-                    last_origin_walking['sequence'] = 2
-                    first_origin_walking['match_id'] = count_matching
-                    last_origin_walking['match_id'] = count_matching
-                    first_origin_walking['sampn_perno_tripno'] = transit_sampn_perno_tripno
-                    last_origin_walking['sampn_perno_tripno'] = transit_sampn_perno_tripno
-                    list_matches.append(first_origin_walking)
-                    list_matches.append(last_origin_walking)
-
-                    list_route_match.append(first_origin_walking)
-                    list_route_match.append(last_origin_walking)
-
-                if len(first_transit_travel) > 0:
-                    first_transit_travel['sequence'] = 3
-                    last_transit_travel['sequence'] = 4
-                    first_transit_travel['match_id'] = count_matching
-                    last_transit_travel['match_id'] = count_matching
-                    first_transit_travel['sampn_perno_tripno'] = transit_sampn_perno_tripno
-                    last_transit_travel['sampn_perno_tripno'] = transit_sampn_perno_tripno
-                    list_matches.append(first_transit_travel)
-                    list_matches.append(last_transit_travel)
-
-                    list_route_match.append(first_transit_travel)
-                    list_route_match.append(last_transit_travel)
-
-                if len(first_destination_walking) > 0:
-                    first_destination_walking['sequence'] = 5
-                    last_destination_walking['sequence'] = 6
-                    first_destination_walking['match_id'] = count_matching
-                    last_destination_walking['match_id'] = count_matching
-                    first_destination_walking['sampn_perno_tripno'] = transit_sampn_perno_tripno
-                    last_destination_walking['sampn_perno_tripno'] = transit_sampn_perno_tripno
-                    list_matches.append(first_destination_walking)
-                    list_matches.append(last_destination_walking)
-
-                    list_route_match.append(first_destination_walking)
-                    list_route_match.append(last_destination_walking)
-
-
-                first_car_travel = car_origin_integration[0].copy()
-                last_car_travel = car_origin_integration[-1].copy()
-                first_car_travel['stop_id'] = ''
-                last_car_travel['stop_id'] = ''
-                first_car_travel['sequence'] = 7
-                last_car_travel['sequence'] = 8
-                first_car_travel['match_id'] = count_matching
-                last_car_travel['match_id'] = count_matching
-                first_car_travel['sampn_perno_tripno'] = car_sampn_perno_tripno
-                last_car_travel['sampn_perno_tripno'] = car_sampn_perno_tripno
-                list_matches.append(first_car_travel)
-                list_matches.append(last_car_travel)
-
-                list_route_match.append(first_car_travel)
-                list_route_match.append(last_car_travel)
-
-                count_matching += 1
-
-                for route in list_route_match:
-                    print route['match_id'], route['sampn_perno_tripno'], route['sequence']
-
-                print ''
-
-                # print '=>Subway trip', transit_sampn_perno_tripno
-                # print first_origin_walking
-                # print last_origin_walking
-                # print first_transit_travel
-                # print last_transit_travel
-                # print first_destination_walking
-                # print last_destination_walking
-                #
-                # print '=>Taxi trip', car_sampn_perno_tripno
-                # print first_car_travel
-                # print last_car_travel
-
-                print '============================='
-
-    # if count_matching > 6:
-    #     break
+        # break
 
 df_matches = pd.DataFrame(list_matches)
-df_matches = df_matches[['match_id', 'sampn_perno_tripno', 'sequence', 'date_time', 'distance',\
-'longitude', 'latitude', 'stop_id']]
-df_matches = df_matches.sort_values(by=['match_id', 'sequence'])
+print df_matches
+df_matches = df_matches[['car_trip_id', 'transit_trip_id','car_trip_sequence','car_pos_sequence','car_destination_time',\
+'transit_trip_sequence', 'transit_pos_sequence', 'transit_destination_time','car_arrival_time_transit_stop']]
+# df_matches = df_matches.sort_values(by=['match_id', 'sequence'])
 df_matches.to_csv(result_path, index=False)
