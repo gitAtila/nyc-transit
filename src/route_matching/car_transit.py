@@ -19,15 +19,15 @@ car_trips_path = argv[2]
 router_id = argv[3]
 result_path = argv[4]
 
-def group_df_rows(df, key_label, sort_by_label):
+def group_df_rows(df, key_label):
     dict_grouped = dict()
     for index, row in df.iterrows():
         key = row[key_label]
         del row[key_label]
         dict_grouped.setdefault(key, []).append(row.to_dict())
-    if sort_by_label:
-        for key, list_dict in dict_grouped.iteritems():
-            dict_grouped[key] = sorted(list_dict, key=lambda pos: pos[sort_by_label])
+
+    for key, list_dict in dict_grouped.iteritems():
+        dict_grouped[key] = sorted(list_dict, key=lambda pos: (pos['trip_sequence'], pos['pos_sequence']))
     return dict_grouped
 
 def list_modes(mode_codes):
@@ -144,6 +144,14 @@ def integration_position_times(computed_transit_trip, computed_car_trip, router_
             #     print 'there is not enough time to get the transit passenter'
     return list_possible_integrations
 
+def is_date_time_consistet(list_trip):
+    for index in range(1, len(list_trip)):
+        diff_date_time = (list_trip[index]['date_time'] - list_trip[index-1]['date_time']).total_seconds()
+        if diff_date_time < 0:
+            print 'date_time not consistent'
+            return False
+    return True
+
 # read car trips
 df_car_trips = pd.read_csv(car_trips_path)
 del df_car_trips['id']
@@ -156,8 +164,8 @@ del df_transit_trips['id']
 df_transit_trips['date_time'] = pd.to_datetime(df_transit_trips['date_time'])
 # print df_transit_trips
 
-dict_car_trips = group_df_rows(df_car_trips, 'sampn_perno_tripno', '')
-dict_transit_trips = group_df_rows(df_transit_trips, 'sampn_perno_tripno', '')
+dict_car_trips = group_df_rows(df_car_trips, 'sampn_perno_tripno')
+dict_transit_trips = group_df_rows(df_transit_trips, 'sampn_perno_tripno')
 # print len(dict_car_trips)
 # print len(dict_transit_trips)
 
@@ -165,11 +173,11 @@ dict_transit_trips = group_df_rows(df_transit_trips, 'sampn_perno_tripno', '')
 # find similar car trips that would help the transit passenger arrive at their destination earlier
 list_matches = []
 for transit_trip_id, computed_transit_trip in dict_transit_trips.iteritems():
-    if transit_trip_id != '6007368_2_2': continue
+    #  if transit_trip_id != '6007368_2_2': continue
+    if is_date_time_consistet(computed_transit_trip) == False: continue
+
     print '\ntransit_trip_id', transit_trip_id
 
-    for trip in computed_transit_trip:
-        print trip
 
     # do not consider walking positions after last alighting stop as integrable positions
     # last_transit_index = len(computed_transit_trip)-1
@@ -217,15 +225,19 @@ for transit_trip_id, computed_transit_trip in dict_transit_trips.iteritems():
                 #     print 'car_destination_time', dict_integration['car']['destination_time']
                 #     print 'transit_destination_time', dict_integration['transit']['destination_time']
                 # stop
-        # if len(dict_car_trips_happening)>1:
+
             else:
                 print 'there is not any integration station' #stop
-    else:        # break
+
+    else:
         print 'there is not any overlaping'
+
+    # if len(dict_car_trips_happening)>1:
+    #     break
 
 df_matches = pd.DataFrame(list_matches)
 print df_matches
 df_matches = df_matches[['transit_trip_id', 'car_trip_id', 'car_trip_sequence','car_pos_sequence','car_destination_time',\
 'transit_trip_sequence', 'transit_pos_sequence', 'transit_destination_time','car_arrival_time_transit_stop']]
 # df_matches = df_matches.sort_values(by=['match_id', 'sequence'])
-# df_matches.to_csv(result_path, index=False)
+df_matches.to_csv(result_path, index=False)
