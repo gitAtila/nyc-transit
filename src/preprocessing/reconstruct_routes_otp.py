@@ -40,7 +40,7 @@ def trip_route_otp(df_trips, modes, gtfs_year, router_id, result_file):
 
 		if pd.isnull(date_time_origin) == False:
 			# find equivalent day in the GTFS's year
-			gtfs_day = datetime(gtfs_year, date_time_origin.month, 1)
+			gtfs_day = datetime(gtfs_year, date_time_origin.month, date_time_origin.day)
 			while gtfs_day.weekday() != date_time_origin.weekday():
 				gtfs_day += timedelta(days=1)
 
@@ -51,8 +51,6 @@ def trip_route_otp(df_trips, modes, gtfs_year, router_id, result_file):
 
 			# origin position were informed
 			if math.isnan(trip['lon_origin']) == False and math.isnan(trip['lon_destination']) == False:
-				# date = new_date_time_origin.strftime('%m-%d-%Y')
-				# time = new_date_time_origin.strftime('%I:%M%p')
 
 				# print date, time
 				passenger_otp_trip = otp.route_positions(trip['lat_origin'], trip['lon_origin'],\
@@ -61,17 +59,8 @@ def trip_route_otp(df_trips, modes, gtfs_year, router_id, result_file):
 				for passenger_trip in passenger_otp_trip:
 					if len(passenger_trip) > 0:
 						passenger_trip['sampn_perno_tripno'] = sampn_perno_tripno
-						correct_date = date_time_origin.date()
-						if passenger_trip['date_time'].date() > new_date_time_origin.date():
-							difference_days = (passenger_trip['date_time'] - new_date_time_origin).days
-							correct_date = correct_date + timedelta(days=difference_days)
-						correct_date_time = datetime.combine(correct_date, passenger_trip['date_time'].time())
-						passenger_trip['date_time'] = correct_date_time
 						list_passengers_trip.append(passenger_trip)
-						# print passenger_trip
 
-				print ''
-				# break
 	df_passenger_trip = pd.DataFrame(list_passengers_trip)
 	df_passenger_trip = df_passenger_trip[['sampn_perno_tripno','trip_sequence',\
 	'pos_sequence','date_time', 'longitude', 'latitude', 'distance', 'stop_id']]

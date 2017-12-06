@@ -169,6 +169,7 @@ class OTP_routing:
                     list_distance, list_lon_lat_positions, average_speed)
 
                 else:
+                    print leg['mode']
                     raise Exception('mode dont known')
 
                 pos_sequence = 1

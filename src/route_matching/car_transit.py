@@ -57,78 +57,91 @@ def integration_position_times(computed_transit_trip, computed_car_trip, router_
 
     list_possible_integrations = []
     best_saving_time = -maxint
-    for transit_position in computed_transit_trip:
+
+    computed_car_destination = computed_car_trip[-1]
+    computed_transit_destination = computed_transit_trip[-1]
+
+    for transit_position in computed_transit_trip[:-1]:
         for car_position in computed_car_trip[:-1]:
 
-            # integration_car -> integration_transit
-            integration_car_trip = otp.route_positions(car_position['latitude'], car_position['longitude'],\
-            transit_position['latitude'], transit_position['longitude'], 'CAR', car_position['date_time'])
-            if len(integration_car_trip) == 0: continue
+            if transit_position['date_time'] < computed_car_destination['date_time']\
+            and car_position['date_time'] < computed_transit_destination['date_time']:
 
-            car_arrival_time_transit_stop = integration_car_trip[-1]['date_time']
-            transit_arrival_time_stop = transit_position['date_time']
+                # integration_car -> integration_transit
+                integration_car_trip = otp.route_positions(car_position['latitude'], car_position['longitude'],\
+                transit_position['latitude'], transit_position['longitude'], 'CAR', car_position['date_time'])
+                if len(integration_car_trip) == 0: continue
 
-            car_passenger_destination_time = computed_car_trip[-1]['date_time']
-            transit_passenger_destination_time = computed_transit_trip[-1]['date_time']
+                car_arrival_time_transit_stop = integration_car_trip[-1]['date_time']
+                transit_arrival_time_stop = transit_position['date_time']
 
-            car_departure_time_transit_stop = car_arrival_time_transit_stop
-            if transit_arrival_time_stop > car_arrival_time_transit_stop:
-                car_departure_time_transit_stop = transit_arrival_time_stop
+                car_passenger_destination_time = computed_car_destination['date_time']
+                transit_passenger_destination_time = computed_transit_destination['date_time']
 
-            if car_departure_time_transit_stop < car_passenger_destination_time:
+                car_departure_time_transit_stop = car_arrival_time_transit_stop
+                if transit_arrival_time_stop > car_arrival_time_transit_stop:
+                    car_departure_time_transit_stop = transit_arrival_time_stop
 
-                # integration_transit -> destination_transit
-                integration_transit_destination_trip = otp.route_positions(transit_position['latitude'], transit_position['longitude'],\
-                computed_transit_trip[-1]['latitude'], computed_transit_trip[-1]['longitude'], 'CAR', car_departure_time_transit_stop)
-                if len(integration_transit_destination_trip) == 0: continue
-                integration_transit_destination_time = integration_transit_destination_trip[-1]['date_time']
+                if car_departure_time_transit_stop < car_passenger_destination_time:
 
-                # integration_transit -> destination_car
-                integration_car_destination_trip = otp.route_positions(transit_position['latitude'], transit_position['longitude'],\
-                computed_car_trip[-1]['latitude'], computed_car_trip[-1]['longitude'], 'CAR', car_departure_time_transit_stop)
-                if len(integration_car_destination_trip) == 0: continue
-                integration_car_destination_time = integration_car_destination_trip[-1]['date_time']
+                    # integration_transit -> destination_transit
+                    integration_transit_destination_trip = otp.route_positions(transit_position['latitude'], transit_position['longitude'],\
+                    computed_transit_destination['latitude'], computed_transit_destination['longitude'], 'CAR', car_departure_time_transit_stop)
+                    if len(integration_transit_destination_trip) == 0: continue
+                    integration_transit_destination_time = integration_transit_destination_trip[-1]['date_time']
 
-                if integration_car_destination_time < integration_transit_destination_time:
+                    # integration_transit -> destination_car
+                    integration_car_destination_trip = otp.route_positions(transit_position['latitude'], transit_position['longitude'],\
+                    computed_car_destination['latitude'], computed_car_destination['longitude'], 'CAR', car_departure_time_transit_stop)
+                    if len(integration_car_destination_trip) == 0: continue
+                    integration_car_destination_time = integration_car_destination_trip[-1]['date_time']
 
-                    # destination_car -> destination_transit
-                    destination_car_destination_transit_trip = otp.route_positions(integration_car_destination_trip[-1]['latitude'],\
-                    integration_car_destination_trip[-1]['longitude'], integration_transit_destination_trip[-1]['latitude'],\
-                    integration_transit_destination_trip[-1]['longitude'], 'CAR', integration_car_destination_time)
-                    if len(destination_car_destination_transit_trip) == 0: continue
-                    integration_transit_destination_time = destination_car_destination_transit_trip[-1]['date_time']
+                    if integration_car_destination_time < integration_transit_destination_time:
 
-                if integration_transit_destination_time < transit_passenger_destination_time:
+                        # destination_car -> destination_transit
+                        destination_car_destination_transit_trip = otp.route_positions(integration_car_destination_trip[-1]['latitude'],\
+                        integration_car_destination_trip[-1]['longitude'], integration_transit_destination_trip[-1]['latitude'],\
+                        integration_transit_destination_trip[-1]['longitude'], 'CAR', integration_car_destination_time)
+                        if len(destination_car_destination_transit_trip) == 0: continue
+                        integration_transit_destination_time = destination_car_destination_transit_trip[-1]['date_time']
 
-                    # car wasting time
-                    if integration_car_destination_time >= integration_transit_destination_time:
-                        # destination_transit -> destination_car
-                        destination_transit_destination_car_trip = otp.route_positions(integration_transit_destination_trip[-1]['latitude'],\
-                        integration_transit_destination_trip[-1]['longitude'], integration_car_destination_trip[-1]['latitude'],\
-                        integration_car_destination_trip[-1]['longitude'],  'CAR', integration_transit_destination_time)
-                        if len(destination_transit_destination_car_trip) == 0: continue
-                        integration_car_destination_time = destination_transit_destination_car_trip[-1]['date_time']
+                    if integration_transit_destination_time < transit_passenger_destination_time:
 
-                    # print 'There is an integration'
-                    # # print transit_position
-                    # # print car_position
-                    # print car_departure_time_transit_stop
-                    # print transit_passenger_destination_time
-                    # print integration_transit_destination_time
-                    transit_saving_time = (transit_passenger_destination_time - integration_transit_destination_time).total_seconds()/60
-                    # print 'transit_saving_time', transit_saving_time
-                    # print integration_car_destination_time
-                    # print car_passenger_destination_time
-                    car_extra_time = (integration_car_destination_time - car_passenger_destination_time).total_seconds()/60
-                    # print 'car_extra_time', car_extra_time
-                    dict_costs = {'car':{'trip_sequence': car_position['trip_sequence'], 'pos_sequence': car_position['pos_sequence'],\
-                    'destination_time': integration_car_destination_time},\
-                    'transit': {'trip_sequence': transit_position['trip_sequence'], 'pos_sequence': transit_position['pos_sequence'],\
-                    'destination_time': integration_transit_destination_time},\
-                    'car_arrival_time_transit_stop': car_arrival_time_transit_stop}
-                    list_possible_integrations.append(dict_costs)
-                    # print '======================================'
+                        # car wasting time
+                        if integration_car_destination_time >= integration_transit_destination_time:
+                            # destination_transit -> destination_car
+                            destination_transit_destination_car_trip = otp.route_positions(integration_transit_destination_trip[-1]['latitude'],\
+                            integration_transit_destination_trip[-1]['longitude'], integration_car_destination_trip[-1]['latitude'],\
+                            integration_car_destination_trip[-1]['longitude'],  'CAR', integration_transit_destination_time)
+                            if len(destination_transit_destination_car_trip) == 0: continue
+                            integration_car_destination_time = destination_transit_destination_car_trip[-1]['date_time']
 
+                        # print 'There is an integration'
+                        # # print transit_position
+                        # # print car_position
+                        # print car_departure_time_transit_stop
+                        # print transit_passenger_destination_time
+                        # print integration_transit_destination_time
+                        transit_saving_time = (transit_passenger_destination_time - integration_transit_destination_time).total_seconds()/60
+                        # print 'transit_saving_time', transit_saving_time
+                        # print integration_car_destination_time
+                        # print car_passenger_destination_time
+                        car_extra_time = (integration_car_destination_time - car_passenger_destination_time).total_seconds()/60
+                        # print 'car_extra_time', car_extra_time
+                        dict_costs = {'car':{'trip_sequence': car_position['trip_sequence'], 'pos_sequence': car_position['pos_sequence'],\
+                        'destination_time': integration_car_destination_time},\
+                        'transit': {'trip_sequence': transit_position['trip_sequence'], 'pos_sequence': transit_position['pos_sequence'],\
+                        'destination_time': integration_transit_destination_time},\
+                        'car_arrival_time_transit_stop': car_arrival_time_transit_stop}
+                        list_possible_integrations.append(dict_costs)
+                        # print '======================================'
+            #         else:
+            #             print 'transit arrive at his destination first'
+            #
+            #     else:
+            #         print 'car arrive at destination first'
+            # else:
+            #     print 'there is not enough time to get the transit passenter'
     return list_possible_integrations
 
 # read car trips
@@ -143,8 +156,8 @@ del df_transit_trips['id']
 df_transit_trips['date_time'] = pd.to_datetime(df_transit_trips['date_time'])
 # print df_transit_trips
 
-dict_car_trips = group_df_rows(df_car_trips, 'sampn_perno_tripno', 'date_time')
-dict_transit_trips = group_df_rows(df_transit_trips, 'sampn_perno_tripno', 'date_time')
+dict_car_trips = group_df_rows(df_car_trips, 'sampn_perno_tripno', '')
+dict_transit_trips = group_df_rows(df_transit_trips, 'sampn_perno_tripno', '')
 # print len(dict_car_trips)
 # print len(dict_transit_trips)
 
@@ -152,22 +165,26 @@ dict_transit_trips = group_df_rows(df_transit_trips, 'sampn_perno_tripno', 'date
 # find similar car trips that would help the transit passenger arrive at their destination earlier
 list_matches = []
 for transit_trip_id, computed_transit_trip in dict_transit_trips.iteritems():
-    print 'transit_trip_id', transit_trip_id
+    if transit_trip_id != '6007368_2_2': continue
+    print '\ntransit_trip_id', transit_trip_id
+
+    for trip in computed_transit_trip:
+        print trip
 
     # do not consider walking positions after last alighting stop as integrable positions
-    last_transit_index = len(computed_transit_trip)-1
-    for index in reversed(xrange(len(computed_transit_trip))):
-        if type(computed_transit_trip[index]['stop_id']) != float:
-            last_transit_index = index
-            break
-    integrable_transit_trip = computed_transit_trip[0:last_transit_index+1]
+    # last_transit_index = len(computed_transit_trip)-1
+    # for index in reversed(xrange(len(computed_transit_trip))):
+    #     if type(computed_transit_trip[index]['stop_id']) != float:
+    #         last_transit_index = index
+    #         break
+    # integrable_transit_trip = computed_transit_trip[0:last_transit_index+1]
 
     departure_transit_passenger_time = computed_transit_trip[0]['date_time']
     computed_transit_destination_time = computed_transit_trip[-1]['date_time']
-    last_integrable_transit_position_time = integrable_transit_trip[-1]['date_time']
+    # last_integrable_transit_position_time = integrable_transit_trip[-1]['date_time']
 
     # find car trips that could help the transit passenger arrive at his destination earlier
-    list_ids_car_trips_happening = car_trips_happening(dict_car_trips, departure_transit_passenger_time, last_integrable_transit_position_time)
+    list_ids_car_trips_happening = car_trips_happening(dict_car_trips, departure_transit_passenger_time, computed_transit_destination_time)
     # print 'car_trips_happening', list_ids_car_trips_happening
     dict_car_trips_happening = {key: dict_car_trips[key] for key in list_ids_car_trips_happening}
 
@@ -176,8 +193,12 @@ for transit_trip_id, computed_transit_trip in dict_transit_trips.iteritems():
 
         # find the best integration point if it exists
         for car_trip_id, computed_car_trip in dict_car_trips_happening.iteritems():
+            print 'car_trip_id', car_trip_id
+
+            print 'car_trip', computed_car_trip[0]['date_time'], computed_car_trip[-1]['date_time']
+            print 'transit_trip', computed_transit_trip[0]['date_time'], computed_transit_trip[-1]['date_time']
+
             integration_times = integration_position_times(computed_transit_trip, computed_car_trip, router_id)
-            print car_trip_id, len(computed_car_trip), len(integration_times)
 
             if len(integration_times) > 0:
                 # earlier_transit_arrival_time = integration_times[0]['transit']['destination_time']
@@ -193,9 +214,14 @@ for transit_trip_id, computed_transit_trip in dict_transit_trips.iteritems():
                     'transit_destination_time': dict_integration['transit']['destination_time'],\
                     'car_arrival_time_transit_stop': dict_integration['car_arrival_time_transit_stop']}
                     list_matches.append(dict_match)
+                #     print 'car_destination_time', dict_integration['car']['destination_time']
+                #     print 'transit_destination_time', dict_integration['transit']['destination_time']
+                # stop
         # if len(dict_car_trips_happening)>1:
-             #stop
-            # break
+            else:
+                print 'there is not any integration station' #stop
+    else:        # break
+        print 'there is not any overlaping'
 
 df_matches = pd.DataFrame(list_matches)
 print df_matches
