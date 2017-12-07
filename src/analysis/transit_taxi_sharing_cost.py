@@ -14,7 +14,6 @@ car_trips_path = argv[2]
 matching_trips_path = argv[3]
 chart_path = argv[4]
 
-
 def nyc_taxi_cost(date_time_origin, trip_distance_meters, stopped_duration_sec):
 
     # costs in dolar
@@ -78,8 +77,6 @@ shared_distance, shared_stopped_time, transit_destination_first, destinations_di
     transit_passenger_cost = 0
 
     initial_cost = initial_charge + tax_per_ride
-    # taxi_passenger_cost = (initial_charge + tax_per_ride)/2
-    # transit_passenger_cost = (initial_charge + tax_per_ride)/2
 
     # peak hours
     if date_time_origin.weekday() in peak_weekdays and date_time_origin.hour in peak_hours:
@@ -94,8 +91,8 @@ shared_distance, shared_stopped_time, transit_destination_first, destinations_di
 
     price_per_meter = mile_in_meters * rate_per_mile
 
-    taxi_passenger_cost +=  integration_distance * price_per_meter
-    taxi_passenger_cost += (integration_stopped_time/60) * rate_per_minute_stopped
+    taxi_passenger_cost += integration_distance * price_per_meter
+    taxi_passenger_cost += ((integration_stopped_time/60) * rate_per_minute_stopped)/2
 
     taxi_passenger_cost += (shared_distance * price_per_meter)/2
     taxi_passenger_cost += (((waiting_time_stop + shared_stopped_time)/60) * rate_per_minute_stopped)/2
@@ -176,10 +173,10 @@ def plot_cdf_two_curves(list_curve_1, list_curve_2, label_curve_1, label_curve_2
     plt.plot(ecdf_curve_1.x, ecdf_curve_1.y, label=label_curve_1)
     plt.plot(ecdf_curve_2.x, ecdf_curve_2.y, label=label_curve_2)
 
-    # ax.xaxis.set_major_locator(ticker.MultipleLocator(30)) # set x sticks interal
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x sticks interal
     plt.grid()
-    plt.legend(loc=4)
-    #ax.set_title(title_name)
+    plt.legend(loc=2)
+    ax.set_title('saturday')
     ax.set_xlabel(x_label)
     ax.set_ylabel('ECDF')
     plt.tight_layout()
@@ -201,6 +198,9 @@ print len(dict_transit_taxisharing)
 
 list_best_integrations = list_best_integrations(df_transit_trips, df_car_trips, dict_transit_taxisharing)
 
+list_taxi_saving_money = []
+list_transit_extra_cost = []
+transit_without_sharing = []
 for integration in list_best_integrations:
     print integration['transit_trip_id'], integration['car_trip_id']
 
@@ -219,7 +219,6 @@ for integration in list_best_integrations:
     # print taxi_distance
 
     taxi_individual_cost = nyc_taxi_cost(taxi_date_time_origin, taxi_distance, 0)
-    print 'taxi_individual_cost\t', taxi_individual_cost
 
     taxi_waiting_time_stop = 0
     if integration['car_arrival_time_transit_stop'] < transit_posisiton['date_time']:
@@ -237,20 +236,24 @@ for integration in list_best_integrations:
     total_distance = start_integration_distance + integration_distance + shared_distance + destinations_distance
 
     total_integrated_cost = nyc_taxi_cost(taxi_date_time_origin, total_distance, taxi_waiting_time_stop)
-    print 'total_integrated_cost\t', total_integrated_cost
+
 
     transit_integrated_cost, taxi_integrated_cost = nyc_transit_taxi_shared_costs(taxi_date_time_origin, integration_distance, 0,\
     taxi_waiting_time_stop, shared_distance, 0, transit_destination_first, destinations_distance, 0)
 
-    print '\ntransit_integrated_cost\t', transit_integrated_cost
+    print 'taxi_individual_cost\t', taxi_individual_cost
     print 'taxi_integrated_cost\t', taxi_integrated_cost
 
+    print '\ntransit_integrated_cost\t', transit_integrated_cost
+
+    print '\ntotal_integrated_cost\t', total_integrated_cost
     print 'transit + taxi\t\t', transit_integrated_cost + taxi_integrated_cost
     print '======================================'
     # break
+    taxi_passenger_saving_money = taxi_individual_cost - taxi_integrated_cost
+    transit_passenger_cost = transit_integrated_cost
 
-# compute ridesharing costs for transit passengers and money saving for taxi passenger
+    list_taxi_saving_money.append(taxi_passenger_saving_money)
+    list_transit_extra_cost.append(transit_passenger_cost)
 
-# plot_cdf_two_curves(list_saving_time, list_extra_time, 'transit_saving_time', 'car_extra_time',\
-# 'Time in Minutes', chart_path)
-# # select best car for each transit trip
+plot_cdf_two_curves(list_taxi_saving_money, list_transit_extra_cost, 'taxi saving money', 'transit extra cost', 'dollars', chart_path)
