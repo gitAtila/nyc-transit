@@ -142,7 +142,7 @@ class OTP_routing:
                 destination_datetime -= timedelta(hours=difference_api_real)
                 first_iteration = False
 
-                if leg['mode'] == 'SUBWAY':
+                if leg['mode'] == 'SUBWAY' or leg['mode'] == 'BUS':
 
                     tripId = leg['tripId']
                     from_stopId = leg['from']['stopId']
