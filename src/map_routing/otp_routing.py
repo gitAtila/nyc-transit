@@ -4,15 +4,15 @@
 # build graph
 # java -Xmx2G -jar otp-1.2.0-shaded.jar --basePath <otp folder> --build <gtfs and pbf path>
 # start server
-# java -Xmx2G -jar otp-1.2.0-shaded.jar --graphs <graphs path> --router <gtfs, pbg, obj path> --inMemory
+# java -Xmx2G -jar otp-1.2.0-shaded.jar --basePath <otp folder> --graphs <graphs path> --router <gtfs, pbg, obj path> --inMemory
 
 import urllib2
 import json
 import math
 import time
 from datetime import datetime, timedelta
-from shapely.geometry import LineString
-import polyline
+# from shapely.geometry import LineString
+# import polyline
 
 class OTP_routing:
 
