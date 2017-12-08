@@ -136,6 +136,8 @@ class OTP_routing:
                 if difference_api_real >=  3600.0:
                     difference_api_real = int(difference_api_real/3600.0)
                 else:
+                    print 'api_time', api_time
+                    print 'real_time', real_time
                     raise Exception('API timezone different from server')
                 # print api_time, real_time, difference_api_real
                 origin_datetime -= timedelta(hours=difference_api_real)
