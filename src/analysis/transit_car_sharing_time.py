@@ -92,7 +92,7 @@ def plot_cdf_two_curves(list_curve_1, list_curve_2, label_curve_1, label_curve_2
     # ax.xaxis.set_major_locator(ticker.MultipleLocator(30)) # set x sticks interal
     plt.grid()
     plt.legend(loc=4)
-    ax.set_title('Saturday')
+    # ax.set_title('Saturday')
     ax.set_xlabel(x_label)
     ax.set_ylabel('ECDF')
     plt.tight_layout()
@@ -114,6 +114,6 @@ print len(dict_transit_taxisharing)
 
 list_saving_time, list_extra_time = saving_extra_time(dict_transit_taxisharing)
 
-plot_cdf_two_curves(list_saving_time, list_extra_time, 'subway_saving_time', 'taxi_extra_time',\
+plot_cdf_two_curves(list_saving_time, list_extra_time, 'transit saving time', 'taxi extra time',\
 'Time in Minutes', chart_path)
 # select best car for each transit trip
