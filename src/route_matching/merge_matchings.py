@@ -9,4 +9,4 @@ frames = [df_csv_1, df_csv_2, df_csv_3]
 
 df_result = pd.concat(frames)
 
-df_result.to_csv(argv[4])
+df_result.to_csv(argv[4], index=False)
