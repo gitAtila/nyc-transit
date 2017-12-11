@@ -237,14 +237,13 @@ for integration in list_best_integrations:
 
     total_integrated_cost = nyc_taxi_cost(taxi_date_time_origin, total_distance, taxi_waiting_time_stop)
 
-
     transit_integrated_cost, taxi_integrated_cost = nyc_transit_taxi_shared_costs(taxi_date_time_origin, integration_distance, 0,\
     taxi_waiting_time_stop, shared_distance, 0, transit_destination_first, destinations_distance, 0)
 
     print 'taxi_individual_cost\t', taxi_individual_cost
     print 'taxi_integrated_cost\t', taxi_integrated_cost
 
-    print '\ntransit_integrated_cost\t', transit_integrated_cost
+    print '\ntransit_shared_integrated_cost', transit_integrated_cost
 
     print '\ntotal_integrated_cost\t', total_integrated_cost
     print 'transit + taxi\t\t', transit_integrated_cost + taxi_integrated_cost
@@ -255,5 +254,6 @@ for integration in list_best_integrations:
 
     list_taxi_saving_money.append(taxi_passenger_saving_money)
     list_transit_extra_cost.append(transit_passenger_cost)
+    # break
 
 plot_cdf_two_curves(list_taxi_saving_money, list_transit_extra_cost, 'taxi saving money', 'transit extra cost', 'dollars', chart_path)
