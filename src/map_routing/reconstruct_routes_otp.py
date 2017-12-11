@@ -1,7 +1,7 @@
 # find transit passenger route
 from sys import argv, path, maxint
-import os
-path.insert(0, os.path.abspath("../map_routing"))
+# import os
+# path.insert(0, os.path.abspath("../map_routing"))
 from datetime import datetime, timedelta
 
 import pandas as pd
