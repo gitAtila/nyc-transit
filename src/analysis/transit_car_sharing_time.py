@@ -5,6 +5,8 @@
 from sys import argv, maxint
 import pandas as pd
 
+import numpy as np
+
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from statsmodels.distributions.empirical_distribution import ECDF
@@ -33,10 +35,10 @@ def group_list_dict(list_dict, key_label):
         dict_grouped.setdefault(key, []).append(item)
     return dict_grouped
 
-def saving_extra_time(dict_transit_taxisharing):
+def best_car_durations(dict_transit_taxisharing):
 
-    list_saving_time = []
-    list_extra_time = []
+    list_durations = []
+    # list_extra_time = []
     for transit_trip_id, list_integrations in dict_transit_taxisharing.iteritems():
 
         transit_trip = df_transit_trips[df_transit_trips['sampn_perno_tripno'] == transit_trip_id]
@@ -44,13 +46,13 @@ def saving_extra_time(dict_transit_taxisharing):
         print '\n', transit_trip_id, len(dict_car_taxisharing)
 
         best_car_saving_time = -maxint
-        best_car_cost_benefit = {}
+        best_car_durations = {}
         for car_trip_id, list_car_integrations in dict_car_taxisharing.iteritems():
             car_trip = df_car_trips[df_car_trips['sampn_perno_tripno'] == car_trip_id]
             print '\t',car_trip_id, len(list_car_integrations)
 
             max_saving_time = -maxint
-            best_position_cost_benefit = {'transit_saving_time': 0, 'car_extra_time': 0}
+            best_position_durations = {}
             for integration in list_car_integrations:
                 transit_posisiton = transit_trip[(transit_trip['trip_sequence'] == integration['transit_trip_sequence'])\
                 & (transit_trip['pos_sequence'] == integration['transit_pos_sequence'])]
@@ -62,21 +64,25 @@ def saving_extra_time(dict_transit_taxisharing):
 
                 if transit_saving_time > max_saving_time:
                     max_saving_time = transit_saving_time
-                    best_position_cost_benefit['transit_saving_time'] = transit_saving_time
-                    best_position_cost_benefit['car_extra_time'] = car_extra_time
+
+                    transit_private_duration = (transit_trip['date_time'].iloc[-1] - transit_trip['date_time'].iloc[0]).total_seconds()/60
+                    transit_shared_duration = (integration['transit_destination_time'] - transit_trip['date_time'].iloc[0]).total_seconds()/60
+                    car_private_duration = (car_trip['date_time'].iloc[-1] - car_trip['date_time'].iloc[0]).total_seconds()/60
+                    car_shared_duration = (integration['car_destination_time'] - car_trip['date_time'].iloc[0]).total_seconds()/60
+
+                    best_position_durations['transit_private_duration'] = transit_private_duration
+                    best_position_durations['transit_shared_duration'] = transit_shared_duration
+                    best_position_durations['car_private_duration'] = car_private_duration
+                    best_position_durations['car_shared_duration'] = car_shared_duration
 
             # print '\tmax_saving_time', max_saving_time
             if max_saving_time > best_car_saving_time:
                 best_car_saving_time = max_saving_time
-                best_car_cost_benefit = best_position_cost_benefit
+                best_car_durations = best_position_durations
 
+        list_durations.append(best_car_durations)
 
-        print '\ttransit_saving_time\t',best_car_cost_benefit['transit_saving_time']
-        print '\tcar_extra_time\t\t',best_car_cost_benefit['car_extra_time']
-        list_saving_time.append(best_car_cost_benefit['transit_saving_time'])
-        list_extra_time.append(best_car_cost_benefit['car_extra_time'])
-
-    return list_saving_time, list_extra_time
+    return list_durations
 
 def plot_cdf_two_curves(list_curve_1, list_curve_2, label_curve_1, label_curve_2, x_label, chart_path):
     list_curve_1.sort()
@@ -112,8 +118,28 @@ df_car_trips['date_time'] = pd.to_datetime(df_car_trips['date_time'])
 dict_transit_taxisharing = group_df_rows(df_matching_trips, 'transit_trip_id', '')
 print len(dict_transit_taxisharing)
 
-list_saving_time, list_extra_time = saving_extra_time(dict_transit_taxisharing)
+list_best_car_durations = best_car_durations(dict_transit_taxisharing)
 
-plot_cdf_two_curves(list_saving_time, list_extra_time, 'transit saving time', 'taxi extra time',\
-'Time in Minutes', chart_path)
+list_transit_private_duration = []
+list_transit_shared_duration = []
+list_car_private_duration = []
+list_car_shared_duration = []
+
+for durations in list_best_car_durations:
+    list_transit_private_duration.append(durations['transit_private_duration'])
+    list_transit_shared_duration.append(durations['transit_shared_duration'])
+    list_car_private_duration.append(durations['car_private_duration'])
+    list_car_shared_duration.append(durations['car_shared_duration'])
+
+print 'transit_private_duration', np.mean(list_transit_private_duration)
+print 'transit_shared_duration', np.mean(list_transit_shared_duration)
+print 'car_private_duration', np.mean(list_car_private_duration)
+print 'car_shared_duration', np.mean(list_car_shared_duration)
+
+# print list_best_car_durations
+plot_cdf_two_curves(list_car_private_duration, list_car_shared_duration, 'taxi private trip', 'taxi shared trip',\
+'Duration in Minutes', chart_path + 'cdf_duration_taxi_passenger.png')
+
+plot_cdf_two_curves(list_transit_private_duration, list_transit_shared_duration, 'transit private trip', 'transit shared trip',\
+'Duration in Minutes', chart_path + 'cdf_duration_transit_passenger.png')
 # select best car for each transit trip
