@@ -255,7 +255,7 @@ def transit_taxi_shared_costs(df_transit_trips, df_car_trips, list_best_integrat
         if integration['car_arrival_time_transit_stop'] < transit_posisiton['date_time']:
             taxi_waiting_time_stop += (transit_posisiton['date_time'] - integration['car_arrival_time_transit_stop']).total_seconds()
 
-        # compute the distributions
+        # compute distributions
         start_integration_distance = car_posisiton['distance']
         integration_distance = integration['integration_distance']
         shared_distance = integration['shared_distance']
