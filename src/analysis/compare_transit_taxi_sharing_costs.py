@@ -16,6 +16,8 @@ car_trips_path = argv[2]
 matching_trips_path = argv[3]
 chart_path = argv[4]
 
+nyc_subway_fare = 2.25
+
 def nyc_taxi_cost(date_time_origin, trip_distance_meters, stopped_duration_sec):
 
     # costs in dolar
@@ -134,7 +136,7 @@ def group_list_dict(list_dict, key_label):
     return dict_grouped
 
 def list_best_integrations(df_transit_trips, df_car_trips, dict_transit_taxisharing):
-    # get integrations where the saving time for transit passenger is the most
+
     list_best_integrations = []
     for transit_trip_id, list_integrations in dict_transit_taxisharing.iteritems():
 
@@ -180,33 +182,25 @@ def plot_cdf_two_curves(list_curve_1, list_curve_2, label_curve_1, label_curve_2
 
     # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x sticks interal
     plt.grid()
-    plt.legend(loc=4)
+    plt.legend(loc=2)
     # ax.set_title('saturday')
     ax.set_xlabel(x_label)
     ax.set_ylabel('ECDF')
     plt.tight_layout()
     fig.savefig(chart_path)
 
-def plot_cdf_three_curves(list_curve_1, list_curve_2, list_curve_3, label_curve_1, label_curve_2, label_curve_3, x_label, chart_path):
-    list_curve_1.sort()
-    list_curve_2.sort()
-    list_curve_3.sort()
-
-    ecdf_curve_1 = ECDF(list_curve_1)
-    ecdf_curve_2 = ECDF(list_curve_2)
-    ecdf_curve_3 = ECDF(list_curve_3)
+def plot_scatter(list_x, list_y, x_label, y_label, chart_path):
 
     fig, ax = plt.subplots()
-    plt.plot(ecdf_curve_1.x, ecdf_curve_1.y, label=label_curve_1)
-    plt.plot(ecdf_curve_2.x, ecdf_curve_2.y, label=label_curve_2)
-    plt.plot(ecdf_curve_3.x, ecdf_curve_3.y, label=label_curve_3)
 
-    # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x sticks interal
-    plt.grid()
-    plt.legend(loc=4)
+    fit = np.polyfit(list_x, list_y, deg=1)
+    ax.plot(list_x, fit[0] * list_x + fit[1], color='red')
+    ax.scatter(list_x, list_y)
+
+    # plt.legend(loc=2)
     # ax.set_title('saturday')
     ax.set_xlabel(x_label)
-    ax.set_ylabel('ECDF')
+    ax.set_ylabel(y_label)
     plt.tight_layout()
     fig.savefig(chart_path)
 
@@ -226,14 +220,9 @@ print len(dict_transit_taxisharing)
 
 list_best_integrations = list_best_integrations(df_transit_trips, df_car_trips, dict_transit_taxisharing)
 
-# list_taxi_saving_money = []
-# list_transit_extra_cost = []
-# transit_without_sharing = []
-
-list_taxi_private_cost = []
-list_taxi_shared_cost = []
-list_transit_shared_cost = []
-good_integration = 0
+list_taxi_saving_money = []
+list_transit_extra_cost = []
+list_transit_saving_time = []
 for integration in list_best_integrations:
     print integration['transit_trip_id'], integration['car_trip_id']
 
@@ -251,7 +240,7 @@ for integration in list_best_integrations:
     # print taxi_date_time_origin, taxi_date_time_origin.hour, taxi_date_time_origin.weekday()
     # print taxi_distance
 
-    taxi_private_cost = nyc_taxi_cost(taxi_date_time_origin, taxi_distance, 0)
+    taxi_individual_cost = nyc_taxi_cost(taxi_date_time_origin, taxi_distance, 0)
 
     taxi_waiting_time_stop = 0
     if integration['car_arrival_time_transit_stop'] < transit_posisiton['date_time']:
@@ -266,27 +255,38 @@ for integration in list_best_integrations:
     if integration['car_destination_time'] < integration['transit_destination_time']:
         transit_destination_first = False
 
-    total_distance = start_integration_distance + integration_distance + shared_distance + destinations_distance
+    # total_distance = start_integration_distance + integration_distance + shared_distance + destinations_distance
+    # total_integrated_cost = nyc_taxi_cost(taxi_date_time_origin, total_distance, taxi_waiting_time_stop)
 
-    total_integrated_cost = nyc_taxi_cost(taxi_date_time_origin, total_distance, taxi_waiting_time_stop)
-
-    transit_shared_cost, taxi_shared_cost = nyc_transit_taxi_shared_costs(taxi_date_time_origin,start_integration_distance, 0,\
+    transit_integrated_cost, taxi_integrated_cost = nyc_transit_taxi_shared_costs(taxi_date_time_origin,start_integration_distance, 0,\
     integration_distance, 0, taxi_waiting_time_stop, shared_distance, 0, transit_destination_first, destinations_distance, 0)
 
-    if taxi_shared_cost < taxi_private_cost:
-        good_integration += 1
+    taxi_passenger_saving_money = taxi_individual_cost - taxi_integrated_cost
 
-    list_taxi_private_cost.append(taxi_private_cost)
-    list_taxi_shared_cost.append(taxi_shared_cost)
-    list_transit_shared_cost.append(transit_shared_cost)
 
-print 'good_integration', good_integration, float(good_integration)/float(len(list_taxi_shared_cost))
-print 'taxi_private_cost', np.mean(list_taxi_private_cost)
-print 'taxi_shared_cost', np.mean(list_taxi_shared_cost)
-print 'transit_shared_cost', np.mean(list_transit_shared_cost)
+    print 'taxi_passenger_saveing_money', taxi_passenger_saving_money
+    print 'transit_shared_extra_cost', transit_integrated_cost
 
-plot_cdf_two_curves(list_taxi_private_cost, list_taxi_shared_cost, 'taxi private cost', 'taxi shared cost', 'dollars',\
-chart_path + 'cdf_taxi_costs.png')
+    taxi_passenger_extra_time = (integration['car_destination_time'] - car_trip.iloc[-1]['date_time']).total_seconds()/60
+    transit_passenger_saving_time = (transit_trip.iloc[-1]['date_time'] - integration['transit_destination_time']).total_seconds()/60
 
-plot_cdf_three_curves(list_taxi_private_cost, list_taxi_shared_cost, list_transit_shared_cost, 'taxi private cost',\
-'taxi shared cost', 'transit shared cost', 'dollars', chart_path + 'cdf_taxi_transit_costs.png')
+    print '\ntaxi_passenger_extra_time', taxi_passenger_extra_time
+    print 'transit_passenger_saving_time', transit_passenger_saving_time
+
+    # print '\ntotal_integrated_cost\t', total_integrated_cost
+    # print 'transit + taxi\t\t', transit_integrated_cost + taxi_integrated_cost
+    print '========================================'
+    # break
+
+    transit_passenger_cost = transit_integrated_cost
+
+    if taxi_passenger_saving_money > 0:
+        list_taxi_saving_money.append(taxi_passenger_saving_money)
+        list_transit_extra_cost.append(transit_passenger_cost/nyc_subway_fare)
+        list_transit_saving_time.append(transit_passenger_saving_time)
+
+plot_scatter(list_transit_extra_cost, list_taxi_saving_money, 'transit passenger cost ($)', 'taxi saving money ($)',\
+chart_path + 'transit_taxi_costs.png')
+
+plot_scatter(list_transit_extra_cost, list_transit_saving_time, 'transit passenger cost ($)', 'transit saving time (minutes)',\
+chart_path + 'transit_time_saving.png')
