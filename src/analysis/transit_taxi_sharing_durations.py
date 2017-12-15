@@ -112,6 +112,15 @@ def plot_cdf_three_curves(list_curve_1, list_curve_2, list_curve_3, label_curve_
     plt.tight_layout()
     fig.savefig(chart_path)
 
+def negative_to_zero(list_numbers):
+    new_list = []
+    for number in list_numbers:
+        if number < 0:
+            new_list.append(0)
+        else:
+            new_list.append(number)
+    return new_list
+
 df_matching_trips = pd.read_csv(matching_trips_path)
 df_matching_trips['car_arrival_time_transit_stop'] = pd.to_datetime(df_matching_trips['car_arrival_time_transit_stop'])
 df_matching_trips['transit_destination_time'] = pd.to_datetime(df_matching_trips['transit_destination_time'])
@@ -139,11 +148,11 @@ for integration in list_best_integrations:
     # print integration['transit_trip_id'], integration['car_trip_id']
 
     transit_trip = df_transit_trips[df_transit_trips['sampn_perno_tripno'] == integration['transit_trip_id']]
-    transit_posisiton = transit_trip[(transit_trip['trip_sequence'] == integration['transit_trip_sequence'])\
+    transit_acceptance = transit_trip[(transit_trip['trip_sequence'] == integration['transit_trip_sequence'])\
     & (transit_trip['pos_sequence'] == integration['transit_pos_sequence'])].iloc[0].T.to_dict()
 
     car_trip = df_car_trips[df_car_trips['sampn_perno_tripno'] == integration['car_trip_id']]
-    car_posisiton = car_trip[(car_trip['trip_sequence'] == integration['car_trip_sequence'])\
+    car_acceptance = car_trip[(car_trip['trip_sequence'] == integration['car_trip_sequence'])\
     & (car_trip['pos_sequence'] == integration['car_pos_sequence'])].iloc[0].T.to_dict()
 
     taxi_date_time_origin = car_trip['date_time'].iloc[0]
@@ -154,15 +163,29 @@ for integration in list_best_integrations:
 
     # taxi_private_cost = nyc_taxi_cost(taxi_date_time_origin, taxi_distance, 0)
 
-    taxi_waiting_time_stop = 0
-    if integration['car_arrival_time_transit_stop'] < transit_posisiton['date_time']:
-        taxi_waiting_time_stop += (transit_posisiton['date_time'] - integration['car_arrival_time_transit_stop']).total_seconds()
+    # taxi_waiting_time_stop = 0
+    # if integration['car_arrival_time_transit_stop'] < transit_acceptance['date_time']:
+    #     taxi_waiting_time_stop += (transit_acceptance['date_time'] - integration['car_arrival_time_transit_stop']).total_seconds()
 
-    list_transit_origin_acceptance.append(transit_posisiton['distance']/1000)
-    list_car_origin_acceptance.append(car_posisiton['distance']/1000)
-    list_car_acceptance_integration.append(integration['integration_distance']/1000)
-    list_car_integration_destination.append(integration['shared_distance']/1000)
-    list_car_between_destinations.append(integration['destinations_distance']/1000)
+    list_transit_origin_acceptance.append((transit_acceptance['date_time'] - transit_trip.iloc[0]['date_time']).total_seconds()/60)
+    list_car_origin_acceptance.append((car_acceptance['date_time'] - car_trip.iloc[0]['date_time']).total_seconds()/60)
+    list_car_acceptance_integration.append((integration['car_arrival_time_transit_stop'] - car_acceptance['date_time']).total_seconds()/60)
+
+    if integration['car_destination_time'] < integration['transit_destination_time']:
+        first_destination_time = integration['car_destination_time']
+        last_destination_time = integration['transit_destination_time']
+    else:
+        first_destination_time = integration['transit_destination_time']
+        last_destination_time = integration['car_destination_time']
+
+    list_car_integration_destination.append((first_destination_time - integration['car_arrival_time_transit_stop']).total_seconds()/60)
+    list_car_between_destinations.append((last_destination_time - first_destination_time).total_seconds()/60)
+
+list_transit_origin_acceptance = negative_to_zero(list_transit_origin_acceptance)
+list_car_origin_acceptance = negative_to_zero(list_car_origin_acceptance)
+list_car_acceptance_integration = negative_to_zero(list_car_acceptance_integration)
+list_car_integration_destination = negative_to_zero(list_car_integration_destination)
+list_car_between_destinations = negative_to_zero(list_car_between_destinations)
 
 list_transit_origin_acceptance.sort()
 list_car_origin_acceptance.sort()
@@ -190,7 +213,7 @@ plt.plot(ecdf_car_between_destinations.x, ecdf_car_between_destinations.y, label
 plt.grid()
 plt.legend(loc=4)
 # ax.set_title('saturday')
-ax.set_xlabel('distance (km)')
+ax.set_xlabel('duration (minutes)')
 ax.set_ylabel('CDF')
 plt.tight_layout()
-fig.savefig(chart_path + 'cdf_integration_distances.png')
+fig.savefig(chart_path + 'cdf_duration_segments.png')
