@@ -4,8 +4,9 @@
 
 from sys import argv, maxint
 import pandas as pd
-
 import numpy as np
+
+from geopy.distance import vincenty
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
@@ -112,6 +113,46 @@ def plot_cdf_three_curves(list_curve_1, list_curve_2, list_curve_3, label_curve_
     plt.tight_layout()
     fig.savefig(chart_path)
 
+def compute_walking_transit_distances(df_transit_positions, dict_transit_acceptance_position):
+    list_origin_acceptance = []
+    for index, position in df_transit_positions.iterrows():
+        list_origin_acceptance.append(position.T.to_dict())
+        if position['trip_sequence'] == dict_transit_acceptance_position['trip_sequence']\
+        and position['pos_sequence'] == dict_transit_acceptance_position['pos_sequence']:
+            break
+
+    list_walking_positions = []
+    list_transit_positions = []
+    for position in list_origin_acceptance:
+        # print position
+        if type(position['stop_id']) == float and np.isnan(position['stop_id']) == True\
+        and np.isnan(position['distance']) == False:
+            list_walking_positions.append(position)
+        else:
+            list_transit_positions.append(position)
+
+    # print list_transit_positions
+    dict_walking_positions = group_list_dict(list_walking_positions, 'trip_sequence')
+    dict_transit_positions = group_list_dict(list_transit_positions, 'trip_sequence')
+
+    walking_distance = 0
+    for trip_id, walking_positions in dict_walking_positions.iteritems():
+        walking_distance += max(position['distance'] for position in walking_positions)
+    # print 'walking_distance', walking_distance
+
+    transit_distance = 0
+    for trip_id, transit_positions in dict_transit_positions.iteritems():
+        trip_distance = 0
+        previous_position = transit_positions[0]
+        for current_position in transit_positions[1:]:
+            trip_distance += vincenty((previous_position['latitude'], previous_position['latitude']),\
+            (current_position['latitude'], current_position['latitude'])).meters
+            previous_position = current_position
+        transit_distance += trip_distance
+    # print 'transit_distance', transit_distance
+
+    return walking_distance, transit_distance
+
 df_matching_trips = pd.read_csv(matching_trips_path)
 df_matching_trips['car_arrival_time_transit_stop'] = pd.to_datetime(df_matching_trips['car_arrival_time_transit_stop'])
 df_matching_trips['transit_destination_time'] = pd.to_datetime(df_matching_trips['transit_destination_time'])
@@ -139,27 +180,25 @@ for integration in list_best_integrations:
     # print integration['transit_trip_id'], integration['car_trip_id']
 
     transit_trip = df_transit_trips[df_transit_trips['sampn_perno_tripno'] == integration['transit_trip_id']]
-    transit_posisiton = transit_trip[(transit_trip['trip_sequence'] == integration['transit_trip_sequence'])\
+    transit_acceptance = transit_trip[(transit_trip['trip_sequence'] == integration['transit_trip_sequence'])\
     & (transit_trip['pos_sequence'] == integration['transit_pos_sequence'])].iloc[0].T.to_dict()
 
     car_trip = df_car_trips[df_car_trips['sampn_perno_tripno'] == integration['car_trip_id']]
-    car_posisiton = car_trip[(car_trip['trip_sequence'] == integration['car_trip_sequence'])\
+    car_acceptance = car_trip[(car_trip['trip_sequence'] == integration['car_trip_sequence'])\
     & (car_trip['pos_sequence'] == integration['car_pos_sequence'])].iloc[0].T.to_dict()
 
     taxi_date_time_origin = car_trip['date_time'].iloc[0]
     taxi_distance = car_trip['distance'].iloc[-1]
 
-    # print taxi_date_time_origin, taxi_date_time_origin.hour, taxi_date_time_origin.weekday()
-    # print taxi_distance
+    transit_walking_distance, transit_vehicle_distance = compute_walking_transit_distances(transit_trip, transit_acceptance)
+    transit_acceptance_distance = transit_walking_distance + transit_vehicle_distance
 
-    # taxi_private_cost = nyc_taxi_cost(taxi_date_time_origin, taxi_distance, 0)
+    # taxi_waiting_time_stop = 0
+    # if integration['car_arrival_time_transit_stop'] < transit_acceptance['date_time']:
+    #     taxi_waiting_time_stop += (transit_acceptance['date_time'] - integration['car_arrival_time_transit_stop']).total_seconds()
 
-    taxi_waiting_time_stop = 0
-    if integration['car_arrival_time_transit_stop'] < transit_posisiton['date_time']:
-        taxi_waiting_time_stop += (transit_posisiton['date_time'] - integration['car_arrival_time_transit_stop']).total_seconds()
-
-    list_transit_origin_acceptance.append(transit_posisiton['distance']/1000)
-    list_car_origin_acceptance.append(car_posisiton['distance']/1000)
+    list_transit_origin_acceptance.append(transit_acceptance_distance/1000)
+    list_car_origin_acceptance.append(car_acceptance['distance']/1000)
     list_car_acceptance_integration.append(integration['integration_distance']/1000)
     list_car_integration_destination.append(integration['shared_distance']/1000)
     list_car_between_destinations.append(integration['destinations_distance']/1000)
@@ -180,7 +219,7 @@ ecdf_car_integration_destination = ECDF(list_car_integration_destination)
 ecdf_car_between_destinations = ECDF(list_car_between_destinations)
 
 fig, ax = plt.subplots()
-#plt.plot(ecdf_transit_origin_acceptance.x, ecdf_transit_origin_acceptance.y, label='transit origin-acceptance')
+plt.plot(ecdf_transit_origin_acceptance.x, ecdf_transit_origin_acceptance.y, label='transit origin-acceptance')
 plt.plot(ecdf_car_origin_acceptance.x, ecdf_car_origin_acceptance.y, label='car origin-acceptance')
 plt.plot(ecdf_car_acceptance_integration.x, ecdf_car_acceptance_integration.y, label='car acceptance-integration')
 plt.plot(ecdf_car_integration_destination.x, ecdf_car_integration_destination.y, label='car integration-destination')
