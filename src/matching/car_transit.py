@@ -116,7 +116,7 @@ def car_transit_integration_positions(computed_transit_trip, computed_car_trip, 
 
                         shared_distance = float(integration_car_destination_trip[-1]['distance'])
                         destinations_distance = float(destination_car_destination_transit_trip[-1]['distance'])
-                        car_destinations_distance_alone = 0
+                        car_destinations_distance = 0
 
                     else: # transit destination comes first
 
@@ -129,14 +129,18 @@ def car_transit_integration_positions(computed_transit_trip, computed_car_trip, 
 
                         shared_distance = float(integration_transit_destination_trip[-1]['distance'])
                         destinations_distance = float(destination_transit_destination_car_trip[-1]['distance'])
-                        car_destinations_distance_alone = destinations_distance
+                        car_destinations_distance = destinations_distance
 
+                    integration_acceptance_destination_distance = integration_distance + shared_distance + car_destinations_distance
                     car_private_distance_acceptance_destination = computed_car_destination['distance'] - car_acceptance['distance']
-                    print 'shared_distances', integration_distance, shared_distance, car_destinations_distance_alone
-                    print 'car_private_distance_acceptance_destination', car_private_distance_acceptance_destination
+
                     # car passenger save money sharing her trip
-                    if (integration_distance + (shared_distance * 0.5) + car_destinations_distance_alone)\
+                    if (integration_distance + (shared_distance * 0.5) + car_destinations_distance)\
                     < car_private_distance_acceptance_destination:
+
+                        print 'shared_distances', integration_distance, shared_distance, car_destinations_distance,\
+                        integration_acceptance_destination_distance
+                        print 'car_private_distance_acceptance_destination', car_private_distance_acceptance_destination
 
                         dict_costs = {'car':{'trip_sequence': car_acceptance['trip_sequence'], 'pos_sequence': car_acceptance['pos_sequence'],\
                         'destination_time': integration_car_destination_time},\
@@ -145,6 +149,7 @@ def car_transit_integration_positions(computed_transit_trip, computed_car_trip, 
                         'car_arrival_time_transit_stop': car_arrival_time_transit_stop, 'integration_distance': integration_distance,\
                         'shared_distance': shared_distance, 'destinations_distance': destinations_distance}
                         list_possible_integrations.append(dict_costs)
+                        # stop
                         # print '======================================'
             #         else:
             #             print 'transit arrive at his destination first'
@@ -208,45 +213,45 @@ for car_trip_id, computed_car_trip in dict_car_trips.iteritems():
             if is_date_time_consistet(computed_transit_trip) == False: continue
             print 'transit_trip_id', transit_trip_id
 
-            print 'transit_trip', computed_transit_trip[0]['date_time'], computed_transit_trip[-1]['date_time']
-            print 'car_trip', computed_car_trip[0]['date_time'], computed_car_trip[-1]['date_time']
+            # print 'transit_trip', computed_transit_trip[0]['date_time'], computed_transit_trip[-1]['date_time']
+            # print 'car_trip', computed_car_trip[0]['date_time'], computed_car_trip[-1]['date_time']
 
             integration_positions = car_transit_integration_positions(computed_transit_trip, computed_car_trip, router_id)
-#
-#             if len(integration_positions) > 0:
-#                 # earlier_transit_arrival_time = integration_positions[0]['transit']['destination_time']
-#                 dict_earlier_transit_arrival_time = integration_positions[0]
-#
-#                 for dict_integration in integration_positions:
-#                     dict_match = {'transit_trip_id': transit_trip_id, 'car_trip_id': car_trip_id,\
-#                     'car_trip_sequence': dict_integration['car']['trip_sequence'],\
-#                     'car_pos_sequence': dict_integration['car']['pos_sequence'],\
-#                     'car_destination_time': dict_integration['car']['destination_time'],\
-#                     'transit_trip_sequence': dict_integration['transit']['trip_sequence'],\
-#                     'transit_pos_sequence': dict_integration['transit']['pos_sequence'],\
-#                     'transit_destination_time': dict_integration['transit']['destination_time'],\
-#                     'car_arrival_time_transit_stop': dict_integration['car_arrival_time_transit_stop'],\
-#                     'integration_distance': dict_integration['integration_distance'],\
-#                     'shared_distance': dict_integration['shared_distance'],\
-#                     'destinations_distance': dict_integration['destinations_distance']}
-#                     list_matches.append(dict_match)
-#                 #     print 'car_destination_time', dict_integration['car']['destination_time']
-#                 #     print 'transit_destination_time', dict_integration['transit']['destination_time']
-#                 # stop
-#
-#             else:
-#                 print 'there is not any integration station' #stop
-#
-#     else:
-#         print 'there is not any overlaping'
-#
-#     # if len(dict_car_trips_happening)>1:
-#     #     break
-#
-# df_matches = pd.DataFrame(list_matches)
-# print df_matches
-# df_matches = df_matches[['transit_trip_id', 'car_trip_id', 'car_trip_sequence','car_pos_sequence','car_destination_time',\
-# 'transit_trip_sequence', 'transit_pos_sequence', 'transit_destination_time','car_arrival_time_transit_stop', 'integration_distance',\
-# 'shared_distance', 'destinations_distance']]
-# # df_matches = df_matches.sort_values(by=['match_id', 'sequence'])
-# df_matches.to_csv(result_path, index=False)
+
+            if len(integration_positions) > 0:
+                # earlier_transit_arrival_time = integration_positions[0]['transit']['destination_time']
+                dict_earlier_transit_arrival_time = integration_positions[0]
+
+                for dict_integration in integration_positions:
+                    dict_match = {'car_trip_id': car_trip_id, 'transit_trip_id': transit_trip_id,\
+                    'car_trip_sequence': dict_integration['car']['trip_sequence'],\
+                    'car_pos_sequence': dict_integration['car']['pos_sequence'],\
+                    'car_destination_time': dict_integration['car']['destination_time'],\
+                    'transit_trip_sequence': dict_integration['transit']['trip_sequence'],\
+                    'transit_pos_sequence': dict_integration['transit']['pos_sequence'],\
+                    'transit_destination_time': dict_integration['transit']['destination_time'],\
+                    'car_arrival_time_transit_stop': dict_integration['car_arrival_time_transit_stop'],\
+                    'integration_distance': dict_integration['integration_distance'],\
+                    'shared_distance': dict_integration['shared_distance'],\
+                    'destinations_distance': dict_integration['destinations_distance']}
+                    list_matches.append(dict_match)
+                #     print 'car_destination_time', dict_integration['car']['destination_time']
+                #     print 'transit_destination_time', dict_integration['transit']['destination_time']
+                # stop
+
+            else:
+                print 'there is not any integration station' #stop
+
+    else:
+        print 'there is not any overlaping'
+
+    # if len(dict_car_trips_happening)>1:
+    #     break
+
+df_matches = pd.DataFrame(list_matches)
+print df_matches
+df_matches = df_matches[['car_trip_id', 'transit_trip_id', 'car_trip_sequence','car_pos_sequence','car_destination_time',\
+'transit_trip_sequence', 'transit_pos_sequence', 'transit_destination_time','car_arrival_time_transit_stop', 'integration_distance',\
+'shared_distance', 'destinations_distance']]
+# df_matches = df_matches.sort_values(by=['match_id', 'sequence'])
+df_matches.to_csv(result_path, index=False)
