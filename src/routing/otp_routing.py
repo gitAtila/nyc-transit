@@ -17,6 +17,7 @@ from datetime import datetime, timedelta
 class OTP_routing:
 
     def __init__(self, routerId):
+        self.router_id = routerId
         self.url_head = 'http://localhost:8080/otp/routers/' + routerId + '/'
 
     def walking_intermediate_times(self, origin_datetime, destination_datetime, list_distance,\
@@ -138,7 +139,7 @@ class OTP_routing:
                 else:
                     print 'api_time', api_time
                     print 'real_time', real_time
-                    raise Exception('API timezone different from server')
+                    raise timezoneError('API timezone different from server')
                 # print api_time, real_time, difference_api_real
                 origin_datetime -= timedelta(hours=difference_api_real)
                 destination_datetime -= timedelta(hours=difference_api_real)
@@ -184,8 +185,11 @@ class OTP_routing:
                     # print position['date_time']
                 trip_sequence += 1
         else:
-            print json_route['error']['message']
-            print url
+            if 'error' in json_route:
+                print json_route['error']['message']
+                print url
+            else:
+                raise Exception('Verify if router_id is correct')
             return []
         return route_position_times
 

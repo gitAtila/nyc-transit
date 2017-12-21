@@ -3,7 +3,7 @@
 '''
 from sys import argv, path, maxint
 import os
-path.insert(0, os.path.abspath("../map_routing"))
+path.insert(0, os.path.abspath("../routing"))
 
 import pandas as pd
 import math
@@ -68,9 +68,13 @@ def car_transit_integration_positions(computed_transit_trip, computed_car_trip, 
             and transit_position['date_time'] < computed_car_destination['date_time']:
 
                 # integration_car -> integration_transit
+                # try:
                 integration_car_trip = otp.route_positions(car_acceptance['latitude'], car_acceptance['longitude'],\
                 transit_position['latitude'], transit_position['longitude'], 'CAR', car_acceptance['date_time'])
                 if len(integration_car_trip) == 0: continue
+                # except:
+                    # print tze.value
+                    # continue
 
                 integration_distance = float(integration_car_trip[-1]['distance'])
 
@@ -128,8 +132,9 @@ def car_transit_integration_positions(computed_transit_trip, computed_car_trip, 
                         car_destinations_distance_alone = destinations_distance
 
                     car_private_distance_acceptance_destination = computed_car_destination['distance'] - car_acceptance['distance']
-
-                    # car passenger save money with the shared route
+                    print 'shared_distances', integration_distance, shared_distance, car_destinations_distance_alone
+                    print 'car_private_distance_acceptance_destination', car_private_distance_acceptance_destination
+                    # car passenger save money sharing her trip
                     if (integration_distance + (shared_distance * 0.5) + car_destinations_distance_alone)\
                     < car_private_distance_acceptance_destination:
 
@@ -148,6 +153,8 @@ def car_transit_integration_positions(computed_transit_trip, computed_car_trip, 
             #         print 'car arrive at destination first'
             # else:
             #     print 'there is not enough time to get the transit passenter'
+            # break
+        break
     return list_possible_integrations
 
 def is_date_time_consistet(list_trip):
