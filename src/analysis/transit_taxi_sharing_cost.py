@@ -6,6 +6,7 @@ from sys import argv, maxint
 import pandas as pd
 
 import numpy as np
+from scipy import stats
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
@@ -222,7 +223,8 @@ df_car_trips = pd.read_csv(car_trips_path)
 df_car_trips['date_time'] = pd.to_datetime(df_car_trips['date_time'])
 
 dict_transit_taxisharing = group_df_rows(df_matching_trips, 'transit_trip_id', '')
-print len(dict_transit_taxisharing)
+print len(df_car_trips['sampn_perno_tripno'].unique()), len(dict_transit_taxisharing),\
+float(len(dict_transit_taxisharing))/float(len(df_car_trips['sampn_perno_tripno'].unique()))
 
 list_best_integrations = list_best_integrations(df_transit_trips, df_car_trips, dict_transit_taxisharing)
 
@@ -235,7 +237,7 @@ list_taxi_shared_cost = []
 list_transit_shared_cost = []
 good_integration = 0
 for integration in list_best_integrations:
-    print integration['transit_trip_id'], integration['car_trip_id']
+    # print integration['transit_trip_id'], integration['car_trip_id']
 
     transit_trip = df_transit_trips[df_transit_trips['sampn_perno_tripno'] == integration['transit_trip_id']]
     transit_posisiton = transit_trip[(transit_trip['trip_sequence'] == integration['transit_trip_sequence'])\
@@ -281,9 +283,21 @@ for integration in list_best_integrations:
     list_transit_shared_cost.append(transit_shared_cost)
 
 print 'good_integration', good_integration, float(good_integration)/float(len(list_taxi_shared_cost))
-print 'taxi_private_cost', np.mean(list_taxi_private_cost)
+
+print '\ntaxi_private_cost'
+print stats.describe(list_taxi_private_cost)
 print 'taxi_shared_cost', np.mean(list_taxi_shared_cost)
-print 'transit_shared_cost', np.mean(list_transit_shared_cost)
+print stats.describe(list_taxi_shared_cost)
+print 'statistical difference'
+t, p = stats.ttest_ind(list_taxi_private_cost, list_taxi_shared_cost, equal_var=False)
+print 't', t, '\tp', p
+
+print '\ntransit_shared_cost'
+print stats.describe(list_transit_shared_cost)
+
+
+
+
 
 plot_cdf_two_curves(list_taxi_private_cost, list_taxi_shared_cost, 'taxi private cost', 'taxi shared cost', 'dollars',\
 chart_path + 'cdf_taxi_costs.png')
