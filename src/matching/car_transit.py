@@ -159,7 +159,7 @@ def car_transit_integration_positions(computed_transit_trip, computed_car_trip, 
             # else:
             #     print 'there is not enough time to get the transit passenter'
             # break
-        break
+        # break
     return list_possible_integrations
 
 def is_date_time_consistet(list_trip):
@@ -220,7 +220,7 @@ for car_trip_id, computed_car_trip in dict_car_trips.iteritems():
 
             if len(integration_positions) > 0:
                 # earlier_transit_arrival_time = integration_positions[0]['transit']['destination_time']
-                dict_earlier_transit_arrival_time = integration_positions[0]
+                # dict_earlier_transit_arrival_time = integration_positions[0]
 
                 for dict_integration in integration_positions:
                     dict_match = {'car_trip_id': car_trip_id, 'transit_trip_id': transit_trip_id,\
