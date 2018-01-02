@@ -3,7 +3,7 @@
 '''
 from sys import argv, path, maxint
 import os
-path.insert(0, os.path.abspath("../map_routing"))
+path.insert(0, os.path.abspath("../routing"))
 
 import pandas as pd
 import math
@@ -12,12 +12,12 @@ from datetime import datetime, timedelta
 from otp_routing import OTP_routing
 
 # survey_trips_path = argv[1]
-transit_trips_path = argv[1]
+all_modes_trips_path = argv[1]
 # transit_mode_codes = argv[2]
-car_trips_path = argv[2]
+# car_trips_path = argv[2]
 # car_mode_codes = argv[4]
-router_id = argv[3]
-result_path = argv[4]
+router_id = argv[2]
+result_path = argv[3]
 
 def group_df_rows(df, key_label):
     dict_grouped = dict()
@@ -61,6 +61,7 @@ def transit_car_integration_positions(computed_transit_trip, computed_car_trip, 
     computed_car_destination = computed_car_trip[-1]
     computed_transit_destination = computed_transit_trip[-1]
 
+    # ignore the last position
     for transit_acceptance in computed_transit_trip[:-1]:
         for car_acceptance in computed_car_trip[:-1]:
 
@@ -152,22 +153,54 @@ def is_date_time_consistet(list_trip):
             return False
     return True
 
-# read car trips
-df_car_trips = pd.read_csv(car_trips_path)
-del df_car_trips['id']
-df_car_trips['date_time'] = pd.to_datetime(df_car_trips['date_time'])
-# print df_car_trips
+# read all mode trips
+df_all_trips = pd.read_csv(all_modes_trips_path)
+del df_all_trips['id']
+# format attributes
+df_all_trips['date_time'] = pd.to_datetime(df_all_trips['date_time'])
 
-# read transit trips
-df_transit_trips = pd.read_csv(transit_trips_path)
-del df_transit_trips['id']
-df_transit_trips['date_time'] = pd.to_datetime(df_transit_trips['date_time'])
-# print df_transit_trips
+# group trips by identifier
+dict_all_trips = group_df_rows(df_all_trips, 'sampn_perno_tripno')
+print len(dict_all_trips)
 
-dict_car_trips = group_df_rows(df_car_trips, 'sampn_perno_tripno')
-dict_transit_trips = group_df_rows(df_transit_trips, 'sampn_perno_tripno')
-# print len(dict_car_trips)
-# print len(dict_transit_trips)
+# separate trips by mode
+dict_car_trips = dict()
+dict_transit_trips = dict()
+for key, list_positions in dict_all_trips.iteritems():
+    print list_positions
+    list_different_modes = []
+    for dict_position in list_positions:
+        if dict_position['mode'] not in list_different_modes:
+            list_different_modes.append(dict_position['mode'])
+    print list_different_modes
+    if 'CAR' in list_different_modes or 'TAXI' in list_different_modes:
+        dict_car_trips[key] = list_positions
+    elif 'SUBWAY' in list_different_modes or 'BUS' in list_different_modes:
+        dict_transit_trips[key] = list_positions
+    # break
+
+print len(dict_car_trips)
+print len(dict_transit_trips)
+# stop
+
+# match transit car trips
+
+# # read car trips
+# df_car_trips = pd.read_csv(car_trips_path)
+# del df_car_trips['id']
+# df_car_trips['date_time'] = pd.to_datetime(df_car_trips['date_time'])
+# # print df_car_trips
+#
+# # read transit trips
+# df_transit_trips = pd.read_csv(transit_trips_path)
+# del df_transit_trips['id']
+# df_transit_trips['date_time'] = pd.to_datetime(df_transit_trips['date_time'])
+# # print df_transit_trips
+#
+# dict_car_trips = group_df_rows(df_car_trips, 'sampn_perno_tripno')
+# dict_transit_trips = group_df_rows(df_transit_trips, 'sampn_perno_tripno')
+# # print len(dict_car_trips)
+# # print len(dict_transit_trips)
 
 # for each transit passenger trip,
 # find car trips that would help the transit passenger arrive at their destination earlier
@@ -210,7 +243,7 @@ for transit_trip_id, computed_transit_trip in dict_transit_trips.iteritems():
 
             if len(integration_positions) > 0:
                 # earlier_transit_arrival_time = integration_positions[0]['transit']['destination_time']
-                dict_earlier_transit_arrival_time = integration_positions[0]
+                # dict_earlier_transit_arrival_time = integration_positions[0]
 
                 for dict_integration in integration_positions:
                     dict_match = {'transit_trip_id': transit_trip_id, 'car_trip_id': car_trip_id,\
