@@ -25,9 +25,9 @@ result_file = argv[2]
 gtfs_year = int(argv[3])
 router_id = argv[4]
 
-equivalence_survey_otp_modes = {1:'SUBWAY', 2:'TRANSIT', 3:'BUS', 7:'CAR', 8:'CAR', 9:'WALK'}
+equivalence_survey_otp_modes = {1:'SUBWAY,WALK', 2:'TRANSIT,WALK', 3:'BUS,WALK', 7:'CAR', 8:'CAR', 9:'WALK'}
 
-def trip_route_otp(df_trips, modes, gtfs_year, router_id, result_file):
+def trip_route_otp(df_trips, equivalence_survey_otp_modes, gtfs_year, router_id, result_file):
 
 	list_passengers_trip = []
 	otp = OTP_routing(router_id)
@@ -54,6 +54,7 @@ def trip_route_otp(df_trips, modes, gtfs_year, router_id, result_file):
 			# origin position were informed
 			if math.isnan(trip['lon_origin']) == False and math.isnan(trip['lon_destination']) == False:
 				trip_mode =  equivalence_survey_otp_modes[trip['MODE_G10']]
+				print trip['MODE_G10'], trip_mode
 				# print date, time
 				passenger_otp_trip = otp.route_positions(trip['lat_origin'], trip['lon_origin'],\
 				trip['lat_destination'], trip['lon_destination'], trip_mode, new_date_time_origin)
@@ -70,6 +71,7 @@ def trip_route_otp(df_trips, modes, gtfs_year, router_id, result_file):
 	df_passenger_trip.to_csv(result_file, index_label='id')
 
 df_trips = pd.read_csv(source_trips_path)
+# df_trips = df_trips.head(100)
 # if ',' in mode_codes:
 # 	mode_codes = [int(code) for code in mode_codes.split(',')]
 # else:
@@ -79,4 +81,4 @@ df_trips = df_trips[df_trips['MODE_G10'].isin(equivalence_survey_otp_modes.keys(
 df_trips['date_time_origin'] = pd.to_datetime(df_trips['date_time_origin'])
 df_trips['date_time_destination'] = pd.to_datetime(df_trips['date_time_destination'])
 
-trip_route_otp(df_trips, mode_names, gtfs_year, router_id, result_file)
+trip_route_otp(df_trips, equivalence_survey_otp_modes, gtfs_year, router_id, result_file)

@@ -24,7 +24,7 @@ class OTP_routing:
     list_lon_lat_positions, average_speed):
         list_positions = []
 
-        list_positions.append({'date_time': origin_datetime, 'longitude': list_lon_lat_positions[0][0],\
+        list_positions.append({'mode': mode,'date_time': origin_datetime, 'longitude': list_lon_lat_positions[0][0],\
         'latitude': list_lon_lat_positions[0][1], 'distance': 0.0, 'stop_id': ''})
 
         total_distance = 0
