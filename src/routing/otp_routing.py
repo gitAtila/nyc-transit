@@ -20,7 +20,7 @@ class OTP_routing:
         self.router_id = routerId
         self.url_head = 'http://localhost:8080/otp/routers/' + routerId + '/'
 
-    def walking_intermediate_times(self, origin_datetime, destination_datetime, list_distance,\
+    def street_intemediate_times(self, mode, origin_datetime, destination_datetime, list_distance,\
     list_lon_lat_positions, average_speed):
         list_positions = []
 
@@ -33,7 +33,7 @@ class OTP_routing:
             total_distance += list_distance[index-1]
             current_datetime = previous_datetime + timedelta(seconds=(list_distance[index-1]/average_speed))
 
-            list_positions.append({'date_time': current_datetime, 'longitude': list_lon_lat_positions[index][0],\
+            list_positions.append({'mode': mode, 'date_time': current_datetime, 'longitude': list_lon_lat_positions[index][0],\
             'latitude': list_lon_lat_positions[index][1], 'distance': total_distance, 'stop_id': ''})
 
             previous_datetime = current_datetime
@@ -55,7 +55,7 @@ class OTP_routing:
 
         return json_response
 
-    def subway_intemediate_stations(self, origin_datetime, tripId, from_stopId, to_stopId):
+    def transit_intermediate_stations(self, mode, origin_datetime, tripId, from_stopId, to_stopId):
         list_positions = []
 
         url_stops = self.url_head + 'index/trips/' + tripId + '/stops/'
@@ -85,7 +85,7 @@ class OTP_routing:
             departure_time = departure_time - nro_days*one_day
             date_time = datetime.fromtimestamp(date + departure_time)
 
-            list_positions.append({'date_time': date_time, 'longitude': json_stops[index]['lon'],\
+            list_positions.append({'mode': mode, 'date_time': date_time, 'longitude': json_stops[index]['lon'],\
             'latitude': json_stops[index]['lat'], 'distance': '', 'stop_id': json_stops[index]['id']})
 
         return list_positions
@@ -150,7 +150,7 @@ class OTP_routing:
                     tripId = leg['tripId']
                     from_stopId = leg['from']['stopId']
                     to_stopId = leg['to']['stopId']
-                    list_positions = self.subway_intemediate_stations(origin_datetime, tripId, from_stopId, to_stopId)
+                    list_positions = self.transit_intermediate_stations(leg['mode'], origin_datetime, tripId, from_stopId, to_stopId)
 
                 elif leg['mode'] == 'WALK' or leg['mode'] == 'CAR':
 
@@ -169,7 +169,7 @@ class OTP_routing:
                         list_lon_lat_positions.append((step['lon'], step['lat']))
                     list_lon_lat_positions.append(destination_position)
 
-                    list_positions = self.walking_intermediate_times(origin_datetime, destination_datetime,\
+                    list_positions = self.street_intemediate_times(leg['mode'], origin_datetime, destination_datetime,\
                     list_distance, list_lon_lat_positions, average_speed)
 
                 else:
