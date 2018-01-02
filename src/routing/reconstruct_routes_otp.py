@@ -36,6 +36,7 @@ def trip_route_otp(df_trips, equivalence_survey_otp_modes, gtfs_year, router_id,
 
 		sampn_perno_tripno = str(trip['sampn']) + '_' + str(trip['perno'])\
 		+ '_' + str(trip['tripno'])
+		print '\n', sampn_perno_tripno
 
 		date_time_origin = trip['date_time_origin']
 		print 'date_time_origin', date_time_origin
@@ -53,6 +54,8 @@ def trip_route_otp(df_trips, equivalence_survey_otp_modes, gtfs_year, router_id,
 
 			# origin position were informed
 			if math.isnan(trip['lon_origin']) == False and math.isnan(trip['lon_destination']) == False:
+				if trip['MODE_G10'] not in equivalence_survey_otp_modes.keys(): continue
+
 				trip_mode =  equivalence_survey_otp_modes[trip['MODE_G10']]
 				print trip['MODE_G10'], trip_mode
 				# print date, time
@@ -62,6 +65,10 @@ def trip_route_otp(df_trips, equivalence_survey_otp_modes, gtfs_year, router_id,
 				for passenger_trip in passenger_otp_trip:
 					if len(passenger_trip) > 0:
 						passenger_trip['sampn_perno_tripno'] = sampn_perno_tripno
+
+						if trip['MODE_G10'] == 7:
+							passenger_trip['mode'] = 'TAXI'
+
 						list_passengers_trip.append(passenger_trip)
 
 	df_passenger_trip = pd.DataFrame(list_passengers_trip)
