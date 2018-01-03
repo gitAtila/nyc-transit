@@ -28,15 +28,20 @@ router_id = argv[4]
 equivalence_survey_otp_modes = {1:'SUBWAY,WALK', 2:'TRANSIT,WALK', 3:'BUS,WALK', 7:'CAR', 8:'CAR', 9:'WALK'}
 
 def trip_route_otp(df_trips, equivalence_survey_otp_modes, gtfs_year, router_id, result_file):
+	total_trips = len(df_trips)
 
 	list_passengers_trip = []
 	otp = OTP_routing(router_id)
 
 	for index, trip in df_trips.iterrows():
+		total_trips -= 1
+		print 'total_trips', total_trips
 
 		sampn_perno_tripno = str(trip['sampn']) + '_' + str(trip['perno'])\
 		+ '_' + str(trip['tripno'])
 		print '\n', sampn_perno_tripno
+
+		# if sampn_perno_tripno != '6049554_1_1': continue
 
 		date_time_origin = trip['date_time_origin']
 		print 'date_time_origin', date_time_origin
@@ -59,8 +64,11 @@ def trip_route_otp(df_trips, equivalence_survey_otp_modes, gtfs_year, router_id,
 				trip_mode =  equivalence_survey_otp_modes[trip['MODE_G10']]
 				print trip['MODE_G10'], trip_mode
 				# print date, time
-				passenger_otp_trip = otp.route_positions(trip['lat_origin'], trip['lon_origin'],\
-				trip['lat_destination'], trip['lon_destination'], trip_mode, new_date_time_origin)
+				try:
+					passenger_otp_trip = otp.route_positions(trip['lat_origin'], trip['lon_origin'],\
+					trip['lat_destination'], trip['lon_destination'], trip_mode, new_date_time_origin)
+				except: # mode unknown
+					passenger_otp_trip = []
 
 				for passenger_trip in passenger_otp_trip:
 					if len(passenger_trip) > 0:
@@ -72,7 +80,8 @@ def trip_route_otp(df_trips, equivalence_survey_otp_modes, gtfs_year, router_id,
 						list_passengers_trip.append(passenger_trip)
 
 	df_passenger_trip = pd.DataFrame(list_passengers_trip)
-	df_passenger_trip = df_passenger_trip[['sampn_perno_tripno','mode','trip_sequence',\
+	print df_passenger_trip
+	df_passenger_trip = df_passenger_trip[['sampn_perno_tripno', 'mode', 'trip_sequence',\
 	'pos_sequence','date_time', 'longitude', 'latitude', 'distance', 'stop_id']]
 	print df_passenger_trip
 	df_passenger_trip.to_csv(result_file, index_label='id')
