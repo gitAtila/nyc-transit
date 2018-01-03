@@ -206,7 +206,8 @@ print len(dict_transit_trips)
 # find car trips that would help the transit passenger arrive at their destination earlier
 list_matches = []
 for transit_trip_id, computed_transit_trip in dict_transit_trips.iteritems():
-    #  if transit_trip_id != '6007368_2_2': continue
+    
+
     if is_date_time_consistet(computed_transit_trip) == False: continue
 
     print '\ntransit_trip_id', transit_trip_id

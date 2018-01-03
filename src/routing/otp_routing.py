@@ -96,7 +96,7 @@ class OTP_routing:
 
         url_plan = self.url_head + 'plan?'
         if math.isnan(lon_origin) or math.isnan(lon_destination):
-            return {'duration': None, 'distance':None, 'geometry': None}
+            return {}
 
         date = date_time.strftime('%m-%d-%Y')
         time = date_time.strftime('%I:%M%p')
