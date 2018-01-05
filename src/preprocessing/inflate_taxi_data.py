@@ -46,6 +46,7 @@ def inflate_trip(range_time, number_additional_trips, dict_trip):
         # print date_time_destination, new_date_time_destination
 
         child_trip = dict_trip.copy()
+        child_trip['tripno'] = str(child_trip['tripno']) + '_' + str(index)
         child_trip['date_time_origin'] = new_date_time_origin
         child_trip['date_time_destination'] = new_date_time_destination
         list_child_trips.append(child_trip)
