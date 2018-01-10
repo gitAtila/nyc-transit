@@ -7,7 +7,7 @@ from datetime import datetime
 
 transit_private_trips_path = argv[1]
 taxi_private_trips_path = argv[2]
-matches_path = argv[3]
+temporal_spatial_match_path = argv[3]
 transit_initial_cost_parcel = float(argv[4])
 transit_integration_cost_parcel = float(argv[5])
 transit_shared_cost_parcel = float(argv[6])
@@ -160,13 +160,14 @@ transit_shared_cost_parcel, dict_transit_private_trip, dict_taxi_private_trip, d
         matching['shared_distance'], 0,\
         transit_destination_first, matching['destinations_distance'], 0)
 
-        list_integration_costs.append({'match_index': index, 'taxi_private_cost': taxi_private_cost,\
-        'taxi_shared_cost': taxi_shared_cost, 'transit_shared_cost': transit_shared_cost})
+        if taxi_shared_cost < taxi_private_cost:
+            list_integration_costs.append({'match_index': index, 'taxi_private_cost': taxi_private_cost,\
+            'taxi_shared_cost': taxi_shared_cost, 'transit_shared_cost': transit_shared_cost})
 
     return list_integration_costs
 
 # read matches
-df_matches = pd.read_csv(matches_path)
+df_matches = pd.read_csv(temporal_spatial_match_path)
 df_matches['taxi_arrival_time_transit_stop'] = pd.to_datetime(df_matches['taxi_arrival_time_transit_stop'])
 df_matches['taxi_destination_time'] = pd.to_datetime(df_matches['taxi_destination_time'])
 df_matches['transit_destination_time'] = pd.to_datetime(df_matches['transit_destination_time'])
