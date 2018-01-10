@@ -1,5 +1,5 @@
 '''
-    Find available taxis near transit stop
+    Find available taxis near transit stop that could carry transit passengers
 '''
 from sys import argv, path, maxint
 import os
