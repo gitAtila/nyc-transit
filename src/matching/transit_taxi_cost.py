@@ -5,10 +5,13 @@ from sys import argv
 import pandas as pd
 from datetime import datetime
 
-matches_path = argv[1]
+transit_private_trips_path = argv[1]
 taxi_private_trips_path = argv[2]
-transit_private_trips_path = argv[3]
-result_path = argv[4]
+matches_path = argv[3]
+transit_initial_cost_parcel = float(argv[4])
+transit_integration_cost_parcel = float(argv[5])
+transit_shared_cost_parcel = float(argv[6])
+result_path = argv[7]
 
 def nyc_taxi_cost(date_time_origin, trip_distance_meters, stopped_duration_sec):
 
@@ -124,17 +127,49 @@ def group_df_rows(df, key_label):
         dict_grouped.setdefault(key, []).append(row.to_dict())
     return dict_grouped
 
+def compute_integration_costs(transit_initial_cost_parcel, transit_integration_cost_parcel,\
+transit_shared_cost_parcel, dict_transit_private_trip, dict_taxi_private_trip, df_matches):
+
+    list_integration_costs = []
+
+    for index, matching in df_matches.iterrows():
+
+        list_transit_trip = dict_transit_private_trip[matching['transit_id']]
+        list_taxi_private_trip = dict_taxi_private_trip[matching['taxi_id']]
+
+        taxi_private_cost = nyc_taxi_cost(list_taxi_private_trip[0]['date_time'], list_taxi_private_trip[-1]['distance'], 0)
+
+        taxi_acceptance_position = [position for position in list_taxi_private_trip\
+        if position['pos_sequence'] == matching['taxi_pos_sequence']][0]
+
+        transit_stop_position = [position for position in list_transit_trip\
+        if position['stop_id'] == matching['stop_id']][0]
+
+        integration_stopped_time = 0
+        if transit_stop_position['date_time'] > matching['taxi_arrival_time_transit_stop']:
+            integration_stopped_time = (transit_stop_position['date_time'] - matching['taxi_arrival_time_transit_stop']).total_seconds()
+
+        transit_destination_first = False
+        if matching['transit_destination_time'] < matching['taxi_destination_time']:
+            transit_destination_first = True
+
+        transit_shared_cost, taxi_shared_cost = nyc_transit_taxi_shared_costs(transit_initial_cost_parcel,\
+        transit_integration_cost_parcel, transit_shared_cost_parcel,\
+        list_taxi_private_trip[0]['date_time'], taxi_acceptance_position['distance'], 0,\
+        matching['integration_distance'], integration_stopped_time,\
+        matching['shared_distance'], 0,\
+        transit_destination_first, matching['destinations_distance'], 0)
+
+        list_integration_costs.append({'match_index': index, 'taxi_private_cost': taxi_private_cost,\
+        'taxi_shared_cost': taxi_shared_cost, 'transit_shared_cost': transit_shared_cost})
+
+    return list_integration_costs
+
 # read matches
 df_matches = pd.read_csv(matches_path)
 df_matches['taxi_arrival_time_transit_stop'] = pd.to_datetime(df_matches['taxi_arrival_time_transit_stop'])
 df_matches['taxi_destination_time'] = pd.to_datetime(df_matches['taxi_destination_time'])
 df_matches['transit_destination_time'] = pd.to_datetime(df_matches['transit_destination_time'])
-
-# read taxi private route
-df_taxi_private_trip = pd.read_csv(taxi_private_trips_path)
-df_taxi_private_trip = df_taxi_private_trip[df_taxi_private_trip['sampn_perno_tripno'].isin(df_matches['taxi_id'].unique())]
-df_taxi_private_trip['date_time'] = pd.to_datetime(df_taxi_private_trip['date_time'])
-dict_taxi_private_trip = group_df_rows(df_taxi_private_trip, 'sampn_perno_tripno')
 
 # read transit private route
 df_transit_private_trip = pd.read_csv(transit_private_trips_path)
@@ -142,35 +177,17 @@ df_transit_private_trip = df_transit_private_trip[df_transit_private_trip['sampn
 df_transit_private_trip['date_time'] = pd.to_datetime(df_transit_private_trip['date_time'])
 dict_transit_private_trip = group_df_rows(df_transit_private_trip, 'sampn_perno_tripno')
 
+# read taxi private route
+df_taxi_private_trip = pd.read_csv(taxi_private_trips_path)
+df_taxi_private_trip = df_taxi_private_trip[df_taxi_private_trip['sampn_perno_tripno'].isin(df_matches['taxi_id'].unique())]
+df_taxi_private_trip['date_time'] = pd.to_datetime(df_taxi_private_trip['date_time'])
+dict_taxi_private_trip = group_df_rows(df_taxi_private_trip, 'sampn_perno_tripno')
+
 # compute and compare costs
-for index, matching in df_matches.iterrows():
-    print matching
+list_integration_costs = compute_integration_costs(transit_initial_cost_parcel, transit_integration_cost_parcel,\
+transit_shared_cost_parcel, dict_transit_private_trip, dict_taxi_private_trip, df_matches)
 
-    list_taxi_private_trip = dict_taxi_private_trip[matching['taxi_id']]
-    list_transit_trip = dict_transit_private_trip[matching['transit_id']]
-
-    taxi_private_cost = nyc_taxi_cost(list_taxi_private_trip[0]['date_time'], list_taxi_private_trip[-1]['distance'], 0)
-    print taxi_private_cost
-
-    taxi_acceptance_position = [position for position in list_taxi_private_trip\
-    if position['pos_sequence'] == matching['taxi_pos_sequence']][0]
-
-    transit_stop_position = [position for position in list_transit_trip\
-    if position['stop_id'] == matching['stop_id']][0]
-
-    integration_stopped_time = 0
-    if transit_stop_position['date_time'] > matching['taxi_arrival_time_transit_stop']:
-        integration_stopped_time = transit_stop_position['date_time'] - matching['taxi_arrival_time_transit_stop']
-
-    transit_destination_first = False
-    if matching['transit_destination_time'] < matching['taxi_destination_time']:
-        transit_destination_first = True
-
-    transit_passenger_cost, taxi_passenger_cost = nyc_transit_taxi_shared_costs(1, 0.5, 0.5,\
-    list_taxi_private_trip[0]['date_time'], taxi_acceptance_position['distance'], 0,\
-    matching['integration_distance'], integration_stopped_time,\
-    matching['shared_distance'], 0,\
-    transit_destination_first, matching['destinations_distance'], 0)
-
-    print transit_passenger_cost, taxi_passenger_cost
-    break
+# save
+df_integration_costs = pd.DataFrame(list_integration_costs)
+print df_integration_costs
+df_integration_costs.to_csv(result_path, index=False)
