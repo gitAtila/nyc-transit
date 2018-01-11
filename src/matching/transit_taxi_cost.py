@@ -160,6 +160,7 @@ transit_shared_cost_parcel, dict_transit_private_trip, dict_taxi_private_trip, d
         matching['shared_distance'], 0,\
         transit_destination_first, matching['destinations_distance'], 0)
 
+        # taxi passenger save time 
         if taxi_shared_cost < taxi_private_cost:
             list_integration_costs.append({'match_index': index, 'taxi_private_cost': taxi_private_cost,\
             'taxi_shared_cost': taxi_shared_cost, 'transit_shared_cost': transit_shared_cost})

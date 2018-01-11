@@ -234,8 +234,11 @@ def match_transit_taxi_trips(dict_transit_trips, dict_taxi_trips, max_distance):
 
     return list_transit_taxi_matches
 
+print 'reading transit data...'
 dict_transit_trips = read_transit_trips(transit_trips_path)
+print 'reading taxi data...'
 dict_taxi_trips = read_taxi_trips(taxi_trips_path)
+# df_taxi_trips = read_taxi_trips(taxi_trips_path)
 
 print 'transit_trips', len(dict_transit_trips)
 print 'taxi_trips', len(dict_taxi_trips)
