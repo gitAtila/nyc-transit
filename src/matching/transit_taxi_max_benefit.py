@@ -8,6 +8,7 @@ transit_private_trips_path = argv[1]
 taxi_private_trips_path = argv[2]
 temporal_spatial_match_path = argv[3]
 cost_match_path = argv[4]
+result_path = argv[5]
 
 def group_df_rows(df, key_label):
     dict_grouped = dict()
@@ -32,7 +33,7 @@ def best_integration_possibility(df_matches, df_transit_private_trip):
     dict_transit_taxis = group_df_rows(df_matches, 'transit_id')
     dict_best_possibilities = dict()
     for transit_id, list_possibilities in dict_transit_taxis.iteritems():
-        print transit_id, len(list_possibilities)
+        # print transit_id, len(list_possibilities)
         maximum_utility = -maxint
         best_stop_integration = ''
         for possibility in list_possibilities:
@@ -40,15 +41,16 @@ def best_integration_possibility(df_matches, df_transit_private_trip):
             original_destination_time = df_original_transit['date_time'].iloc[-1]
             transit_saving_time = (original_destination_time - possibility['transit_destination_time']).total_seconds()
             taxi_saving_money = possibility['taxi_private_cost'] - possibility['taxi_shared_cost']
-            print 'transit_saving_time', transit_saving_time
-            print 'taxi_saving_money', taxi_saving_money
 
-            # compine utilities
+            # combine utilities
             integration_utility = transit_saving_time * taxi_saving_money
 
-            if integration_utility < maximum_utility:
+            # get the maximum utility
+            if integration_utility > maximum_utility:
                 maximum_utility = integration_utility
+                possibility['transit_original_destination_time'] = original_destination_time
                 dict_best_possibilities[transit_id] = possibility
+
     return dict_best_possibilities
 
 df_cost_match = pd.read_csv(cost_match_path)
@@ -75,4 +77,17 @@ df_matches = pd.DataFrame(list_matches)
 
 dict_best_possibilities = best_integration_possibility(df_matches, df_transit_private_trip)
 
-print len(dict_best_possibilities)
+list_best_integration = []
+for transit_id, dict_integration in dict_best_possibilities.iteritems():
+    # print transit_id, dict_integration
+    dict_integration['transit_id'] = transit_id
+    list_best_integration.append(dict_integration)
+
+df_best_integration = pd.DataFrame(list_best_integration)
+df_best_integration = df_best_integration[['transit_id', 'stop_id', 'taxi_id', 'taxi_pos_sequence',\
+'taxi_arrival_time_transit_stop', 'taxi_destination_time', 'transit_destination_time',\
+'transit_original_destination_time','integration_distance', 'shared_distance', 'destinations_distance',\
+'taxi_private_cost', 'taxi_shared_cost', 'transit_shared_cost']]
+print df_best_integration
+
+df_best_integration.to_csv(result_path, index=False)
