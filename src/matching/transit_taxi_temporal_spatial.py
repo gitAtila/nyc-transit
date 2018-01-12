@@ -5,6 +5,7 @@ from sys import argv, path, maxint
 import os
 path.insert(0, os.path.abspath("../routing"))
 
+import timeit
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
@@ -17,6 +18,7 @@ taxi_trips_path = argv[2]
 max_distance = float(argv[3])
 router_id = argv[4]
 result_path = argv[5]
+times_path = argv[6]
 
 def group_df_rows(df, key_label):
     dict_grouped = dict()
@@ -186,9 +188,11 @@ taxi_destination_position, integration_transit_destination_trip):
 
     return {}, list()
 
-def match_transit_taxi_trips(dict_transit_trips, dict_taxi_trips, max_distance):
+def match_transit_taxi_trips(router_id, dict_transit_trips, dict_taxi_trips, max_distance):
     list_transit_taxi_matches = []
+    list_time_per_transit_id = []
     for transit_id, list_transit_trip in dict_transit_trips.iteritems():
+        start_time = timeit.default_timer()
         # print 'transit_id', transit_id
 
         # integrations happens on the stop station
@@ -231,8 +235,9 @@ def match_transit_taxi_trips(dict_transit_trips, dict_taxi_trips, max_distance):
 
                         list_transit_taxi_matches.append(dict_match_times_distances)
                         # print transit_stop_position['stop_id'], taxi_near_stop['taxi_id']
-
-    return list_transit_taxi_matches
+        elapsed = timeit.default_timer() - start_time
+        list_time_per_transit_id.append({'transit_id': transit_id, 'elapsed': elapsed})
+    return list_transit_taxi_matches, list_time_per_transit_id
 
 print 'reading transit data...'
 dict_transit_trips = read_transit_trips(transit_trips_path)
@@ -243,8 +248,14 @@ dict_taxi_trips = read_taxi_trips(taxi_trips_path)
 print 'transit_trips', len(dict_transit_trips)
 print 'taxi_trips', len(dict_taxi_trips)
 
-list_transit_taxi_matches = match_transit_taxi_trips(dict_transit_trips, dict_taxi_trips, max_distance)
+start_time = timeit.default_timer()
+list_transit_taxi_matches, list_time_per_transit_id = match_transit_taxi_trips(router_id,\
+dict_transit_trips, dict_taxi_trips, max_distance)
+elapsed = timeit.default_timer() - start_time
+print 'matching_time', elapsed
+
 df_transit_taxi_matches = pd.DataFrame(list_transit_taxi_matches)
+df_time_per_transit_id = pd.DataFrame(list_time_per_transit_id)
 
 df_transit_taxi_matches = df_transit_taxi_matches[['transit_id', 'stop_id', 'taxi_id', 'taxi_pos_sequence',\
 'taxi_arrival_time_transit_stop', 'taxi_destination_time', 'transit_destination_time', 'integration_distance',\
@@ -253,4 +264,5 @@ df_transit_taxi_matches = df_transit_taxi_matches[['transit_id', 'stop_id', 'tax
 print df_transit_taxi_matches
 print 'matches', len(list_transit_taxi_matches)
 
-df_transit_taxi_matches.to_csv(result_path, index=False)
+df_transit_taxi_matches.to_csv(result_path, index = False)
+df_time_per_transit_id.to_csv(times_path, index = False)
