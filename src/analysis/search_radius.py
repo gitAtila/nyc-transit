@@ -9,11 +9,13 @@ search_time_1000_path = argv[1]
 search_time_2000_path = argv[2]
 search_time_3000_path = argv[3]
 search_time_4000_path = argv[4]
+search_time_5000_path = argv[5]
 
-temporal_spatial_match_1000_path = argv[5]
-temporal_spatial_match_2000_path = argv[6]
-temporal_spatial_match_3000_path = argv[7]
-temporal_spatial_match_4000_path = argv[8]
+temporal_spatial_match_1000_path = argv[6]
+temporal_spatial_match_2000_path = argv[7]
+temporal_spatial_match_3000_path = argv[8]
+temporal_spatial_match_4000_path = argv[9]
+temporal_spatial_match_5000_path = argv[10]
 
 def avg_match_time(search_time_path, temporal_spatial_match_path):
     df_search_time = pd.read_csv(search_time_path)
@@ -42,3 +44,5 @@ print '3000'
 avg_match_time(search_time_3000_path, temporal_spatial_match_3000_path)
 print '4000'
 avg_match_time(search_time_4000_path, temporal_spatial_match_4000_path)
+print '5000'
+avg_match_time(search_time_5000_path, temporal_spatial_match_5000_path)
