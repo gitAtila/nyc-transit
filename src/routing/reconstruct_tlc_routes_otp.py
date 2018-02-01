@@ -113,7 +113,7 @@ with open(tlc_trips_path) as csv_file:
                 passenger_trip['longitude'], passenger_trip['latitude'], passenger_trip['distance'],\
                 passenger_trip['stop_id']))
 
-        # if trip_id > 50:
-        #     break
+        if trip_id > 1000:
+            break
 
 csv_out_file.close()

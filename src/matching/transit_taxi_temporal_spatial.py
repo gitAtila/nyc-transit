@@ -8,6 +8,7 @@ path.insert(0, os.path.abspath("../routing"))
 import timeit
 import pandas as pd
 import numpy as np
+import csv
 from datetime import datetime, timedelta
 
 from geopy.distance import great_circle
@@ -19,6 +20,35 @@ max_distance = float(argv[3])
 router_id = argv[4]
 result_path = argv[5]
 times_path = argv[6]
+
+def format_trip(list_trip):
+    return list_formated_trip
+
+def generate_trip(transit_trips_path, list_modes):
+    with open(transit_trips_path, 'rb') as in_file:
+        csv_reader = csv.reader(in_file, delimiter=',')
+        csv_headings = next(csv_reader)
+        list_trip = []
+        try:
+            previous_pos = dict(zip(csv_headings, next(csv_reader)))
+            if previous_pos['mode'] in list_modes:
+                list_trip.append(previous_pos)
+
+            while True:
+                current_pos = dict(zip(csv_headings, next(csv_reader)))
+                if current_pos['mode'] in list_modes:
+                    if len(list_trip) == 0 or (len(list_trip) > 0 and list_trip[-1]['sampn_perno_tripno'] == current_pos['sampn_perno_tripno']):
+                        list_trip.append(current_pos)
+                    elif list_trip[-1]['sampn_perno_tripno'] != current_pos['sampn_perno_tripno']:
+                        yield list_trip
+                        list_trip = []
+                        list_trip.append(current_pos)
+
+        except csv.Error:
+            print "Error"
+        except StopIteration:
+            print "Iteration End"
+            yield list_trip
 
 def group_df_rows(df, key_label):
     dict_grouped = dict()
@@ -70,6 +100,12 @@ def read_taxi_trips(taxi_trips_path):
     del df_taxi_trips
 
     return dict_taxi_trips
+
+# def running_taxis_near_stop(transit_stop_position, dict_taxi_trips, max_distance):
+#     # get running taxis
+#
+#     # find those are near bus stop
+#     return list_taxis_near_stop
 
 def running_taxi_trips(date_time, dict_taxi_trips):
     dict_running_taxis = dict()
@@ -188,69 +224,75 @@ taxi_destination_position, integration_transit_destination_trip):
 
     return {}, list()
 
-def match_transit_taxi_trips(router_id, dict_transit_trips, dict_taxi_trips, max_distance):
+def match_transit_taxi_trips(router_id, list_transit_trip, dict_taxi_trips, max_distance):
     list_transit_taxi_matches = []
     list_time_per_transit_id = []
-    for transit_id, list_transit_trip in dict_transit_trips.iteritems():
-        start_time = timeit.default_timer()
-        # print 'transit_id', transit_id
+    # for transit_id, list_transit_trip in dict_transit_trips.iteritems():
 
-        # integrations happens on the stop station
-        list_stops = [position for position in list_transit_trip if type(position['stop_id']) != float]
+    start_time = timeit.default_timer()
+    # print 'transit_id', transit_id
 
-        # for each transit stop
-        dict_stops_available_taxis = dict()
-        for transit_stop_position in list_stops:
+    # integrations happens on the stop station
+    list_stops = [position for position in list_transit_trip if type(position['stop_id']) != float]
 
-            # cache to prevent extra computation
-            integration_transit_destination_trip = list()
+    # for each transit stop
+    dict_stops_available_taxis = dict()
+    for transit_stop_position in list_stops:
 
-            # find running taxis until x meters from the stop
-            dict_running_taxis = running_taxi_trips(transit_stop_position['date_time'], dict_taxi_trips)
-            list_taxis_near_stop = taxis_near_stop(transit_stop_position, dict_running_taxis, max_distance)
+        # cache to prevent extra computation
+        integration_transit_destination_trip = list()
 
-            if len(list_taxis_near_stop) > 0:
-                # print transit_stop_position
-                for taxi_near_stop in list_taxis_near_stop:
-                    # print taxi_near_stop['taxi_id']
+        # find running taxis until x meters from the stop
+        dict_running_taxis = running_taxi_trips(transit_stop_position['date_time'], dict_taxi_trips)
+        list_taxis_near_stop = taxis_near_stop(transit_stop_position, dict_running_taxis, max_distance)
 
-                    list_taxi_positions = dict_taxi_trips[taxi_near_stop['taxi_id']]
-                    taxi_acceptance_position = [position for position in list_taxi_positions\
-                    if position['pos_sequence'] == taxi_near_stop['pos_sequence']][0]
+        if len(list_taxis_near_stop) > 0:
+            # print transit_stop_position
+            for taxi_near_stop in list_taxis_near_stop:
+                # print taxi_near_stop['taxi_id']
 
-                    transit_destination_position = list_transit_trip[-1]
-                    taxi_destination_position = list_taxi_positions[-1]
+                list_taxi_positions = dict_taxi_trips[taxi_near_stop['taxi_id']]
+                taxi_acceptance_position = [position for position in list_taxi_positions\
+                if position['pos_sequence'] == taxi_near_stop['pos_sequence']][0]
 
-                    dict_match_times_distances, integration_transit_destination_trip = integration_route(router_id,\
-                    transit_stop_position, taxi_acceptance_position, transit_destination_position,\
-                    taxi_destination_position, integration_transit_destination_trip)
+                transit_destination_position = list_transit_trip[-1]
+                taxi_destination_position = list_taxi_positions[-1]
 
-                    if len(dict_match_times_distances) > 0:
+                dict_match_times_distances, integration_transit_destination_trip = integration_route(router_id,\
+                transit_stop_position, taxi_acceptance_position, transit_destination_position,\
+                taxi_destination_position, integration_transit_destination_trip)
 
-                        dict_match_times_distances['transit_id'] = transit_id
-                        dict_match_times_distances['stop_id'] = transit_stop_position['stop_id']
+                if len(dict_match_times_distances) > 0:
 
-                        dict_match_times_distances['taxi_id'] = taxi_near_stop['taxi_id']
-                        dict_match_times_distances['taxi_pos_sequence'] = taxi_near_stop['pos_sequence']
+                    dict_match_times_distances['transit_id'] = transit_id
+                    dict_match_times_distances['stop_id'] = transit_stop_position['stop_id']
 
-                        list_transit_taxi_matches.append(dict_match_times_distances)
-                        # print transit_stop_position['stop_id'], taxi_near_stop['taxi_id']
+                    dict_match_times_distances['taxi_id'] = taxi_near_stop['taxi_id']
+                    dict_match_times_distances['taxi_pos_sequence'] = taxi_near_stop['pos_sequence']
+
+                    list_transit_taxi_matches.append(dict_match_times_distances)
+                    # print transit_stop_position['stop_id'], taxi_near_stop['taxi_id']
         elapsed = timeit.default_timer() - start_time
         list_time_per_transit_id.append({'transit_id': transit_id, 'elapsed': elapsed})
     return list_transit_taxi_matches, list_time_per_transit_id
 
-print 'reading transit data...'
-dict_transit_trips = read_transit_trips(transit_trips_path)
+# print 'reading transit data...'
+# dict_transit_trips = read_transit_trips(transit_trips_path)
 print 'reading taxi data...'
 dict_taxi_trips = read_taxi_trips(taxi_trips_path)
 # df_taxi_trips = read_taxi_trips(taxi_trips_path)
 
-print 'transit_trips', len(dict_transit_trips)
+# print 'transit_trips', len(dict_transit_trips)
 print 'taxi_trips', len(dict_taxi_trips)
 
 start_time = timeit.default_timer()
-list_transit_taxi_matches, list_time_per_transit_id = match_transit_taxi_trips(router_id,\
-dict_transit_trips, dict_taxi_trips, max_distance)
+
+list_transit_taxi_matches = []
+list_time_per_transit_id = []
+for list_transit_trip in generate_trip(transit_trips_path, ['BUS', 'SUBWAY']):
+    print list_transit_trip
+    list_transit_taxi_matches, list_time_per_transit_id = match_transit_taxi_trips(router_id,\
+    list_transit_trip, dict_taxi_trips, max_distance)
 elapsed = timeit.default_timer() - start_time
 print 'matching_time', elapsed
 
