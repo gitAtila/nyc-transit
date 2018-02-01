@@ -21,8 +21,15 @@ router_id = argv[4]
 result_path = argv[5]
 times_path = argv[6]
 
-def format_trip(list_trip):
-    return list_formated_trip
+def format_trip_position(dict_trip):
+    dict_formated_trip = dict()
+    dict_formated_trip['trip_sequence'] = int(dict_trip['trip_sequence'])
+    dict_formated_trip['pos_sequence'] = int(dict_trip['pos_sequence'])
+    dict_formated_trip['date_time'] = int(dict_trip['date_time'])
+    dict_formated_trip['longitude'] = float(dict_trip['longitude'])
+    dict_formated_trip['latitude'] =  float(dict_trip['latitude'])
+    dict_formated_trip['distance'] = float(dict_trip['distance'])
+    return dict_formated_trip
 
 def generate_trip(transit_trips_path, list_modes):
     with open(transit_trips_path, 'rb') as in_file:
@@ -32,17 +39,17 @@ def generate_trip(transit_trips_path, list_modes):
         try:
             previous_pos = dict(zip(csv_headings, next(csv_reader)))
             if previous_pos['mode'] in list_modes:
-                list_trip.append(previous_pos)
+                list_trip.append(format_position(previous_pos))
 
             while True:
                 current_pos = dict(zip(csv_headings, next(csv_reader)))
                 if current_pos['mode'] in list_modes:
                     if len(list_trip) == 0 or (len(list_trip) > 0 and list_trip[-1]['sampn_perno_tripno'] == current_pos['sampn_perno_tripno']):
-                        list_trip.append(current_pos)
+                        list_trip.append(format_trip_position(current_pos))
                     elif list_trip[-1]['sampn_perno_tripno'] != current_pos['sampn_perno_tripno']:
                         yield list_trip
                         list_trip = []
-                        list_trip.append(current_pos)
+                        list_trip.append(format_trip_position(current_pos))
 
         except csv.Error:
             print "Error"
