@@ -22,7 +22,7 @@ result_path = argv[5]
 times_path = argv[6]
 
 def format_trip_position(dict_trip):
-    dict_formated_trip = dict_trip.clone()
+    dict_formated_trip = dict_trip
     dict_formated_trip['trip_sequence'] = int(dict_trip['trip_sequence'])
     dict_formated_trip['pos_sequence'] = int(dict_trip['pos_sequence'])
     dict_formated_trip['date_time'] = datetime.strptime(dict_trip['date_time'], '%Y-%m-%d %H:%M:%S.%f')
