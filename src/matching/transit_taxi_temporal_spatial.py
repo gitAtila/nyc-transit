@@ -300,10 +300,13 @@ start_time = timeit.default_timer()
 
 list_transit_taxi_matches = []
 list_time_per_transit_id = []
+count = 0
 for list_transit_trip in generate_trip(transit_trips_path, ['BUS', 'SUBWAY']):
     # print list_transit_trip
     list_transit_taxi_matches, list_time_per_transit_id = match_transit_taxi_trips(router_id,\
     list_transit_trip, dict_taxi_trips, max_distance)
+    print count
+    count += 1
 elapsed = timeit.default_timer() - start_time
 print 'matching_time', elapsed
 
