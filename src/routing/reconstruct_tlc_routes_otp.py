@@ -17,14 +17,34 @@ router_id = argv[4]
 
 # df_tlc_trips = pd.read_csv(tlc_trips_path)
 # print df_tlc_trips
-def str_to_float(str_money):
-    if len(str_money) == 0:
+def str_to_float(str_float):
+    if len(str_float) == 0:
         return 0.0
     else:
-        return float(str_money)
+        return float(str_float)
 
-list_passengers_trip = []
+def equivalent_weekday(original_date_time, new_date_time):
+    if original_date_time.weekday() == new_date_time.weekday():
+        return new_date_time
+
+    day_before = new_date_time
+    day_after = new_date_time
+    while day_before.weekday() != original_date_time.weekday()\
+    and day_after.weekday() != original_date_time.weekday():
+        day_after += timedelta(days=1)
+        day_before -= timedelta(days=1)
+
+    if day_before.weekday() == original_date_time.weekday():
+        return day_before
+    else:
+        return day_after
+
 otp = OTP_routing(router_id)
+
+csv_out_file = open(result_path, 'wb')
+csv_writer = csv.writer(csv_out_file, delimiter=',')
+csv_writer.writerow(('sampn_perno_tripno', 'mode', 'trip_sequence',\
+'pos_sequence','date_time', 'longitude', 'latitude', 'distance', 'stop_id'))
 
 trip_id = 1
 with open(tlc_trips_path) as csv_file:
@@ -54,10 +74,6 @@ with open(tlc_trips_path) as csv_file:
         prefix_trip_id = dict_taxi_trip['date_time_origin'].month
         dict_taxi_trip['trip_id'] = str(prefix_trip_id) + '_' + str(dict_taxi_trip['trip_id'])
 
-        # dict_taxi_trip['Passenger_Count'] = int(row[3])
-        # dict_taxi_trip['store_and_forward'] = int(dict_taxi_trip['store_and_forward'])
-        # dict_taxi_trip['Trip_Distance'] = float(dict_taxi_trip['Trip_Distance'])
-
         dict_taxi_trip['lon_origin'] = float(row[5])
         dict_taxi_trip['lat_origin'] = float(row[6])
         dict_taxi_trip['lon_destination'] = float(row[9])
@@ -68,40 +84,20 @@ with open(tlc_trips_path) as csv_file:
         or dict_taxi_trip['lon_destination'] == 0 or dict_taxi_trip['lat_destination'] == 0):
             continue
 
-        # dict_taxi_trip['Fare_Amt'] = str_to_float(dict_taxi_trip['Fare_Amt'])
-        # dict_taxi_trip['surcharge'] = str_to_float(dict_taxi_trip['surcharge'])
-        # dict_taxi_trip['mta_tax'] = str_to_float(dict_taxi_trip['mta_tax'])
-        # dict_taxi_trip['Tip_Amt'] = str_to_float(dict_taxi_trip['Tip_Amt'])
-        # dict_taxi_trip['Tolls_Amt'] = str_to_float(dict_taxi_trip['Tolls_Amt'])
-        # dict_taxi_trip['Total_Amt'] = str_to_float(dict_taxi_trip['Total_Amt'])
-
-        # print dict_taxi_trip
-
         date_time_origin = dict_taxi_trip['date_time_origin']
         print 'date_time_origin', date_time_origin
 
         # find equivalent day in the GTFS's year
         gtfs_day = datetime(gtfs_year, date_time_origin.month, date_time_origin.day)
-        diff_weekday = date_time_origin.weekday() - gtfs_day.weekday()
-        if abs(diff_weekday) <= 3:
-            gtfs_day -= timedelta(days=abs(diff_weekday))
-        else:
-            gtfs_day += timedelta(days=abs(diff_weekday))
+        new_day = equivalent_weekday(date_time_origin, gtfs_day)
 
-        # while gtfs_day.weekday() != date_time_origin.weekday():
-        	# gtfs_day += timedelta(days=1)
-
-        new_date_time_origin = datetime.combine(gtfs_day.date(), date_time_origin.time())
+        new_date_time_origin = datetime.combine(new_day.date(), date_time_origin.time())
         print 'new_date_time_origin', new_date_time_origin
 
         # origin position were informed
         if math.isnan(dict_taxi_trip['lon_origin']) == False and math.isnan(dict_taxi_trip['lon_destination']) == True:
             continue
-        # 	if dict_taxi_trip['MODE_G10'] not in equivalence_survey_otp_modes.keys(): continue
 
-        	# trip_mode =  equivalence_survey_otp_modes[trip['MODE_G10']]
-        	# print trip['MODE_G10'], trip_mode
-        	# print date, time
         try:
         	passenger_otp_trip = otp.route_positions(dict_taxi_trip['lat_origin'], dict_taxi_trip['lon_origin'],\
         	dict_taxi_trip['lat_destination'], dict_taxi_trip['lon_destination'], 'CAR', new_date_time_origin)
@@ -112,15 +108,12 @@ with open(tlc_trips_path) as csv_file:
         	if len(passenger_trip) > 0:
         		passenger_trip['sampn_perno_tripno'] = dict_taxi_trip['trip_id']
         		passenger_trip['mode'] = 'TAXI'
-                # print passenger_trip
-                list_passengers_trip.append(passenger_trip)
-        # if trip_id > 20:
-        #     break
-        # print(row[0])
-        # print(row[0],row[1],row[2],)
+                csv_writer.writerow((passenger_trip['sampn_perno_tripno'], passenger_trip['mode'],\
+                passenger_trip['trip_sequence'], passenger_trip['pos_sequence'],passenger_trip['date_time'],\
+                passenger_trip['longitude'], passenger_trip['latitude'], passenger_trip['distance'],\
+                passenger_trip['stop_id']))
 
-df_passenger_trip = pd.DataFrame(list_passengers_trip)
-df_passenger_trip = df_passenger_trip[['sampn_perno_tripno', 'mode', 'trip_sequence',\
-'pos_sequence','date_time', 'longitude', 'latitude', 'distance', 'stop_id']]
-print df_passenger_trip
-df_passenger_trip.to_csv(result_path, index_label='id')
+        # if trip_id > 50:
+        #     break
+
+csv_out_file.close()
