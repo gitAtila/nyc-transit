@@ -25,7 +25,11 @@ def format_trip_position(dict_trip):
     dict_formated_trip = dict()
     dict_formated_trip['trip_sequence'] = int(dict_trip['trip_sequence'])
     dict_formated_trip['pos_sequence'] = int(dict_trip['pos_sequence'])
+<<<<<<< HEAD
     dict_formated_trip['date_time'] = datetime.strptime(dict_trip['date_time'], '%Y-%m-%d %H:%M:%S')
+=======
+    dict_formated_trip['date_time'] = int(dict_trip['date_time'])
+>>>>>>> 8ae68ad2d159c6349aeed55581c24702ec3d525c
     dict_formated_trip['longitude'] = float(dict_trip['longitude'])
     dict_formated_trip['latitude'] =  float(dict_trip['latitude'])
     dict_formated_trip['distance'] = float(dict_trip['distance'])
