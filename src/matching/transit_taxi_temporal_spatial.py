@@ -254,6 +254,7 @@ def match_transit_taxi_trips(router_id, list_transit_trip, dict_taxi_trips, max_
         integration_transit_destination_trip = list()
 
         # find running taxis until x meters from the stop
+        print 'find matches'
         dict_running_taxis = running_taxi_trips(transit_stop_position['date_time'], dict_taxi_trips)
         list_taxis_near_stop = taxis_near_stop(transit_stop_position, dict_running_taxis, max_distance)
 
