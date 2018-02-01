@@ -237,6 +237,7 @@ taxi_destination_position, integration_transit_destination_trip):
 def match_transit_taxi_trips(router_id, list_transit_trip, dict_taxi_trips, max_distance):
     list_transit_taxi_matches = []
     list_time_per_transit_id = []
+    # transit_id = (list_transit_trip['id'])
     # for transit_id, list_transit_trip in dict_transit_trips.iteritems():
 
     start_time = timeit.default_timer()
@@ -274,7 +275,7 @@ def match_transit_taxi_trips(router_id, list_transit_trip, dict_taxi_trips, max_
 
                 if len(dict_match_times_distances) > 0:
 
-                    dict_match_times_distances['transit_id'] = transit_id
+                    # dict_match_times_distances['transit_id'] = transit_id
                     dict_match_times_distances['stop_id'] = transit_stop_position['stop_id']
 
                     dict_match_times_distances['taxi_id'] = taxi_near_stop['taxi_id']
@@ -283,7 +284,7 @@ def match_transit_taxi_trips(router_id, list_transit_trip, dict_taxi_trips, max_
                     list_transit_taxi_matches.append(dict_match_times_distances)
                     # print transit_stop_position['stop_id'], taxi_near_stop['taxi_id']
         elapsed = timeit.default_timer() - start_time
-        list_time_per_transit_id.append({'transit_id': transit_id, 'elapsed': elapsed})
+        # list_time_per_transit_id.append({'transit_id': transit_id, 'elapsed': elapsed})
     return list_transit_taxi_matches, list_time_per_transit_id
 
 # print 'reading transit data...'
@@ -300,7 +301,7 @@ start_time = timeit.default_timer()
 list_transit_taxi_matches = []
 list_time_per_transit_id = []
 for list_transit_trip in generate_trip(transit_trips_path, ['BUS', 'SUBWAY']):
-    print list_transit_trip
+    # print list_transit_trip
     list_transit_taxi_matches, list_time_per_transit_id = match_transit_taxi_trips(router_id,\
     list_transit_trip, dict_taxi_trips, max_distance)
 elapsed = timeit.default_timer() - start_time
