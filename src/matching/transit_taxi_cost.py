@@ -98,8 +98,8 @@ transit_destination_first, destinations_distance, destinations_stopped_time):
     stopped_integration_cost = ((integration_stopped_time/60) * rate_per_minute_stopped)
     total_integration_cost = distance_integration_cost + stopped_integration_cost
 
-    transit_passenger_cost += total_integration_cost * transit_initial_cost_parcel
-    taxi_passenger_cost += total_integration_cost * (1 - transit_initial_cost_parcel)
+    transit_passenger_cost += total_integration_cost * transit_integration_cost_parcel
+    taxi_passenger_cost += total_integration_cost * (1 - transit_integration_cost_parcel)
 
     # integration-first_destination
     distance_shared_cost = (shared_distance * price_per_meter)
@@ -160,7 +160,7 @@ transit_shared_cost_parcel, dict_transit_private_trip, dict_taxi_private_trip, d
         matching['shared_distance'], 0,\
         transit_destination_first, matching['destinations_distance'], 0)
 
-        # taxi passenger save time 
+        # taxi passenger save time
         if taxi_shared_cost < taxi_private_cost:
             list_integration_costs.append({'match_index': index, 'taxi_private_cost': taxi_private_cost,\
             'taxi_shared_cost': taxi_shared_cost, 'transit_shared_cost': transit_shared_cost})

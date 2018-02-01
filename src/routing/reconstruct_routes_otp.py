@@ -27,6 +27,22 @@ router_id = argv[4]
 
 equivalence_survey_otp_modes = {1:'SUBWAY,WALK', 2:'TRANSIT,WALK', 3:'BUS,WALK', 7:'CAR', 8:'CAR', 9:'WALK'}
 
+def equivalent_weekday(original_date_time, new_date_time):
+    if original_date_time.weekday() == new_date_time.weekday():
+        return new_date_time
+
+    day_before = new_date_time
+    day_after = new_date_time
+    while day_before.weekday() != original_date_time.weekday()\
+    and day_after.weekday() != original_date_time.weekday():
+        day_after += timedelta(days=1)
+        day_before -= timedelta(days=1)
+
+    if day_before.weekday() == original_date_time.weekday():
+        return day_before
+    else:
+        return day_after
+
 def trip_route_otp(df_trips, equivalence_survey_otp_modes, gtfs_year, router_id, result_file):
 	total_trips = len(df_trips)
 
@@ -49,10 +65,12 @@ def trip_route_otp(df_trips, equivalence_survey_otp_modes, gtfs_year, router_id,
 		if pd.isnull(date_time_origin) == False:
 			# find equivalent day in the GTFS's year
 			gtfs_day = datetime(gtfs_year, date_time_origin.month, date_time_origin.day)
-			while gtfs_day.weekday() != date_time_origin.weekday():
-				gtfs_day += timedelta(days=1)
+			new_day = equivalent_weekday(date_time_origin, gtfs_day)
 
-			new_date_time_origin = datetime.combine(gtfs_day.date(), date_time_origin.time())
+			# while gtfs_day.weekday() != date_time_origin.weekday():
+			# 	gtfs_day += timedelta(days=1)
+
+			new_date_time_origin = datetime.combine(new_day.date(), date_time_origin.time())
 			print 'new_date_time_origin', new_date_time_origin
 
 			print trip['lon_origin'], trip['lat_origin']
