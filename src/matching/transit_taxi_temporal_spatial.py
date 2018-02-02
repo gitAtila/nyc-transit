@@ -25,7 +25,10 @@ def format_trip_position(dict_trip):
     dict_formated_trip = dict_trip
     dict_formated_trip['trip_sequence'] = int(dict_trip['trip_sequence'])
     dict_formated_trip['pos_sequence'] = int(dict_trip['pos_sequence'])
-    dict_formated_trip['date_time'] = datetime.strptime(dict_trip['date_time'], '%Y-%m-%d %H:%M:%S.%f')
+    try:
+        dict_formated_trip['date_time'] = datetime.strptime(dict_trip['date_time'], '%Y-%m-%d %H:%M:%S.%f')
+    except ValueError:
+        dict_formated_trip['date_time'] = datetime.strptime(dict_trip['date_time'], '%Y-%m-%d %H:%M:%S')
     dict_formated_trip['longitude'] = float(dict_trip['longitude'])
     dict_formated_trip['latitude'] =  float(dict_trip['latitude'])
     if len(dict_trip['distance']) > 0:
