@@ -58,6 +58,9 @@ df_transit_trips['date_time_destination'] = pd.to_datetime(df_transit_trips['dat
 df_transit_trips['date_time_destination'] = df_transit_trips['date_time_destination']\
 .apply((lambda x: equivalent_day(x, reference_year)))
 
+df_transit_trips = df_transit_trips[df_transit_trips['date_time_origin'] != -1]
+df_transit_trips = df_transit_trips[df_transit_trips['date_time_destination'] != -1]
+
 # print df_transit_trips
 # stop
 #
@@ -85,7 +88,6 @@ with open(tlc_trips_path) as csv_file:
 
         date_time_pickup = datetime.strptime(dict_trip['Trip_Pickup_DateTime'], '%Y-%m-%d %H:%M:%S')
         date_time_dropoff = datetime.strptime(dict_trip['Trip_Dropoff_DateTime'], '%Y-%m-%d %H:%M:%S')
-
 
         new_date_time_pickup = equivalent_day(date_time_pickup, reference_year)
         print 'new_date_time_pickup', new_date_time_pickup
