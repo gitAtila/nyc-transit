@@ -34,8 +34,8 @@ def equivalent_day(original_date_time, reference_year):
             return datetime.combine(day_after.date(), original_date_time.time())
 
     except TypeError:
-        return null
-    return null
+        return None
+    return None
 
 def od_overlap_trip(date_time_pickup, date_time_dropoff, df_transit_trips):
     df_overplaping = df_transit_trips[(df_transit_trips['date_time_origin'] <= date_time_dropoff)\
