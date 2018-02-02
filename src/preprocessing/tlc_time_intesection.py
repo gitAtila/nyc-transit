@@ -86,7 +86,6 @@ with open(tlc_trips_path) as csv_file:
         date_time_pickup = datetime.strptime(dict_trip['Trip_Pickup_DateTime'], '%Y-%m-%d %H:%M:%S')
         date_time_dropoff = datetime.strptime(dict_trip['Trip_Dropoff_DateTime'], '%Y-%m-%d %H:%M:%S')
 
-
         new_date_time_pickup = equivalent_day(date_time_pickup, reference_year)
         print 'new_date_time_pickup', new_date_time_pickup
 
