@@ -1,5 +1,5 @@
 '''
-    Read Taxi Limousine Comision dataset, put times and positions in a correct format and select interested fields
+    Reconstruct taxi trips from Taxi Limousine Comision dataset
 '''
 from sys import argv
 from datetime import datetime, timedelta
