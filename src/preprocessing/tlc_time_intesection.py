@@ -58,8 +58,8 @@ df_transit_trips['date_time_destination'] = pd.to_datetime(df_transit_trips['dat
 df_transit_trips['date_time_destination'] = df_transit_trips['date_time_destination']\
 .apply((lambda x: equivalent_day(x, reference_year)))
 
-df_transit_trips = df_transit_trips[type(df_transit_trips['date_time_origin']) != int]
-df_transit_trips = df_transit_trips[type(df_transit_trips['date_time_destination']) != int]
+# df_transit_trips = df_transit_trips[type(df_transit_trips['date_time_origin']) != int]
+# df_transit_trips = df_transit_trips[type(df_transit_trips['date_time_destination']) != int]
 
 # print df_transit_trips
 # stop
