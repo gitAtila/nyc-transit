@@ -25,7 +25,10 @@ def format_trip_position(dict_trip):
     dict_formated_trip = dict_trip
     dict_formated_trip['trip_sequence'] = int(dict_trip['trip_sequence'])
     dict_formated_trip['pos_sequence'] = int(dict_trip['pos_sequence'])
-    dict_formated_trip['date_time'] = datetime.strptime(dict_trip['date_time'], '%Y-%m-%d %H:%M:%S.%f')
+    try:
+        dict_formated_trip['date_time'] = datetime.strptime(dict_trip['date_time'], '%Y-%m-%d %H:%M:%S.%f')
+    except ValueError:
+        dict_formated_trip['date_time'] = datetime.strptime(dict_trip['date_time'], '%Y-%m-%d %H:%M:%S')
     dict_formated_trip['longitude'] = float(dict_trip['longitude'])
     dict_formated_trip['latitude'] =  float(dict_trip['latitude'])
     if len(dict_trip['distance']) > 0:
@@ -268,12 +271,13 @@ def match_transit_taxi_trips(router_id, list_transit_trip, dict_taxi_trips, max_
         integration_transit_destination_trip = list()
 
         # find running taxis until x meters from the stop
-        print 'find matches'
         dict_running_taxis = running_taxi_trips(transit_stop_position['date_time'], dict_taxi_trips)
+        print 'finding positions...'
         list_taxis_near_stop = taxis_near_stop(transit_stop_position, dict_running_taxis, max_distance)
 
         if len(list_taxis_near_stop) > 0:
             # print transit_stop_position
+            print 'computing new route...'
             for taxi_near_stop in list_taxis_near_stop:
                 # print taxi_near_stop['taxi_id']
 
