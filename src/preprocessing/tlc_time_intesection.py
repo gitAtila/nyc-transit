@@ -34,8 +34,8 @@ def equivalent_day(original_date_time, reference_year):
             return datetime.combine(day_after.date(), original_date_time.time())
 
     except TypeError:
-        return -1
-    return -1
+        return null
+    return null
 
 def od_overlap_trip(date_time_pickup, date_time_dropoff, df_transit_trips):
     df_overplaping = df_transit_trips[(df_transit_trips['date_time_origin'] <= date_time_dropoff)\
@@ -48,9 +48,11 @@ def od_overlap_trip(date_time_pickup, date_time_dropoff, df_transit_trips):
 
 df_transit_trips = pd.read_csv(transit_data_path)
 df_transit_trips = df_transit_trips[df_transit_trips['MODE_G10'].isin([1,3])]
+
 df_transit_trips = df_transit_trips[pd.isnull(df_transit_trips['date_time_origin']) == False]
 df_transit_trips = df_transit_trips[pd.isnull(df_transit_trips['lat_origin']) == False]
 df_transit_trips = df_transit_trips[pd.isnull(df_transit_trips['lon_destination']) == False]
+
 df_transit_trips['date_time_origin'] = pd.to_datetime(df_transit_trips['date_time_origin'])
 df_transit_trips['date_time_origin'] = df_transit_trips['date_time_origin']\
 .apply(lambda x: equivalent_day(x, reference_year))
@@ -58,9 +60,8 @@ df_transit_trips['date_time_destination'] = pd.to_datetime(df_transit_trips['dat
 df_transit_trips['date_time_destination'] = df_transit_trips['date_time_destination']\
 .apply((lambda x: equivalent_day(x, reference_year)))
 
-# df_transit_trips = df_transit_trips[type(df_transit_trips['date_time_origin']) != int]
-# df_transit_trips = df_transit_trips[type(df_transit_trips['date_time_destination']) != int]
-
+df_transit_trips = df_transit_trips[pd.isnull(df_transit_trips['date_time_origin']) == False]
+df_transit_trips = df_transit_trips[pd.isnull(df_transit_trips['date_time_destination']) == False]
 # print df_transit_trips
 # stop
 #
