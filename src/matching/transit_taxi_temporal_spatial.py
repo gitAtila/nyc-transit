@@ -34,8 +34,8 @@ def format_trip_position(dict_trip):
         dict_formated_trip['distance'] = 0.0
     return dict_formated_trip
 
-def generate_trip(transit_trips_path, list_modes):
-    with open(transit_trips_path, 'rb') as in_file:
+def generate_trip(trips_path, list_modes):
+    with open(trips_path, 'rb') as in_file:
         csv_reader = csv.reader(in_file, delimiter=',')
         csv_headings = next(csv_reader)
         list_trip = []
@@ -59,6 +59,20 @@ def generate_trip(transit_trips_path, list_modes):
         except StopIteration:
             print "Iteration End"
             yield list_trip
+
+def read_trips(trips_path, list_modes):
+    dict_trips = dict()
+
+    with open(trips_path, 'rb') as in_file:
+        csv_reader = csv.reader(in_file, delimiter=',')
+        csv_headings = next(csv_reader)
+
+        for current_pos in csv_reader:
+            dict_pos = dict(zip(csv_headings, current_pos))
+            if dict_pos['mode'] in list_modes:
+                dict_trips.setdefault(dict_pos['sampn_perno_tripno'], []).append(format_trip_position(dict_pos))
+
+    return dict_trips
 
 def group_df_rows(df, key_label):
     dict_grouped = dict()
@@ -87,29 +101,30 @@ def trips_by_modes(df_trips, list_modes):
             dict_valid_trips[key] = list_positions
     return dict_valid_trips
 
-def read_transit_trips(transit_trips_path):
-    dict_transit_trips = dict()
+# def read_transit_trips(transit_trips_path):
+#     dict_transit_trips = dict()
+#
+#     df_transit_trips = pd.read_csv(transit_trips_path)
+#     # df_transit_trips = df_transit_trips.head(10000)
+#     df_transit_trips = df_transit_trips[(df_transit_trips['mode'] == 'WALK')\
+#     | (df_transit_trips['mode'] == 'BUS') | (df_transit_trips['mode'] == 'SUBWAY')]
+#     df_transit_trips['date_time'] = pd.to_datetime(df_transit_trips['date_time'])
+#     dict_transit_trips = group_df_rows(df_transit_trips, 'sampn_perno_tripno')
+#     del df_transit_trips
+#
+#     return dict_transit_trips
 
-    df_transit_trips = pd.read_csv(transit_trips_path)
-    # df_transit_trips = df_transit_trips.head(10000)
-    df_transit_trips = df_transit_trips[(df_transit_trips['mode'] == 'WALK')\
-    | (df_transit_trips['mode'] == 'BUS') | (df_transit_trips['mode'] == 'SUBWAY')]
-    df_transit_trips['date_time'] = pd.to_datetime(df_transit_trips['date_time'])
-    dict_transit_trips = group_df_rows(df_transit_trips, 'sampn_perno_tripno')
-    del df_transit_trips
 
-    return dict_transit_trips
-
-def read_taxi_trips(taxi_trips_path):
-    dict_taxi_trips = dict()
-
-    df_taxi_trips = pd.read_csv(taxi_trips_path)
-    df_taxi_trips = df_taxi_trips[df_taxi_trips['mode'] == 'TAXI']
-    df_taxi_trips['date_time'] = pd.to_datetime(df_taxi_trips['date_time'])
-    dict_taxi_trips = group_df_rows(df_taxi_trips, 'sampn_perno_tripno')
-    del df_taxi_trips
-
-    return dict_taxi_trips
+# def read_taxi_trips(taxi_trips_path):
+#     dict_taxi_trips = dict()
+#
+#     df_taxi_trips = pd.read_csv(taxi_trips_path)
+#     df_taxi_trips = df_taxi_trips[df_taxi_trips['mode'] == 'TAXI']
+#     df_taxi_trips['date_time'] = pd.to_datetime(df_taxi_trips['date_time'])
+#     dict_taxi_trips = group_df_rows(df_taxi_trips, 'sampn_perno_tripno')
+#     del df_taxi_trips
+#
+#     return dict_taxi_trips
 
 # def running_taxis_near_stop(transit_stop_position, dict_taxi_trips, max_distance):
 #     # get running taxis
@@ -291,7 +306,7 @@ def match_transit_taxi_trips(router_id, list_transit_trip, dict_taxi_trips, max_
 # print 'reading transit data...'
 # dict_transit_trips = read_transit_trips(transit_trips_path)
 print 'reading taxi data...'
-dict_taxi_trips = read_taxi_trips(taxi_trips_path)
+dict_taxi_trips = read_trips(taxi_trips_path, ['TAXI'])
 # df_taxi_trips = read_taxi_trips(taxi_trips_path)
 
 # print 'transit_trips', len(dict_transit_trips)
