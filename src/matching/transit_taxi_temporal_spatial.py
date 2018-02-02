@@ -71,7 +71,6 @@ def read_trips(trips_path, list_modes):
             dict_pos = dict(zip(csv_headings, current_pos))
             if dict_pos['mode'] in list_modes:
                 dict_trips.setdefault(dict_pos['sampn_perno_tripno'], []).append(format_trip_position(dict_pos))
-
     return dict_trips
 
 def group_df_rows(df, key_label):
