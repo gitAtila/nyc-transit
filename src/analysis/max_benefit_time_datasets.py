@@ -1,5 +1,5 @@
 '''
-    Vary time datasets and evaluate matchings
+    Evaluate matchings for different datasets
 '''
 
 from sys import argv
@@ -20,13 +20,15 @@ max_benefit_10min_10x_path = argv[8]
 max_benefit_20min_5x_path = argv[9]
 max_benefit_20min_10x_path = argv[10]
 
-extra_time_chart_path = argv[11]
-saving_time_chart_path = argv[12]
+tp_extra_time_chart_path = argv[11]
+td_extra_time_chart_path = argv[12]
+bp_saving_time_chart_path = argv[13]
 
 def saving_extra_time(taxi_private_trips_path, df_max_benefit_trip):
 
-    list_transit_passenger_saving_time = []
+    list_transit_passenger_bp_saving_time = []
     list_taxi_passenger_extra_time = []
+    list_taxi_driver_extra_time = []
 
     df_taxi_private_trips = pd.read_csv(taxi_private_trips_path)
     df_taxi_private_trips = df_taxi_private_trips[df_taxi_private_trips['sampn_perno_tripno']\
@@ -39,16 +41,22 @@ def saving_extra_time(taxi_private_trips_path, df_max_benefit_trip):
     df_max_benefit_trip['taxi_destination_time'] = pd.to_datetime(df_max_benefit_trip['taxi_destination_time'])
 
     for index, max_benefit_trip in df_max_benefit_trip.iterrows():
-        transit_passenger_saving_time = (max_benefit_trip['transit_original_destination_time']\
+        transit_passenger_bp_saving_time = (max_benefit_trip['transit_original_destination_time']\
         - max_benefit_trip['transit_destination_time']).total_seconds()/60
-        list_transit_passenger_saving_time.append(transit_passenger_saving_time)
+        list_transit_passenger_bp_saving_time.append(transit_passenger_bp_saving_time)
 
         taxi_private_destination_time = dict_taxi_private_trips[max_benefit_trip['taxi_id']][-1]['date_time']
         taxi_passenger_extra_time = (max_benefit_trip['taxi_destination_time']\
         - taxi_private_destination_time).total_seconds()/60
         list_taxi_passenger_extra_time.append(taxi_passenger_extra_time)
 
-    return list_transit_passenger_saving_time, list_taxi_passenger_extra_time
+        last_destination_time = max_benefit_trip['transit_destination_time']
+        if max_benefit_trip['taxi_destination_time'] > last_destination_time:
+            last_destination_time = max_benefit_trip['taxi_destination_time']
+        taxi_driver_extra_time = (last_destination_time - taxi_private_destination_time).total_seconds()/60
+        list_taxi_driver_extra_time.append(taxi_driver_extra_time)
+
+    return list_transit_passenger_bp_saving_time, list_taxi_passenger_extra_time, list_taxi_driver_extra_time
 
 def group_df_rows(df, key_label):
     dict_grouped = dict()
@@ -77,34 +85,43 @@ print len(df_max_benefit_20min_10x)
 
 # how much time did transit passengers pay more?
 # how much time did taxi passengers saved?
-list_saving_time_real, list_extra_time_real = saving_extra_time(taxi_private_real_path, df_max_benefit_real)
-list_saving_time_10min_5x, list_extra_time_10min_5x = saving_extra_time(taxi_private_10min_5x_path, df_max_benefit_10min_5x)
-list_saving_time_10min_10x, list_extra_time_10min_10x = saving_extra_time(taxi_private_10min_10x_path, df_max_benefit_10min_10x)
-list_saving_time_20min_5x, list_extra_time_20min_5x = saving_extra_time(taxi_private_20min_5x_path, df_max_benefit_20min_5x)
-list_saving_time_20min_10x, list_extra_time_20min_10x = saving_extra_time(taxi_private_20min_10x_path, df_max_benefit_20min_10x)
+list_bp_saving_time_real, list_tp_extra_time_real, list_td_extra_time_real\
+= saving_extra_time(taxi_private_real_path, df_max_benefit_real)
+
+list_bp_saving_time_10min_5x, list_tp_extra_time_10min_5x, list_td_extra_time_10min_5x\
+= saving_extra_time(taxi_private_10min_5x_path, df_max_benefit_10min_5x)
+
+list_bp_saving_time_10min_10x, list_tp_extra_time_10min_10x, list_td_extra_time_10min_10x\
+= saving_extra_time(taxi_private_10min_10x_path, df_max_benefit_10min_10x)
+
+list_bp_saving_time_20min_5x, list_tp_extra_time_20min_5x, list_td_extra_time_20min_5x\
+= saving_extra_time(taxi_private_20min_5x_path, df_max_benefit_20min_5x)
+
+list_bp_saving_time_20min_10x, list_tp_extra_time_20min_10x, list_td_extra_time_20min_10x\
+= saving_extra_time(taxi_private_20min_10x_path, df_max_benefit_20min_10x)
 
 '''
-    Extra time
+    Taxi passenger extra time
 '''
 
-list_extra_time_real.sort()
-list_extra_time_10min_5x.sort()
-list_extra_time_10min_10x.sort()
-list_extra_time_20min_5x.sort()
-list_extra_time_20min_10x.sort()
+list_tp_extra_time_real.sort()
+list_tp_extra_time_10min_5x.sort()
+list_tp_extra_time_10min_10x.sort()
+list_tp_extra_time_20min_5x.sort()
+list_tp_extra_time_20min_10x.sort()
 
-ecdf_extra_time_real = ECDF(list_extra_time_real)
-ecdf_extra_time_10min_5x = ECDF(list_extra_time_10min_5x)
-ecdf_extra_time_10min_10x = ECDF(list_extra_time_10min_10x)
-ecdf_extra_time_20min_5x = ECDF(list_extra_time_20min_5x)
-ecdf_extra_time_20min_10x = ECDF(list_extra_time_20min_10x)
+ecdf_tp_extra_time_real = ECDF(list_tp_extra_time_real)
+ecdf_tp_extra_time_10min_5x = ECDF(list_tp_extra_time_10min_5x)
+ecdf_tp_extra_time_10min_10x = ECDF(list_tp_extra_time_10min_10x)
+ecdf_tp_extra_time_20min_5x = ECDF(list_tp_extra_time_20min_5x)
+ecdf_tp_extra_time_20min_10x = ECDF(list_tp_extra_time_20min_10x)
 
 fig, ax = plt.subplots()
-plt.plot(ecdf_extra_time_real.x, ecdf_extra_time_real.y, label='real')
-plt.plot(ecdf_extra_time_10min_5x.x, ecdf_extra_time_10min_5x.y, label='10min_5x')
-plt.plot(ecdf_extra_time_10min_10x.x, ecdf_extra_time_10min_10x.y, label='10min_10x')
-plt.plot(ecdf_extra_time_20min_5x.x, ecdf_extra_time_20min_5x.y, label='20min_5x')
-plt.plot(ecdf_extra_time_20min_10x.x, ecdf_extra_time_20min_10x.y, label='20min_10x')
+plt.plot(ecdf_tp_extra_time_real.x, ecdf_tp_extra_time_real.y, label='real')
+plt.plot(ecdf_tp_extra_time_10min_5x.x, ecdf_tp_extra_time_10min_5x.y, label='10min_5x')
+plt.plot(ecdf_tp_extra_time_10min_10x.x, ecdf_tp_extra_time_10min_10x.y, label='10min_10x')
+plt.plot(ecdf_tp_extra_time_20min_5x.x, ecdf_tp_extra_time_20min_5x.y, label='20min_5x')
+plt.plot(ecdf_tp_extra_time_20min_10x.x, ecdf_tp_extra_time_20min_10x.y, label='20min_10x')
 
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x sticks interal
 plt.grid()
@@ -113,30 +130,62 @@ plt.legend(loc=4)
 ax.set_xlabel('taxi passenger extra time (minutes)')
 ax.set_ylabel('ECDF')
 plt.tight_layout()
-fig.savefig(extra_time_chart_path)
+fig.savefig(tp_extra_time_chart_path)
 
 '''
-    Saving time
+    Taxi driver extra time
 '''
 
-list_saving_time_real.sort()
-list_saving_time_10min_5x.sort()
-list_saving_time_10min_10x.sort()
-list_saving_time_20min_5x.sort()
-list_saving_time_20min_10x.sort()
+list_td_extra_time_real.sort()
+list_td_extra_time_10min_5x.sort()
+list_td_extra_time_10min_10x.sort()
+list_td_extra_time_20min_5x.sort()
+list_td_extra_time_20min_10x.sort()
 
-ecdf_saving_time_real = ECDF(list_saving_time_real)
-ecdf_saving_time_10min_5x = ECDF(list_saving_time_10min_5x)
-ecdf_saving_time_10min_10x = ECDF(list_saving_time_10min_10x)
-ecdf_saving_time_20min_5x = ECDF(list_saving_time_20min_5x)
-ecdf_saving_time_20min_10x = ECDF(list_saving_time_20min_10x)
+ecdf_td_extra_time_real = ECDF(list_td_extra_time_real)
+ecdf_td_extra_time_10min_5x = ECDF(list_td_extra_time_10min_5x)
+ecdf_td_extra_time_10min_10x = ECDF(list_td_extra_time_10min_10x)
+ecdf_td_extra_time_20min_5x = ECDF(list_td_extra_time_20min_5x)
+ecdf_td_extra_time_20min_10x = ECDF(list_td_extra_time_20min_10x)
 
 fig, ax = plt.subplots()
-plt.plot(ecdf_saving_time_real.x, ecdf_saving_time_real.y, label='real')
-plt.plot(ecdf_saving_time_10min_5x.x, ecdf_saving_time_10min_5x.y, label='10min_5x')
-plt.plot(ecdf_saving_time_10min_10x.x, ecdf_saving_time_10min_10x.y, label='10min_10x')
-plt.plot(ecdf_saving_time_20min_5x.x, ecdf_saving_time_20min_5x.y, label='20min_5x')
-plt.plot(ecdf_saving_time_20min_10x.x, ecdf_saving_time_20min_10x.y, label='20min_10x')
+plt.plot(ecdf_td_extra_time_real.x, ecdf_td_extra_time_real.y, label='real')
+plt.plot(ecdf_td_extra_time_10min_5x.x, ecdf_td_extra_time_10min_5x.y, label='10min_5x')
+plt.plot(ecdf_td_extra_time_10min_10x.x, ecdf_td_extra_time_10min_10x.y, label='10min_10x')
+plt.plot(ecdf_td_extra_time_20min_5x.x, ecdf_td_extra_time_20min_5x.y, label='20min_5x')
+plt.plot(ecdf_td_extra_time_20min_10x.x, ecdf_td_extra_time_20min_10x.y, label='20min_10x')
+
+# ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x sticks interal
+plt.grid()
+plt.legend(loc=4)
+# ax.set_title('saturday')
+ax.set_xlabel('taxi driver extra time (minutes)')
+ax.set_ylabel('ECDF')
+plt.tight_layout()
+fig.savefig(td_extra_time_chart_path)
+
+'''
+    Transit Passenger Saving time
+'''
+
+list_bp_saving_time_real.sort()
+list_bp_saving_time_10min_5x.sort()
+list_bp_saving_time_10min_10x.sort()
+list_bp_saving_time_20min_5x.sort()
+list_bp_saving_time_20min_10x.sort()
+
+ecdf_bp_saving_time_real = ECDF(list_bp_saving_time_real)
+ecdf_bp_saving_time_10min_5x = ECDF(list_bp_saving_time_10min_5x)
+ecdf_bp_saving_time_10min_10x = ECDF(list_bp_saving_time_10min_10x)
+ecdf_bp_saving_time_20min_5x = ECDF(list_bp_saving_time_20min_5x)
+ecdf_bp_saving_time_20min_10x = ECDF(list_bp_saving_time_20min_10x)
+
+fig, ax = plt.subplots()
+plt.plot(ecdf_bp_saving_time_real.x, ecdf_bp_saving_time_real.y, label='real')
+plt.plot(ecdf_bp_saving_time_10min_5x.x, ecdf_bp_saving_time_10min_5x.y, label='10min_5x')
+plt.plot(ecdf_bp_saving_time_10min_10x.x, ecdf_bp_saving_time_10min_10x.y, label='10min_10x')
+plt.plot(ecdf_bp_saving_time_20min_5x.x, ecdf_bp_saving_time_20min_5x.y, label='20min_5x')
+plt.plot(ecdf_bp_saving_time_20min_10x.x, ecdf_bp_saving_time_20min_10x.y, label='20min_10x')
 
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x sticks interal
 plt.grid()
@@ -145,4 +194,4 @@ plt.legend(loc=4)
 ax.set_xlabel('transit passenger saving time (minutes)')
 ax.set_ylabel('ECDF')
 plt.tight_layout()
-fig.savefig(saving_time_chart_path)
+fig.savefig(bp_saving_time_chart_path)
