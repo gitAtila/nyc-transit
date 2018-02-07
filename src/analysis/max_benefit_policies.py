@@ -4,6 +4,7 @@
 
 from sys import argv
 import pandas as pd
+import numpy as np
 
 import matplotlib.pyplot as plt
 from statsmodels.distributions.empirical_distribution import ECDF
@@ -26,6 +27,8 @@ saving_money_chart_path = argv[12]
 tp_extra_time_chart_path = argv[13]
 td_extra_time_chart_path = argv[14]
 saving_time_chart_path = argv[15]
+
+colormap = plt.cm.nipy_spectral
 
 def group_df_rows(df, key_label):
     dict_grouped = dict()
@@ -121,6 +124,7 @@ ecdf_extra_cost_05_1_1 = ECDF(list_extra_saving_money[6][0])
 ecdf_extra_cost_1_1_1 = ECDF(list_extra_saving_money[7][0])
 
 fig, ax = plt.subplots()
+ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,len(list_extra_saving_money))])
 plt.plot(ecdf_extra_cost_05_05_05.x, ecdf_extra_cost_05_05_05.y, label='a=0.5 b=0.5 c=0.5')
 plt.plot(ecdf_extra_cost_1_05_05.x, ecdf_extra_cost_1_05_05.y, label='a=1.0 b=0.5 c=0.5')
 plt.plot(ecdf_extra_cost_05_1_05.x, ecdf_extra_cost_05_1_05.y, label='a=0.5 b=1.0 c=0.5')
@@ -153,6 +157,7 @@ ecdf_extra_money_05_1_1 = ECDF(list_extra_saving_money[6][1])
 ecdf_extra_money_1_1_1 = ECDF(list_extra_saving_money[7][1])
 
 fig, ax = plt.subplots()
+ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,len(list_extra_saving_money))])
 plt.plot(ecdf_extra_money_05_05_05.x, ecdf_extra_money_05_05_05.y, label='a=0.5 b=0.5 c=0.5')
 plt.plot(ecdf_extra_money_1_05_05.x, ecdf_extra_money_1_05_05.y, label='a=1.0 b=0.5 c=0.5')
 plt.plot(ecdf_extra_money_05_1_05.x, ecdf_extra_money_05_1_05.y, label='a=0.5 b=1.0 c=0.5')
@@ -185,6 +190,7 @@ ecdf_saving_money_05_1_1 = ECDF(list_extra_saving_money[6][2])
 ecdf_saving_money_1_1_1 = ECDF(list_extra_saving_money[7][2])
 
 fig, ax = plt.subplots()
+ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,len(list_extra_saving_money))])
 plt.plot(ecdf_saving_money_05_05_05.x, ecdf_saving_money_05_05_05.y, label='a=0.5 b=0.5 c=0.5')
 plt.plot(ecdf_saving_money_1_05_05.x, ecdf_saving_money_1_05_05.y, label='a=1.0 b=0.5 c=0.5')
 plt.plot(ecdf_saving_money_05_1_05.x, ecdf_saving_money_05_1_05.y, label='a=0.5 b=1.0 c=0.5')
@@ -217,6 +223,7 @@ ecdf_extra_time_05_1_1 = ECDF(list_extra_saving_time[6][0])
 ecdf_extra_time_1_1_1 = ECDF(list_extra_saving_time[7][0])
 
 fig, ax = plt.subplots()
+ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,len(list_extra_saving_time))])
 plt.plot(ecdf_extra_time_05_05_05.x, ecdf_extra_time_05_05_05.y, label='a=0.5 b=0.5 c=0.5')
 plt.plot(ecdf_extra_time_1_05_05.x, ecdf_extra_time_1_05_05.y, label='a=1.0 b=0.5 c=0.5')
 plt.plot(ecdf_extra_time_05_1_05.x, ecdf_extra_time_05_1_05.y, label='a=0.5 b=1.0 c=0.5')
@@ -249,6 +256,7 @@ ecdf_extra_time_05_1_1 = ECDF(list_extra_saving_time[6][1])
 ecdf_extra_time_1_1_1 = ECDF(list_extra_saving_time[7][1])
 
 fig, ax = plt.subplots()
+ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,len(list_extra_saving_time))])
 plt.plot(ecdf_extra_time_05_05_05.x, ecdf_extra_time_05_05_05.y, label='a=0.5 b=0.5 c=0.5')
 plt.plot(ecdf_extra_time_1_05_05.x, ecdf_extra_time_1_05_05.y, label='a=1.0 b=0.5 c=0.5')
 plt.plot(ecdf_extra_time_05_1_05.x, ecdf_extra_time_05_1_05.y, label='a=0.5 b=1.0 c=0.5')
@@ -281,6 +289,7 @@ ecdf_saving_time_05_1_1 = ECDF(list_extra_saving_time[6][2])
 ecdf_saving_time_1_1_1 = ECDF(list_extra_saving_time[7][2])
 
 fig, ax = plt.subplots()
+ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,len(list_extra_saving_time))])
 plt.plot(ecdf_saving_time_05_05_05.x, ecdf_saving_time_05_05_05.y, label='a=0.5 b=0.5 c=0.5')
 plt.plot(ecdf_saving_time_1_05_05.x, ecdf_saving_time_1_05_05.y, label='a=1.0 b=0.5 c=0.5')
 plt.plot(ecdf_saving_time_05_1_05.x, ecdf_saving_time_05_1_05.y, label='a=0.5 b=1.0 c=0.5')
