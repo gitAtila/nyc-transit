@@ -4,14 +4,19 @@
 
 from sys import argv
 import pandas as pd
+import numpy as np
 
 import matplotlib.pyplot as plt
 from statsmodels.distributions.empirical_distribution import ECDF
 
 max_benefit_trips_path = argv[1]
 taxi_private_trips_path = argv[2]
+
 times_chart_path = argv[3]
 money_chart_path = argv[4]
+
+transit_passenger_chart_path = argv[5]
+taxi_passenger_chart_path = argv[6]
 
 def group_df_rows(df, key_label):
     dict_grouped = dict()
@@ -38,6 +43,18 @@ def plot_cdf_two_curves(list_curve_1, list_curve_2, label_curve_1, label_curve_2
     # ax.set_title('saturday')
     ax.set_xlabel(x_label)
     ax.set_ylabel('ECDF')
+    plt.tight_layout()
+    fig.savefig(chart_path)
+
+def scatter_plot(list_x_values, list_y_values, x_label, y_label, chart_path):
+
+    fig, ax = plt.subplots()
+    plt.plot(list_x_values, list_y_values, 'o')
+
+    # ax.set_title('saturday')
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+
     plt.tight_layout()
     fig.savefig(chart_path)
 
@@ -86,3 +103,11 @@ times_chart_path)
 plot_cdf_two_curves(list_transit_passenger_extra_cost, list_taxi_passenger_saving_money,\
 'transit passenger sharing cost', 'taxi passenger saving money', 'difference of money (dollars)',\
 money_chart_path)
+
+scatter_plot(list_transit_passenger_extra_cost, list_transit_passenger_saving_time,\
+'extra cost (dollars)', 'saving time (minutes)', transit_passenger_chart_path)
+# print np.corrcoef(list_transit_passenger_extra_cost, list_transit_passenger_saving_time)
+
+scatter_plot(list_taxi_passenger_saving_money, list_taxi_passenger_extra_time,\
+'saving money (dollars)', 'extra time (minutes)', taxi_passenger_chart_path)
+# print np.corrcoef(list_taxi_passenger_saving_money, list_taxi_passenger_extra_time)
