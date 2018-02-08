@@ -10,7 +10,7 @@ import time
 import matplotlib.pyplot as plt
 from statsmodels.distributions.empirical_distribution import ECDF
 
-taxi_private_trips_path = argv[1]
+transit_private_trips_path = argv[1]
 
 max_benefit_05_05_05_path = argv[2]
 max_benefit_1_05_05_path = argv[3]
@@ -42,26 +42,28 @@ def taxi_passenger_saving_money(df_max_benefit):
 
     return list_taxi_passenger_saving_money
 
-def transit_passenger_saving_time(taxi_private_trips_path, df_max_benefit):
+def transit_passenger_saving_time(transit_private_trips_path, df_max_benefit):
 
     list_transit_passenger_bp_saving_time = []
-    list_taxi_passenger_extra_time = []
-    list_taxi_driver_extra_time = []
 
-    df_taxi_private_trips = pd.read_csv(taxi_private_trips_path)
-    df_taxi_private_trips = df_taxi_private_trips[df_taxi_private_trips['sampn_perno_tripno']\
-    .isin(df_max_benefit['taxi_id'].unique())]
-    df_taxi_private_trips['date_time'] = pd.to_datetime(df_taxi_private_trips['date_time'])
-    dict_taxi_private_trips = group_df_rows(df_taxi_private_trips, 'sampn_perno_tripno')
+    df_transit_private_trips = pd.read_csv(transit_private_trips_path)
+    df_transit_private_trips = df_transit_private_trips[df_transit_private_trips['sampn_perno_tripno']\
+    .isin(df_max_benefit['transit_id'].unique())]
+    df_transit_private_trips['date_time'] = pd.to_datetime(df_transit_private_trips['date_time'])
+    dict_transit_private_trips = group_df_rows(df_transit_private_trips, 'sampn_perno_tripno')
 
     df_max_benefit['transit_original_destination_time'] = pd.to_datetime(df_max_benefit['transit_original_destination_time'])
     df_max_benefit['transit_destination_time'] = pd.to_datetime(df_max_benefit['transit_destination_time'])
     df_max_benefit['taxi_destination_time'] = pd.to_datetime(df_max_benefit['taxi_destination_time'])
 
     for index, max_benefit_trip in df_max_benefit.iterrows():
-        transit_passenger_bp_saving_time = (time.mktime(max_benefit_trip['transit_original_destination_time'].timetuple())\
-        - time.mktime(max_benefit_trip['transit_destination_time'].timetuple()))\
-        /time.mktime(max_benefit_trip['transit_original_destination_time'].timetuple())
+        # print max_benefit_trip
+        transit_origin_time = dict_transit_private_trips[max_benefit_trip['transit_id']][-1]['date_time']
+        transit_original_duration = (dict_transit_private_trips[max_benefit_trip['transit_id']][0]['date_time']\
+        - transit_origin_time).total_seconds()
+        transit_new_duration = (max_benefit_trip['transit_destination_time'] - transit_origin_time).total_seconds()
+
+        transit_passenger_bp_saving_time = (transit_original_duration - transit_new_duration)/transit_original_duration
         list_transit_passenger_bp_saving_time.append(transit_passenger_bp_saving_time)
 
     return list_transit_passenger_bp_saving_time
@@ -80,11 +82,13 @@ list_saving_money = []
 list_saving_time = []
 for df_max_benefit in list_df_max_benefit:
     list_saving_money.append(taxi_passenger_saving_money(df_max_benefit))
-    list_saving_time.append(transit_passenger_saving_time(taxi_private_trips_path, df_max_benefit))
+    list_saving_time.append(transit_passenger_saving_time(transit_private_trips_path, df_max_benefit))
 
 for index in range(len(list_saving_money)):
     list_saving_money[index].sort()
     list_saving_time[index].sort()
+
+print list_saving_time[0][0], list_saving_time[0][-1]
 
 '''
     Saving money
@@ -145,7 +149,7 @@ plt.plot(ecdf_saving_time_1_1_1.x, ecdf_saving_time_1_1_1.y, label='a=1.0 b=1.0 
 
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x sticks interal
 plt.grid()
-plt.legend(loc=4)
+plt.legend(loc=2)
 # ax.set_title('saturday')
 ax.set_xlabel('transit saving time (orig - new)/orig')
 ax.set_ylabel('ECDF')
