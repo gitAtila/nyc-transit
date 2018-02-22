@@ -38,6 +38,7 @@ def format_trip_position(dict_trip):
     return dict_formated_trip
 
 def generate_trip(trips_path, list_modes):
+
     with open(trips_path, 'rb') as in_file:
         csv_reader = csv.reader(in_file, delimiter=',')
         csv_headings = next(csv_reader)
@@ -45,7 +46,7 @@ def generate_trip(trips_path, list_modes):
         try:
             previous_pos = dict(zip(csv_headings, next(csv_reader)))
             if previous_pos['mode'] in list_modes:
-                list_trip.append(format_position(previous_pos))
+                list_trip.append(format_trip_position(previous_pos))
 
             while True:
                 current_pos = dict(zip(csv_headings, next(csv_reader)))
@@ -134,8 +135,8 @@ def otp_route_positions(router_id, lat_origin, lon_origin, lat_destination, lon_
     route_positions = otp.route_positions(lat_origin, lon_origin, lat_destination, lon_destination, mode, date_time)
     return route_positions
 
-def integration_route(router_id, transit_stop_position, taxi_acceptance_position, transit_destination_position,\
-taxi_destination_position):
+def integration_route(router_id, transit_stop_position, taxi_acceptance_position, dict_transit_private_destination,\
+dict_taxi_private_destination):
 
     # taxi acceptance -> transit integration stop
     integration_taxi_trip = otp_route_positions(router_id, taxi_acceptance_position['latitude'],\
@@ -156,38 +157,38 @@ taxi_destination_position):
         taxi_departure_time_transit_stop = transit_arrival_time_stop
 
     # the integration could not begin after the expected arrival time at the taxi passenger destination
-    if taxi_departure_time_transit_stop < taxi_destination_position['date_time']:
+    if taxi_departure_time_transit_stop < dict_taxi_private_destination['date_time']:
 
         # find which destination comes first
         distance_integration_transit_destination = great_circle((transit_stop_position['latitude'], transit_stop_position['longitude']),\
-        (transit_destination_position['latitude'], transit_destination_position['longitude']))
+        (dict_transit_private_destination['latitude'], dict_transit_private_destination['longitude']))
         distance_integration_taxi_destination = great_circle((transit_stop_position['latitude'], transit_stop_position['longitude']),\
-        (taxi_destination_position['latitude'], taxi_destination_position['longitude']))
+        (dict_taxi_private_destination['latitude'], dict_taxi_private_destination['longitude']))
 
         # taxi destination comes first
         if distance_integration_taxi_destination < distance_integration_transit_destination:
 
             # transit stop integration -> taxi destination
             integration_taxi_destination_trip = otp_route_positions(router_id,transit_stop_position['latitude'],\
-            transit_stop_position['longitude'], taxi_destination_position['latitude'], taxi_destination_position['longitude'],\
+            transit_stop_position['longitude'], dict_taxi_private_destination['latitude'], dict_taxi_private_destination['longitude'],\
             'CAR', taxi_departure_time_transit_stop)
 
             # scape if empty
             if len(integration_taxi_destination_trip) == 0:
                 return {}
 
-            integration_taxi_destination_time = integration_taxi_destination_trip[-1]['date_time']
+            taxi_shared_destination_time = integration_taxi_destination_trip[-1]['date_time']
 
             # taxi destination -> transit destination
-            destination_taxi_destination_transit_trip = otp_route_positions(router_id, taxi_destination_position['latitude'],\
-            taxi_destination_position['longitude'], transit_destination_position['latitude'],\
-            transit_destination_position['longitude'], 'CAR', integration_taxi_destination_time)
+            destination_taxi_destination_transit_trip = otp_route_positions(router_id, dict_taxi_private_destination['latitude'],\
+            dict_taxi_private_destination['longitude'], dict_transit_private_destination['latitude'],\
+            dict_transit_private_destination['longitude'], 'CAR', taxi_shared_destination_time)
 
             # scape if empty
             if len(destination_taxi_destination_transit_trip) == 0:
                 return {}
 
-            integration_transit_destination_time = destination_taxi_destination_transit_trip[-1]['date_time']
+            transit_shared_destination_time = destination_taxi_destination_transit_trip[-1]['date_time']
 
             shared_distance = float(integration_taxi_destination_trip[-1]['distance'])
             destinations_distance = float(destination_taxi_destination_transit_trip[-1]['distance'])
@@ -196,33 +197,33 @@ taxi_destination_position):
         else:
             # compute the route from integration to transit destination
             integration_transit_destination_trip = otp_route_positions(router_id, transit_stop_position['latitude'],\
-            transit_stop_position['longitude'], transit_destination_position['latitude'], transit_destination_position['longitude'],\
+            transit_stop_position['longitude'], dict_transit_private_destination['latitude'], dict_transit_private_destination['longitude'],\
             'CAR', taxi_departure_time_transit_stop)
 
             # scape if empty
             if len(integration_transit_destination_trip) == 0:
                 return {}
 
-            integration_transit_destination_time = integration_transit_destination_trip[-1]['date_time']
+            transit_shared_destination_time = integration_transit_destination_trip[-1]['date_time']
 
             # compute the route from transit destination to taxi destination
-            destination_transit_destination_taxi_trip = otp_route_positions(router_id, transit_destination_position['latitude'],\
-            transit_destination_position['longitude'], taxi_destination_position['latitude'],\
-            taxi_destination_position['longitude'],  'CAR', integration_transit_destination_time)
+            destination_transit_destination_taxi_trip = otp_route_positions(router_id, dict_transit_private_destination['latitude'],\
+            dict_transit_private_destination['longitude'], dict_taxi_private_destination['latitude'],\
+            dict_taxi_private_destination['longitude'],  'CAR', transit_shared_destination_time)
 
             if len(destination_transit_destination_taxi_trip) == 0:
                 return {}
 
-            integration_taxi_destination_time = destination_transit_destination_taxi_trip[-1]['date_time']
+            taxi_shared_destination_time = destination_transit_destination_taxi_trip[-1]['date_time']
 
             shared_distance = float(integration_transit_destination_trip[-1]['distance'])
             destinations_distance = float(destination_transit_destination_taxi_trip[-1]['distance'])
 
-        # transit passenger save time with the shared route
-        if integration_transit_destination_time < transit_destination_position['date_time']:
-
-            return {'taxi_destination_time': integration_taxi_destination_time,\
-            'transit_destination_time': integration_transit_destination_time,\
+        # if transit passenger save time
+        if transit_shared_destination_time < dict_transit_private_destination['date_time']:
+            # print 'private destination time', dict_transit_private_destination['date_time']
+            return {'taxi_destination_time': taxi_shared_destination_time,\
+            'transit_destination_time': transit_shared_destination_time,\
             'taxi_arrival_time_transit_stop': taxi_arrival_time_transit_stop, 'integration_distance': integration_distance,\
             'shared_distance': shared_distance, 'destinations_distance': destinations_distance}
 
@@ -255,13 +256,13 @@ def match_transit_taxi_trips(router_id, list_transit_trip, dict_taxi_trips, max_
                 list_taxi_positions = dict_taxi_trips[taxi_near_stop['taxi_id']]
                 taxi_acceptance_position = [position for position in list_taxi_positions\
                 if position['pos_sequence'] == taxi_near_stop['pos_sequence']][0]
-
-                transit_destination_position = list_transit_trip[-1]
-                taxi_destination_position = list_taxi_positions[-1]
+                # print list_transit_trip
+                dict_transit_private_destination = list_transit_trip[-1]
+                dict_taxi_private_destination = list_taxi_positions[-1]
 
                 dict_match_times_distances = integration_route(router_id,\
-                transit_stop_position, taxi_acceptance_position, transit_destination_position,\
-                taxi_destination_position)
+                transit_stop_position, taxi_acceptance_position, dict_transit_private_destination,\
+                dict_taxi_private_destination)
 
                 if len(dict_match_times_distances) > 0:
                     print 'match', dict_match_times_distances
@@ -288,11 +289,19 @@ list_transit_taxi_matches = []
 list_time_per_transit_id = []
 count = 0
 
-for list_transit_trip in generate_trip(transit_trips_path, ['BUS', 'SUBWAY']):
+for list_transit_trip in generate_trip(transit_trips_path, ['BUS', 'SUBWAY', 'WALK']):
+
+    # only transit trips
+    df_transi_trip = pd.DataFrame(list_transit_trip)
+    if len(df_transi_trip[(df_transi_trip['mode'] == 'BUS') | (df_transi_trip['mode'] == 'SUBWAY')]) == 0:
+        continue
+
     print count
+
     list_matches, list_times = match_transit_taxi_trips(router_id, list_transit_trip, dict_taxi_trips, max_distance)
     list_transit_taxi_matches += list_matches
     list_time_per_transit_id += list_times
+
     count += 1
 
 elapsed = timeit.default_timer() - start_time

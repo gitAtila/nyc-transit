@@ -160,10 +160,12 @@ transit_shared_cost_parcel, dict_transit_private_trip, dict_taxi_private_trip, d
         matching['shared_distance'], 0,\
         transit_destination_first, matching['destinations_distance'], 0)
 
-        # taxi passenger save time
+        # taxi passenger save money
         if taxi_shared_cost < taxi_private_cost:
-            list_integration_costs.append({'match_index': index, 'taxi_private_cost': taxi_private_cost,\
-            'taxi_shared_cost': taxi_shared_cost, 'transit_shared_cost': transit_shared_cost})
+            list_integration_costs.append({'transit_id': matching['transit_id'], 'stop_id': matching['stop_id'],\
+            'taxi_id': matching['taxi_id'], 'taxi_pos_sequence': matching['taxi_pos_sequence'],\
+            'taxi_private_cost': taxi_private_cost, 'taxi_shared_cost': taxi_shared_cost,\
+            'transit_shared_cost': transit_shared_cost})
 
     return list_integration_costs
 
@@ -191,5 +193,7 @@ transit_shared_cost_parcel, dict_transit_private_trip, dict_taxi_private_trip, d
 
 # save
 df_integration_costs = pd.DataFrame(list_integration_costs)
+df_integration_costs = df_integration_costs[['transit_id', 'stop_id', 'taxi_id', 'taxi_pos_sequence', 'taxi_private_cost',\
+'taxi_shared_cost', 'transit_shared_cost']]
 print df_integration_costs
 df_integration_costs.to_csv(result_path, index=False)

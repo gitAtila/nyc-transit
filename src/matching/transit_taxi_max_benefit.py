@@ -21,7 +21,10 @@ def group_df_rows(df, key_label):
 def merge_matches(df_temporal_spatial_match, df_cost_match):
     list_matches = []
     for index, costs in df_cost_match.iterrows():
-        dict_match = df_temporal_spatial_match.loc[int(costs['match_index'])].to_dict()
+        dict_match = df_temporal_spatial_match[(df_temporal_spatial_match['transit_id'] == costs['transit_id']) \
+        & (df_temporal_spatial_match['stop_id'] == costs['stop_id']) \
+        & (df_temporal_spatial_match['taxi_id'] == costs['taxi_id']) \
+        & (df_temporal_spatial_match['taxi_pos_sequence'] == costs['taxi_pos_sequence'])].iloc[0].to_dict()
         dict_match['taxi_private_cost'] = costs['taxi_private_cost']
         dict_match['taxi_shared_cost'] = costs['taxi_shared_cost']
         dict_match['transit_shared_cost'] = costs['transit_shared_cost']
@@ -30,6 +33,7 @@ def merge_matches(df_temporal_spatial_match, df_cost_match):
     return list_matches
 
 def best_integration_possibility(df_matches, df_transit_private_trip):
+
     dict_transit_taxis = group_df_rows(df_matches, 'transit_id')
     dict_best_possibilities = dict()
     for transit_id, list_possibilities in dict_transit_taxis.iteritems():
