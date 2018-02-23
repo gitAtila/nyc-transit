@@ -95,10 +95,11 @@ for index, max_benefit_trip in df_max_benefit_trip.iterrows():
         # print max_benefit_trip
         print 'private', taxi_private_destination_time
         print 'shared', max_benefit_trip['taxi_destination_time']
-        print 'private distance', dict_taxi_private_trip[max_benefit_trip['taxi_id']][-1]['distance']
-        print 'shared distance', (max_benefit_trip['integration_distance']\
-        + max_benefit_trip['shared_distance'] + max_benefit_trip['destinations_distance'])
-        print max_benefit_trip
+        # print 'private distance', dict_taxi_private_trip[max_benefit_trip['taxi_id']][-1]['distance']
+        # print 'shared distance', (max_benefit_trip['integration_distance']\
+        # + max_benefit_trip['shared_distance'] + max_benefit_trip['destinations_distance'])
+        # print max_benefit_trip
+        print 'taxi_passenger_extra_time', taxi_passenger_extra_time
         print ''
     list_taxi_passenger_extra_time.append(taxi_passenger_extra_time)
 
