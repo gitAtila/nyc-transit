@@ -142,6 +142,10 @@ transit_shared_cost_parcel, dict_transit_private_trip, dict_taxi_private_trip, d
         taxi_acceptance_position = [position for position in list_taxi_private_trip\
         if position['pos_sequence'] == matching['taxi_pos_sequence']][0]
 
+        # print matching['stop_id']
+        # for position in list_transit_trip:
+        #     print position['mode'], position['stop_id']
+
         transit_stop_position = [position for position in list_transit_trip\
         if position['stop_id'] == matching['stop_id']][0]
 

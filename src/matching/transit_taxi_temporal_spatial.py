@@ -238,7 +238,7 @@ def match_transit_taxi_trips(router_id, list_transit_trip, dict_taxi_trips, max_
     start_time = timeit.default_timer()
 
     # get stop positions
-    list_stops = [position for position in list_transit_trip if type(position['stop_id']) != float]
+    list_stops = [position for position in list_transit_trip if position['mode'] != 'WALK']
 
     # for each transit stop
     dict_stops_available_taxis = dict()
