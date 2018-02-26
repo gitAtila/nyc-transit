@@ -63,6 +63,8 @@ def extra_saving_time(taxi_private_trips_path, df_max_benefit):
     df_taxi_private_trips['date_time'] = pd.to_datetime(df_taxi_private_trips['date_time'])
     dict_taxi_private_trips = group_df_rows(df_taxi_private_trips, 'sampn_perno_tripno')
 
+    print df_max_benefit.iloc[0]
+
     df_max_benefit['transit_original_destination_time'] = pd.to_datetime(df_max_benefit['transit_original_destination_time'])
     df_max_benefit['transit_destination_time'] = pd.to_datetime(df_max_benefit['transit_destination_time'])
     df_max_benefit['taxi_destination_time'] = pd.to_datetime(df_max_benefit['taxi_destination_time'])
