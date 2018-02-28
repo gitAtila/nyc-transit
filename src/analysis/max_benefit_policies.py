@@ -20,9 +20,9 @@ max_benefit_1_05_1_path = argv[7]
 max_benefit_05_1_1_path = argv[8]
 max_benefit_1_1_1_path = argv[9]
 
-extra_cost_chart_path = argv[10]
-extra_money_chart_path = argv[11]
-saving_money_chart_path = argv[12]
+transit_passenger_sharing_cost_path = argv[10]
+taxi_driver_sharing_revenue_path = argv[11]
+taxi_passenger_sharing_cost_path = argv[12]
 
 tp_extra_time_chart_path = argv[13]
 td_extra_time_chart_path = argv[14]
@@ -38,18 +38,17 @@ def group_df_rows(df, key_label):
         dict_grouped.setdefault(key, []).append(row.to_dict())
     return dict_grouped
 
-def extra_saving_money(df_max_benefit):
-    list_transit_passenger_extra_cost = []
-    list_taxi_driver_extra_money = []
-    list_taxi_passenger_saving_money = []
+def users_costs(df_max_benefit):
+    list_transit_passenger = []
+    list_taxi_passenger = []
+    list_taxi_driver = []
 
     for index, max_benefit_trip in df_max_benefit.iterrows():
-        list_transit_passenger_extra_cost.append(max_benefit_trip['transit_shared_cost'])
-        list_taxi_passenger_saving_money.append(max_benefit_trip['taxi_private_cost'] - max_benefit_trip['taxi_shared_cost'])
-        list_taxi_driver_extra_money.append(max_benefit_trip['transit_shared_cost'] + max_benefit_trip['taxi_shared_cost']\
-        - max_benefit_trip['taxi_private_cost'])
+        list_transit_passenger.append(max_benefit_trip['transit_shared_cost'])
+        list_taxi_passenger.append(max_benefit_trip['taxi_shared_cost'])
+        list_taxi_driver.append(max_benefit_trip['transit_shared_cost'] + max_benefit_trip['taxi_shared_cost'])
 
-    return list_transit_passenger_extra_cost, list_taxi_driver_extra_money, list_taxi_passenger_saving_money
+    return list_transit_passenger, list_taxi_driver, list_taxi_passenger
 
 def extra_saving_time(taxi_private_trips_path, df_max_benefit):
 
@@ -97,16 +96,16 @@ list_df_max_benefit.append(pd.read_csv(max_benefit_1_05_1_path))
 list_df_max_benefit.append(pd.read_csv(max_benefit_05_1_1_path))
 list_df_max_benefit.append(pd.read_csv(max_benefit_1_1_1_path))
 
-list_extra_saving_money = []
+list_costs = []
 list_extra_saving_time = []
 for df_max_benefit in list_df_max_benefit:
-    list_extra_saving_money.append(extra_saving_money(df_max_benefit))
+    list_costs.append(users_costs(df_max_benefit))
     list_extra_saving_time.append(extra_saving_time(taxi_private_trips_path, df_max_benefit))
 
-for index in range(len(list_extra_saving_money)):
-    list_extra_saving_money[index][0].sort()
-    list_extra_saving_money[index][1].sort()
-    list_extra_saving_money[index][2].sort()
+for index in range(len(list_costs)):
+    list_costs[index][0].sort()
+    list_costs[index][1].sort()
+    list_costs[index][2].sort()
 
     list_extra_saving_time[index][0].sort()
     list_extra_saving_time[index][1].sort()
@@ -114,19 +113,19 @@ for index in range(len(list_extra_saving_money)):
 '''
     Extra costs
 '''
-# print list_extra_saving_money[0][0]
+# print list_costs[0][0]
 
-ecdf_extra_cost_05_05_05 = ECDF(list_extra_saving_money[0][0])
-ecdf_extra_cost_1_05_05 = ECDF(list_extra_saving_money[1][0])
-ecdf_extra_cost_05_1_05 = ECDF(list_extra_saving_money[2][0])
-ecdf_extra_cost_05_05_1 = ECDF(list_extra_saving_money[3][0])
-ecdf_extra_cost_1_1_05 = ECDF(list_extra_saving_money[4][0])
-ecdf_extra_cost_1_05_1 = ECDF(list_extra_saving_money[5][0])
-ecdf_extra_cost_05_1_1 = ECDF(list_extra_saving_money[6][0])
-ecdf_extra_cost_1_1_1 = ECDF(list_extra_saving_money[7][0])
+ecdf_extra_cost_05_05_05 = ECDF(list_costs[0][0])
+ecdf_extra_cost_1_05_05 = ECDF(list_costs[1][0])
+ecdf_extra_cost_05_1_05 = ECDF(list_costs[2][0])
+ecdf_extra_cost_05_05_1 = ECDF(list_costs[3][0])
+ecdf_extra_cost_1_1_05 = ECDF(list_costs[4][0])
+ecdf_extra_cost_1_05_1 = ECDF(list_costs[5][0])
+ecdf_extra_cost_05_1_1 = ECDF(list_costs[6][0])
+ecdf_extra_cost_1_1_1 = ECDF(list_costs[7][0])
 
 fig, ax = plt.subplots()
-ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,len(list_extra_saving_money))])
+ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,len(list_costs))])
 plt.plot(ecdf_extra_cost_05_05_05.x, ecdf_extra_cost_05_05_05.y, label='a=0.5 b=0.5 c=0.5')
 plt.plot(ecdf_extra_cost_1_05_05.x, ecdf_extra_cost_1_05_05.y, label='a=1.0 b=0.5 c=0.5')
 plt.plot(ecdf_extra_cost_05_1_05.x, ecdf_extra_cost_05_1_05.y, label='a=0.5 b=1.0 c=0.5')
@@ -143,23 +142,23 @@ plt.legend(loc=4)
 ax.set_xlabel('transit passenger sharing cost (dollars)')
 ax.set_ylabel('ECDF')
 plt.tight_layout()
-fig.savefig(extra_cost_chart_path)
+fig.savefig(transit_passenger_sharing_cost_path)
 
 '''
     Extra money
 '''
 
-ecdf_extra_money_05_05_05 = ECDF(list_extra_saving_money[0][1])
-ecdf_extra_money_1_05_05 = ECDF(list_extra_saving_money[1][1])
-ecdf_extra_money_05_1_05 = ECDF(list_extra_saving_money[2][1])
-ecdf_extra_money_05_05_1 = ECDF(list_extra_saving_money[3][1])
-ecdf_extra_money_1_1_05 = ECDF(list_extra_saving_money[4][1])
-ecdf_extra_money_1_05_1 = ECDF(list_extra_saving_money[5][1])
-ecdf_extra_money_05_1_1 = ECDF(list_extra_saving_money[6][1])
-ecdf_extra_money_1_1_1 = ECDF(list_extra_saving_money[7][1])
+ecdf_extra_money_05_05_05 = ECDF(list_costs[0][1])
+ecdf_extra_money_1_05_05 = ECDF(list_costs[1][1])
+ecdf_extra_money_05_1_05 = ECDF(list_costs[2][1])
+ecdf_extra_money_05_05_1 = ECDF(list_costs[3][1])
+ecdf_extra_money_1_1_05 = ECDF(list_costs[4][1])
+ecdf_extra_money_1_05_1 = ECDF(list_costs[5][1])
+ecdf_extra_money_05_1_1 = ECDF(list_costs[6][1])
+ecdf_extra_money_1_1_1 = ECDF(list_costs[7][1])
 
 fig, ax = plt.subplots()
-ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,len(list_extra_saving_money))])
+ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,len(list_costs))])
 plt.plot(ecdf_extra_money_05_05_05.x, ecdf_extra_money_05_05_05.y, label='a=0.5 b=0.5 c=0.5')
 plt.plot(ecdf_extra_money_1_05_05.x, ecdf_extra_money_1_05_05.y, label='a=1.0 b=0.5 c=0.5')
 plt.plot(ecdf_extra_money_05_1_05.x, ecdf_extra_money_05_1_05.y, label='a=0.5 b=1.0 c=0.5')
@@ -173,26 +172,26 @@ plt.plot(ecdf_extra_money_1_1_1.x, ecdf_extra_money_1_1_1.y, label='a=1.0 b=1.0 
 plt.grid()
 plt.legend(loc=4)
 # ax.set_title('saturday')
-ax.set_xlabel('taxi driver extra money (dollars)')
+ax.set_xlabel('taxi driver sharing revenue (dollars)')
 ax.set_ylabel('ECDF')
 plt.tight_layout()
-fig.savefig(extra_money_chart_path)
+fig.savefig(taxi_driver_sharing_revenue_path)
 
 '''
     Saving money
 '''
 
-ecdf_saving_money_05_05_05 = ECDF(list_extra_saving_money[0][2])
-ecdf_saving_money_1_05_05 = ECDF(list_extra_saving_money[1][2])
-ecdf_saving_money_05_1_05 = ECDF(list_extra_saving_money[2][2])
-ecdf_saving_money_05_05_1 = ECDF(list_extra_saving_money[3][2])
-ecdf_saving_money_1_1_05 = ECDF(list_extra_saving_money[4][2])
-ecdf_saving_money_1_05_1 = ECDF(list_extra_saving_money[5][2])
-ecdf_saving_money_05_1_1 = ECDF(list_extra_saving_money[6][2])
-ecdf_saving_money_1_1_1 = ECDF(list_extra_saving_money[7][2])
+ecdf_saving_money_05_05_05 = ECDF(list_costs[0][2])
+ecdf_saving_money_1_05_05 = ECDF(list_costs[1][2])
+ecdf_saving_money_05_1_05 = ECDF(list_costs[2][2])
+ecdf_saving_money_05_05_1 = ECDF(list_costs[3][2])
+ecdf_saving_money_1_1_05 = ECDF(list_costs[4][2])
+ecdf_saving_money_1_05_1 = ECDF(list_costs[5][2])
+ecdf_saving_money_05_1_1 = ECDF(list_costs[6][2])
+ecdf_saving_money_1_1_1 = ECDF(list_costs[7][2])
 
 fig, ax = plt.subplots()
-ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,len(list_extra_saving_money))])
+ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,len(list_costs))])
 plt.plot(ecdf_saving_money_05_05_05.x, ecdf_saving_money_05_05_05.y, label='a=0.5 b=0.5 c=0.5')
 plt.plot(ecdf_saving_money_1_05_05.x, ecdf_saving_money_1_05_05.y, label='a=1.0 b=0.5 c=0.5')
 plt.plot(ecdf_saving_money_05_1_05.x, ecdf_saving_money_05_1_05.y, label='a=0.5 b=1.0 c=0.5')
@@ -206,10 +205,10 @@ plt.plot(ecdf_saving_money_1_1_1.x, ecdf_saving_money_1_1_1.y, label='a=1.0 b=1.
 plt.grid()
 plt.legend(loc=4)
 # ax.set_title('saturday')
-ax.set_xlabel('taxi passenger saving money (dollars)')
+ax.set_xlabel('taxi passenger sharing cost (dollars)')
 ax.set_ylabel('ECDF')
 plt.tight_layout()
-fig.savefig(saving_money_chart_path)
+fig.savefig(taxi_passenger_sharing_cost_path)
 
 '''
     Extra time
