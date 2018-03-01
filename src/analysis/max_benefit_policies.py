@@ -54,8 +54,8 @@ def users_costs(df_max_benefit):
 def sharing_duration(taxi_private_trips_path, transit_private_trips_path, df_max_benefit):
 
     list_transit_passenger_sharing_duration = []
-    list_taxi_passenger_extra_time = []
-    list_taxi_driver_extra_time = []
+    list_taxi_passenger_sharing_duration = []
+    list_taxi_driver_sharing_duration = []
 
     df_taxi_private_trips = pd.read_csv(taxi_private_trips_path)
     df_transit_private_trips = pd.read_csv(transit_private_trips_path)
