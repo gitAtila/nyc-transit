@@ -109,7 +109,8 @@ list_costs = []
 list_sharing_duration = []
 for df_max_benefit in list_df_max_benefit:
     list_costs.append(users_costs(df_max_benefit))
-    list_sharing_duration.append(sharing_duration(taxi_private_trips_path, df_max_benefit))
+    list_sharing_duration.append(sharing_duration(taxi_private_trips_path,\
+    transit_private_trips_path, df_max_benefit))
 
 for index in range(len(list_costs)):
     list_costs[index][0].sort()
