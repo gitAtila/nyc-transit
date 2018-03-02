@@ -31,7 +31,7 @@ colormap = plt.cm.nipy_spectral
 def clock_times_matched_unmatched(matching_real_path, clock_times_real_path):
     df_matching = pd.read_csv(matching_real_path)
     df_clock_times = pd.read_csv(clock_times_real_path)
-
+    df_clock_times = df_clock_times.sort_valeus(by=['elapsed'])
     df_clock_times['elapsed'] = df_clock_times['elapsed'] - df_clock_times['elapsed'].shift()
 
     print df_clock_times
