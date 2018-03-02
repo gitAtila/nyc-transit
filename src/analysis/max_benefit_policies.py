@@ -22,12 +22,12 @@ max_benefit_05_1_1_path = argv[9]
 max_benefit_1_1_1_path = argv[10]
 
 transit_passenger_sharing_cost_path = argv[11]
-# taxi_driver_sharing_revenue_path = argv[12]
-# taxi_passenger_sharing_cost_path = argv[13]
-#
-# taxi_passenger_sharing_duration_path = argv[14]
-# taxi_driver_sharing_duration_path = argv[15]
-# transit_passenger_sharing_duration_path = argv[16]
+taxi_driver_sharing_revenue_path = argv[12]
+taxi_passenger_sharing_cost_path = argv[13]
+
+taxi_passenger_sharing_duration_path = argv[14]
+taxi_driver_sharing_duration_path = argv[15]
+transit_passenger_sharing_duration_path = argv[16]
 
 colormap = plt.cm.nipy_spectral
 
