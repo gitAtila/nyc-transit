@@ -34,11 +34,7 @@ def clock_times_matched_unmatched(matching_real_path, clock_times_real_path):
     for index in range(1,len(df_clock_times)):
         df_clock_times['elapsed'].iloc[index] = df_clock_times['elapsed'].iloc[index] - df_clock_times['elapsed'].iloc[index-1]
 
-<<<<<<< HEAD
     print df_clock_times
-=======
-    # print df_clock_times
->>>>>>> 3347e0bb7c4826dc2543914c03e16e731716196d
 
     df_matched_times = df_clock_times[df_clock_times['transit_id'].isin(df_matching['transit_id'].tolist())]
     df_unmatched_times = df_clock_times[~df_clock_times['transit_id'].isin(df_matching['transit_id'].tolist())]
