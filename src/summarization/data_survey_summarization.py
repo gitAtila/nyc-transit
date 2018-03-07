@@ -73,7 +73,9 @@ def travels_per_mode(df_trips_wkdy, df_trips_sat, df_trips_sun, chart_name):
 
 	s_mode_name = pd.Series(['NYC Subway Only', 'NYC Subway + Bus', 'NY or MTA Bus (no sub)', 'Commuter Rail (no nyct)', 'Other Rail (no nyct)',\
 	 'Other Transit (no nyct)', 'Taxi, Car/Van Service', 'Auto Driver/Passenger', 'Walk (bike)', 'At-Home/Refused'], index = [1,2,3,4,5,6,7,8,9,10])
-
+	objects = ('NYC Subway Only', 'NYC Subway + Bus', 'NY or MTA Bus (no sub)', 'Commuter Rail (no nyct)', 'Other Rail (no nyct)',\
+	 'Other Transit (no nyct)', 'Taxi, Car/Van Service', 'Auto Driver/Passenger', 'Walk (bike)', 'At-Home/Refused')
+	ypos = np.arrange(len(objects))
 	#df_modes = pd.concat([s_mode_name.rename('mode'), s_mode_count_wkdy.rename('weekday'), s_mode_count_sat.rename('saturday'),\
 	#  s_mode_count_sun.rename('sunday')], axis=1)
 	df_modes = pd.concat([s_mode_name.rename('mode'), s_mode_count.rename('count')], axis=1)
@@ -81,6 +83,7 @@ def travels_per_mode(df_trips_wkdy, df_trips_sat, df_trips_sun, chart_name):
 	print df_modes.index
 	# ax = df_modes.plot(x='mode', y=['weekday', 'saturday', 'sunday'], color=['g', 'y', 'r'],  kind='bar', rot=90)
 	ax = df_modes.plot(x='mode',  kind='barh', rot=90, align='center', alpha=0.5)
+	ax = plt.yticks(y_pos, objects)
 	#ax = df_modes['count'].plot(kind='pie', autopct='%.2f')
 	fig = ax.get_figure()
 	fig.savefig(chart_name, bbox_inches='tight')
