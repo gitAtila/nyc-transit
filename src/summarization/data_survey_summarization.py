@@ -384,8 +384,8 @@ def travel_duration_per_mode(df_trips, chart_name):
 	ax.xaxis.set_major_locator(ticker.MultipleLocator(60)) # set x ticks as multiple of sixty
 	plt.grid()
 	plt.legend(loc=4)
-	ax.set_title('Travel Time')
-	ax.set_xlabel('time(minutes)')
+	# ax.set_title('')
+	ax.set_xlabel('Informed Trip Time (minutes)')
 	ax.set_ylabel('ECDF')
 	plt.tight_layout()
 	fig.savefig(chart_name)
