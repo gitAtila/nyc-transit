@@ -23,9 +23,9 @@ from statsmodels.distributions.empirical_distribution import ECDF
 travel_survey_file_wkdy = argv[1]
 travel_survey_file_sat = argv[2]
 travel_survey_file_sun = argv[3]
-shp_puma = argv[4]
-shp_subway_stations = argv[5]
-chart_path = argv[6]
+# shp_puma = argv[4]
+# shp_subway_stations = argv[5]
+chart_path = argv[4]
 
 # shapefile_census_tract = argv[4]
 # shapefile_borough = argv[6]
@@ -62,6 +62,7 @@ def total_departure_arrival_trips(df_trips, chart_name):
 # # modes
 def travels_per_mode(df_trips_wkdy, df_trips_sat, df_trips_sun, chart_name):
 	print 'test'
+
 	s_mode_count_wkdy = df_trips_wkdy.groupby('MODE_G10')['TRIP_ID'].count()
 	s_mode_count_sat = df_trips_sat.groupby('MODE_G10')['TRIP_ID'].count()
 	s_mode_count_sun = df_trips_sun.groupby('MODE_G10')['TRIP_ID'].count()
@@ -123,7 +124,7 @@ def aggregate_counties_out_of_area(series_area_count, list_names):
 			count_out_of_area += count
 
 	list_area_count.append(('Out of Area', count_out_of_area))
-	
+
 	return list_area_count
 
 def travels_per_county(df_trips_wkdy, df_trips_sat, df_trips_sun, chart_path):
@@ -236,7 +237,7 @@ def origin_destination_county(df_trips, chart_name):
 	d_counties_in_nyc = list(zip(*d_counties_in_nyc))
 
 	print d_counties_in_nyc
-	
+
 	# count counties in and out of nyc boundaries
 	fig, ax = plt.subplots()
 
@@ -245,7 +246,7 @@ def origin_destination_county(df_trips, chart_name):
 
 	rects1 = ax.bar(x_index, o_counties_in_nyc[1], bar_width, color='b', label='origin')
 	rects2 = ax.bar(x_index + bar_width, d_counties_in_nyc[1], bar_width, color='r', label='destination')
-	
+
 	plt.xlabel('County')
 
 	plt.xticks(x_index + 2*bar_width/2, o_counties_in_nyc[0])
@@ -486,7 +487,7 @@ def plot_puma(shapefile_base_path, dict_puma_count, map_tile, map_path):
 	# set colors to each puma
 	colors = dict()
 	# for key, count in dict_puma_count.iteritems():
-	# 	if key in list_nyc_pumas: 
+	# 	if key in list_nyc_pumas:
 	# 	colors[key] = mapper.to_rgba(count)
 
 	for puma in list_nyc_pumas:
@@ -496,12 +497,12 @@ def plot_puma(shapefile_base_path, dict_puma_count, map_tile, map_path):
 			colors[puma] = (1.0,1.0,1.0)
 			#print rgb2hex('w')
 
-	fig = plt.figure() 
-	ax = fig.gca() 
+	fig = plt.figure()
+	ax = fig.gca()
 
 	# manipulate shapefile
-	fields = shapefile_puma.fields[1:] 
-	field_names = [field[0] for field in fields] 
+	fields = shapefile_puma.fields[1:]
+	field_names = [field[0] for field in fields]
 
 	for record, shape in zip(shapefile_puma.iterRecords(), shapefile_puma.iterShapes()):
 		attributes = dict(zip(field_names, record))
@@ -594,7 +595,7 @@ df_trips_sun = df_from_csv(travel_survey_file_sun)
 #origin_destination_nyc_transit(df_trips, chart_path + 'od_transit.png')
 #origin_destination_purpose(df_trips, chart_path + 'od_purpose.png')
 
-#travels_per_mode(df_trips_wkdy, df_trips_sat, df_trips_sun, chart_path + 'travels_per_mode.png')
+travels_per_mode(df_trips_wkdy, df_trips_sat, df_trips_sun, chart_path + 'travels_per_mode.png')
 #travels_per_purpose(df_trips_wkdy, df_trips_sat, df_trips_sun, chart_path)
 #travels_per_county(df_trips_wkdy, df_trips_sat, df_trips_sun, chart_path)
 
@@ -635,67 +636,67 @@ df_trips_sun = df_from_csv(travel_survey_file_sun)
 #od_matrix(df_trips_wkdy, df_trips_sat, df_trips_sun)
 
 #get_subway_stations_per_puma(shp_subway_stations, shp_puma)
-plot_puma(shp_puma, get_subway_stations_per_puma(shp_subway_stations, shp_puma), 'Number of stations per PUMA', chart_path + 'subway_puma.png')
-
-def print_sample(df_trips):
-	for index in range(10):
-		print 'sampn', df_trips.iloc[index]['sampn']
-		print 'perno', df_trips.iloc[index]['perno']
-		print 'tripno', df_trips.iloc[index]['tripno']
-		print 'TRIP_ID', df_trips.iloc[index]['TRIP_ID']
-		print ''
-		print 'daywk', df_trips.iloc[index]['daywk']
-		print 'HR_DEP', df_trips.iloc[index]['HR_DEP']
-		print 'dtime', df_trips.iloc[index]['dtime']
-		print 'trip_sdate', df_trips.iloc[index]['trip_sdate']
-		print 'HR_ARR', df_trips.iloc[index]['HR_ARR']
-		print 'atime', df_trips.iloc[index]['atime']
-		print 'trip_edate', df_trips.iloc[index]['trip_edate']
-		print ''
-		print 'ussob', df_trips.iloc[index]['ussob']
-		print 'MODE_G2', df_trips.iloc[index]['MODE_G2']
-		print 'MODE_G10', df_trips.iloc[index]['MODE_G10']
-		print 'trip_count', df_trips.iloc[index]['trip_count']
-		print 'MODE1', df_trips.iloc[index]['MODE1']
-		print 'MODE2', df_trips.iloc[index]['MODE2']
-		print 'MODE3', df_trips.iloc[index]['MODE3']
-		print 'MODE4', df_trips.iloc[index]['MODE4']
-		print 'MODE5', df_trips.iloc[index]['MODE5']
-		print 'MODE6', df_trips.iloc[index]['MODE6']
-		print 'MODE7', df_trips.iloc[index]['MODE7']
-		print 'MODE8', df_trips.iloc[index]['MODE8']
-		print 'MODE9', df_trips.iloc[index]['MODE9']
-		print 'MODE10', df_trips.iloc[index]['MODE10']
-		print 'MODE11', df_trips.iloc[index]['MODE11']
-		print 'MODE12', df_trips.iloc[index]['MODE12']
-		print 'MODE13', df_trips.iloc[index]['MODE13']
-		print 'MODE14', df_trips.iloc[index]['MODE14']
-		print 'MODE15', df_trips.iloc[index]['MODE15']
-		print 'MODE16', df_trips.iloc[index]['MODE16']
-		print ''
-		print 'R_BORO', df_trips.iloc[index]['R_BORO']
-		print ''
-		print 'otype', df_trips.iloc[index]['otype']
-		print 'O_PURP', df_trips.iloc[index]['O_PURP']
-		print 'O_Boro', df_trips.iloc[index]['O_Boro']
-		print 'O_COUNTY_STR', df_trips.iloc[index]['O_COUNTY_STR']
-		print 'O_COUNTY', df_trips.iloc[index]['O_COUNTY']
-		print 'O_PUMA', df_trips.iloc[index]['O_PUMA']
-		print 'O_TRACT', df_trips.iloc[index]['O_TRACT']
-		print ''
-		print 'dtype', df_trips.iloc[index]['dtype']
-		print 'D_PURP', df_trips.iloc[index]['D_PURP']
-		print 'D_Boro', df_trips.iloc[index]['D_Boro']
-		print 'D_COUNTY_STR', df_trips.iloc[index]['D_COUNTY_STR']
-		print 'D_COUNTY', df_trips.iloc[index]['D_COUNTY']
-		print 'D_PUMA', df_trips.iloc[index]['D_PUMA']
-		print 'D_TRACT', df_trips.iloc[index]['D_TRACT']
-		print ''
-		print 'NSUB', df_trips.iloc[index]['NSUB']
-		print 'NNYBUS', df_trips.iloc[index]['NNYBUS']
-		print 'NCRAIL', df_trips.iloc[index]['NCRAIL']
-		print 'NOTHTRAN', df_trips.iloc[index]['NOTHTRAN']
-		print 'StopAreaNo', df_trips.iloc[index]['StopAreaNo']
-		print '================================================='
+# plot_puma(shp_puma, get_subway_stations_per_puma(shp_subway_stations, shp_puma), 'Number of stations per PUMA', chart_path + 'subway_puma.png')
+#
+# def print_sample(df_trips):
+# 	for index in range(10):
+# 		print 'sampn', df_trips.iloc[index]['sampn']
+# 		print 'perno', df_trips.iloc[index]['perno']
+# 		print 'tripno', df_trips.iloc[index]['tripno']
+# 		print 'TRIP_ID', df_trips.iloc[index]['TRIP_ID']
+# 		print ''
+# 		print 'daywk', df_trips.iloc[index]['daywk']
+# 		print 'HR_DEP', df_trips.iloc[index]['HR_DEP']
+# 		print 'dtime', df_trips.iloc[index]['dtime']
+# 		print 'trip_sdate', df_trips.iloc[index]['trip_sdate']
+# 		print 'HR_ARR', df_trips.iloc[index]['HR_ARR']
+# 		print 'atime', df_trips.iloc[index]['atime']
+# 		print 'trip_edate', df_trips.iloc[index]['trip_edate']
+# 		print ''
+# 		print 'ussob', df_trips.iloc[index]['ussob']
+# 		print 'MODE_G2', df_trips.iloc[index]['MODE_G2']
+# 		print 'MODE_G10', df_trips.iloc[index]['MODE_G10']
+# 		print 'trip_count', df_trips.iloc[index]['trip_count']
+# 		print 'MODE1', df_trips.iloc[index]['MODE1']
+# 		print 'MODE2', df_trips.iloc[index]['MODE2']
+# 		print 'MODE3', df_trips.iloc[index]['MODE3']
+# 		print 'MODE4', df_trips.iloc[index]['MODE4']
+# 		print 'MODE5', df_trips.iloc[index]['MODE5']
+# 		print 'MODE6', df_trips.iloc[index]['MODE6']
+# 		print 'MODE7', df_trips.iloc[index]['MODE7']
+# 		print 'MODE8', df_trips.iloc[index]['MODE8']
+# 		print 'MODE9', df_trips.iloc[index]['MODE9']
+# 		print 'MODE10', df_trips.iloc[index]['MODE10']
+# 		print 'MODE11', df_trips.iloc[index]['MODE11']
+# 		print 'MODE12', df_trips.iloc[index]['MODE12']
+# 		print 'MODE13', df_trips.iloc[index]['MODE13']
+# 		print 'MODE14', df_trips.iloc[index]['MODE14']
+# 		print 'MODE15', df_trips.iloc[index]['MODE15']
+# 		print 'MODE16', df_trips.iloc[index]['MODE16']
+# 		print ''
+# 		print 'R_BORO', df_trips.iloc[index]['R_BORO']
+# 		print ''
+# 		print 'otype', df_trips.iloc[index]['otype']
+# 		print 'O_PURP', df_trips.iloc[index]['O_PURP']
+# 		print 'O_Boro', df_trips.iloc[index]['O_Boro']
+# 		print 'O_COUNTY_STR', df_trips.iloc[index]['O_COUNTY_STR']
+# 		print 'O_COUNTY', df_trips.iloc[index]['O_COUNTY']
+# 		print 'O_PUMA', df_trips.iloc[index]['O_PUMA']
+# 		print 'O_TRACT', df_trips.iloc[index]['O_TRACT']
+# 		print ''
+# 		print 'dtype', df_trips.iloc[index]['dtype']
+# 		print 'D_PURP', df_trips.iloc[index]['D_PURP']
+# 		print 'D_Boro', df_trips.iloc[index]['D_Boro']
+# 		print 'D_COUNTY_STR', df_trips.iloc[index]['D_COUNTY_STR']
+# 		print 'D_COUNTY', df_trips.iloc[index]['D_COUNTY']
+# 		print 'D_PUMA', df_trips.iloc[index]['D_PUMA']
+# 		print 'D_TRACT', df_trips.iloc[index]['D_TRACT']
+# 		print ''
+# 		print 'NSUB', df_trips.iloc[index]['NSUB']
+# 		print 'NNYBUS', df_trips.iloc[index]['NNYBUS']
+# 		print 'NCRAIL', df_trips.iloc[index]['NCRAIL']
+# 		print 'NOTHTRAN', df_trips.iloc[index]['NOTHTRAN']
+# 		print 'StopAreaNo', df_trips.iloc[index]['StopAreaNo']
+# 		print '================================================='
 
 #print_sample(df_trips)
