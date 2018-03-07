@@ -385,7 +385,7 @@ def travel_duration_per_mode(df_trips, chart_name):
 	plt.grid()
 	plt.legend(loc=4)
 	# ax.set_title('')
-	ax.set_xlabel('Informed Trip Time (minutes)')
+	ax.set_xlabel('Informed Trip Duration (minutes)')
 	ax.set_ylabel('ECDF')
 	plt.tight_layout()
 	fig.savefig(chart_name)
