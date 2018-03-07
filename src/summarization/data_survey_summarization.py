@@ -63,6 +63,9 @@ def total_departure_arrival_trips(df_trips, chart_name):
 def travels_per_mode(df_trips_wkdy, df_trips_sat, df_trips_sun, chart_name):
 	print 'test'
 
+	# df_trips = df_trips_wkdy + df_trips_sat + df_trips_sun
+	# s_mode_count = df_trips_wkdy.groupby('MODE_G10')['TRIP_ID'].count()
+
 	s_mode_count_wkdy = df_trips_wkdy.groupby('MODE_G10')['TRIP_ID'].count()
 	s_mode_count_sat = df_trips_sat.groupby('MODE_G10')['TRIP_ID'].count()
 	s_mode_count_sun = df_trips_sun.groupby('MODE_G10')['TRIP_ID'].count()
@@ -74,7 +77,8 @@ def travels_per_mode(df_trips_wkdy, df_trips_sat, df_trips_sun, chart_name):
 	 s_mode_count_sun.rename('sunday')], axis=1)
 	print df_modes['mode']
 	print df_modes.index
-	ax = df_modes.plot(x='mode', y=['weekday', 'saturday', 'sunday'], color=['g', 'y', 'r'],  kind='bar', rot=90)
+	# ax = df_modes.plot(x='mode', y=['weekday', 'saturday', 'sunday'], color=['g', 'y', 'r'],  kind='bar', rot=90)
+	ax = df_modes.plot(x='mode',  kind='bar', rot=90)
 	#ax = df_modes['count'].plot(kind='pie', autopct='%.2f')
 	fig = ax.get_figure()
 	fig.savefig(chart_name, bbox_inches='tight')
