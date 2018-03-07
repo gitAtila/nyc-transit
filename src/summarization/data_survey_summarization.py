@@ -63,7 +63,7 @@ def total_departure_arrival_trips(df_trips, chart_name):
 def travels_per_mode(df_trips_wkdy, df_trips_sat, df_trips_sun, chart_name):
 	print 'test'
 
-	df_trips = pd.concat([df_trips_wkdy + df_trips_sat + df_trips_sun])
+	df_trips = pd.concat([df_trips_wkdy, df_trips_sat, df_trips_sun])
 	s_mode_count = df_trips_wkdy.groupby('MODE_G10')['TRIP_ID'].count()
 	# print s_mode_count
 	#
