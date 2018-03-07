@@ -367,6 +367,10 @@ def travel_duration_per_mode(df_trips, chart_name):
 		#break
 
 	# remove 'At Home/Refused'
+	del dict_commute_time_mode[4]
+	del dict_commute_time_mode[5]
+	del dict_commute_time_mode[6]
+	del dict_commute_time_mode[7]
 	del dict_commute_time_mode[8]
 
 	fig, ax = plt.subplots()
