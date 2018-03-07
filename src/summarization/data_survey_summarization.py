@@ -76,7 +76,7 @@ def travels_per_mode(df_trips_wkdy, df_trips_sat, df_trips_sun, chart_name):
 
 	# df_modes = pd.concat([s_mode_name.rename('mode'), s_mode_count_wkdy.rename('weekday'), s_mode_count_sat.rename('saturday'),\
 	#  s_mode_count_sun.rename('sunday')], axis=1)
-	df_modes = pd.concat([s_mode_name.rename('mode'), s_mode_count, axis=1)
+	df_modes = pd.concat([s_mode_name.rename('mode'), s_mode_count], axis=1)
 	print df_modes['mode']
 	print df_modes.index
 	# ax = df_modes.plot(x='mode', y=['weekday', 'saturday', 'sunday'], color=['g', 'y', 'r'],  kind='bar', rot=90)
