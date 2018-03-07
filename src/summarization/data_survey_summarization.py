@@ -80,7 +80,7 @@ def travels_per_mode(df_trips_wkdy, df_trips_sat, df_trips_sun, chart_name):
 	print df_modes['mode']
 	print df_modes.index
 	# ax = df_modes.plot(x='mode', y=['weekday', 'saturday', 'sunday'], color=['g', 'y', 'r'],  kind='bar', rot=90)
-	ax = df_modes.plot(x='mode',  kind='bar', rot=90)
+	ax = df_modes.plot(x='mode',  kind='barh', rot=90)
 	#ax = df_modes['count'].plot(kind='pie', autopct='%.2f')
 	fig = ax.get_figure()
 	fig.savefig(chart_name, bbox_inches='tight')
