@@ -58,48 +58,49 @@ def total_departure_arrival_trips(df_trips, chart_name):
 	df_trips_subway_bus = df_trips[df_trips['MODE_G8'] == 2]
 	df_trips_bus = df_trips[df_trips['MODE_G8'] == 3]
 	df_trips_taxi = df_trips[df_trips['MODE_G8'] == 5]
-	print df_trips_subway['HR_DEP']
-	df_trips_subway = df_trips_subway[df_trips_subway['HR_DEP'] != 99]
-	df_trips_subway_bus = df_trips_subway_bus[df_trips_subway_bus['HR_DEP'] != 99]
-	df_trips_bus = df_trips_bus[df_trips_bus['HR_DEP'] != 99]
-	df_trips_taxi = df_trips_taxi[df_trips_taxi['HR_DEP'] != 99]
 
-	ecdf_subway = ecdf_df(df_trips_subway, 'HR_DEP')
-	ecdf_subway_bus = ecdf_df(df_trips_subway_bus, 'HR_DEP')
-	ecdf_bus = ecdf_df(df_trips_bus, 'HR_DEP')
-	ecdf_taxi = ecdf_df(df_trips_taxi, 'HR_DEP')
+	departure_subway = df_trips_subway.groupby('HR_DEP')['TRIP_ID'].count()
+	departure_subway_bus = df_trips_subway_bus.groupby('HR_DEP')['TRIP_ID'].count()
+	departure_bus = df_trips_bus.groupby('HR_DEP')['TRIP_ID'].count()
+	departure_taxi = df_trips_taxi.groupby('HR_DEP')['TRIP_ID'].count()
 
-	fig, ax = plt.subplots()
-	plt.plot(ecdf_subway.x, ecdf_subway.y, label='NYC Subway')
-	plt.plot(ecdf_subway_bus.x, ecdf_subway_bus.y, label='Subway + Bus')
-	plt.plot(ecdf_bus.x, ecdf_bus.y, label='NY-MTA Bus (only)')
-	plt.plot(ecdf_taxi.x, ecdf_taxi.y, label='Taxi, Car/Van')
+	# arrival_count = df_trips.groupby('HR_ARR')['TRIP_ID'].count()
+	# 'NYC Subway', 'Subway + Bus', 'NY-MTA Bus (only)', 'Other Transit', 'Taxi, Car/Van'
+	df_total_grouped_hour = pd.concat([departure_subway.rename('NYC Transit'),\
+	departure_subway_bus.rename('Subway + Bus'), departure_bus.rename('NY-MTA Bus (only)'),\
+	departure_taxi.rename('Taxi, Car/Van Service')], axis=1)
+	# df_total_grouped_hour = df_normaliser(df_total_grouped_hour)
 
-	ax.xaxis.set_major_locator(ticker.MultipleLocator(60)) # set x sticks interal
-	plt.grid()
-	plt.legend()
-	ax.set_title('ECDF Departure Time')
-	plt.tight_layout()
+	df_total_grouped_hour = df_total_grouped_hour.drop(99)
+	print df_total_grouped_hour
+	ax = df_total_grouped_hour.plot()
+	ax.set_xlabel('hour')
+	fig = ax.get_figure()
 	fig.savefig(chart_name)
 
-
-	# departure_subway = df_trips_subway.groupby('HR_DEP')['TRIP_ID'].count()
-	# departure_subway_bus = df_trips_subway_bus.groupby('HR_DEP')['TRIP_ID'].count()
-	# departure_bus = df_trips_bus.groupby('HR_DEP')['TRIP_ID'].count()
-	# departure_taxi = df_trips_taxi.groupby('HR_DEP')['TRIP_ID'].count()
+	# print df_trips_subway['HR_DEP']
 	#
-	# # arrival_count = df_trips.groupby('HR_ARR')['TRIP_ID'].count()
-	# # 'NYC Subway', 'Subway + Bus', 'NY-MTA Bus (only)', 'Other Transit', 'Taxi, Car/Van'
-	# df_total_grouped_hour = pd.concat([departure_subway.rename('NYC Transit'),\
-	# departure_subway_bus.rename('Subway + Bus'), departure_bus.rename('NY-MTA Bus (only)'),\
-	# departure_taxi.rename('Taxi, Car/Van Service')], axis=1)
-	# # df_total_grouped_hour = df_normaliser(df_total_grouped_hour)
+	# df_trips_subway = df_trips_subway[df_trips_subway['HR_DEP'] != 99]
+	# df_trips_subway_bus = df_trips_subway_bus[df_trips_subway_bus['HR_DEP'] != 99]
+	# df_trips_bus = df_trips_bus[df_trips_bus['HR_DEP'] != 99]
+	# df_trips_taxi = df_trips_taxi[df_trips_taxi['HR_DEP'] != 99]
 	#
-	# df_total_grouped_hour = df_total_grouped_hour.drop(99)
-	# print df_total_grouped_hour
-	# ax = df_total_grouped_hour.plot()
-	# ax.set_xlabel('hour')
-	# fig = ax.get_figure()
+	# ecdf_subway = ecdf_df(df_trips_subway, 'HR_DEP')
+	# ecdf_subway_bus = ecdf_df(df_trips_subway_bus, 'HR_DEP')
+	# ecdf_bus = ecdf_df(df_trips_bus, 'HR_DEP')
+	# ecdf_taxi = ecdf_df(df_trips_taxi, 'HR_DEP')
+	#
+	# fig, ax = plt.subplots()
+	# plt.plot(ecdf_subway.x, ecdf_subway.y, label='NYC Subway')
+	# plt.plot(ecdf_subway_bus.x, ecdf_subway_bus.y, label='Subway + Bus')
+	# plt.plot(ecdf_bus.x, ecdf_bus.y, label='NY-MTA Bus (only)')
+	# plt.plot(ecdf_taxi.x, ecdf_taxi.y, label='Taxi, Car/Van')
+	#
+	# # ax.xaxis.set_major_locator(ticker.MultipleLocator(60)) # set x sticks interal
+	# plt.grid()
+	# plt.legend()
+	# ax.set_title('ECDF Departure Time')
+	# plt.tight_layout()
 	# fig.savefig(chart_name)
 
 # # transit and no transit mode
@@ -733,7 +734,7 @@ df_trips_sat = df_from_csv(travel_survey_file_sat)
 df_trips_sun = df_from_csv(travel_survey_file_sun)
 df_trips = pd.concat([df_trips_wkdy, df_trips_sat, df_trips_sun])
 
-total_departure_arrival_trips(df_trips, chart_path + 'ecdf_departure_time_modes.png')
+total_departure_arrival_trips(df_trips, chart_path + 'departure_time_modes.png')
 #origin_destination_county(df_trips, chart_path + 'origin_destination_county.png')
 #origin_destination_nyc_transit(df_trips, chart_path + 'od_transit.png')
 #origin_destination_purpose(df_trips, chart_path + 'od_purpose.png')
