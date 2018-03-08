@@ -46,9 +46,22 @@ def df_from_csv(travel_survey_file):
 
 # total departure and arrival time by hour
 def total_departure_arrival_trips(df_trips, chart_name):
-	departure_count = df_trips.groupby('HR_DEP')['TRIP_ID'].count()
-	arrival_count = df_trips.groupby('HR_ARR')['TRIP_ID'].count()
-	df_total_grouped_hour = pd.concat([departure_count.rename('departure'), arrival_count.rename('arrival')], axis=1)
+	df_trips_subway = df_trips[df_trips['MODE_G8'] == 1]
+	df_trips_subway_bus = df_trips[df_trips['MODE_G8'] == 2]
+	df_trips_bus = df_trips[df_trips['MODE_G8'] == 3]
+	df_trips_taxi = df_trips[df_trips['MODE_G8'] == 5]
+
+	departure_subway = df_trips_subway.groupby('HR_DEP')['TRIP_ID'].count()
+	departure_subway_bus = df_trips_subway_bus.groupby('HR_DEP')['TRIP_ID'].count()
+	departure_bus = df_trips_bus.groupby('HR_DEP')['TRIP_ID'].count()
+	departure_taxi = df_trips_taxi.groupby('HR_DEP')['TRIP_ID'].count()
+
+	# arrival_count = df_trips.groupby('HR_ARR')['TRIP_ID'].count()
+	# 'NYC Subway', 'Subway + Bus', 'NY-MTA Bus (only)', 'Other Transit', 'Taxi, Car/Van'
+	df_total_grouped_hour = pd.concat([departure_transit.rename('NYC Transit'),\
+	arrival_taxi.rename('Subway + Bus'), departure_transit.rename('NY-MTA Bus (only)'),\
+	arrival_taxi.rename('Taxi, Car/Van Service')], axis=1)
+
 	df_total_grouped_hour = df_total_grouped_hour.drop(99)
 	print df_total_grouped_hour
 	ax = df_total_grouped_hour.plot()
@@ -687,7 +700,7 @@ df_trips_sat = df_from_csv(travel_survey_file_sat)
 df_trips_sun = df_from_csv(travel_survey_file_sun)
 df_trips = pd.concat([df_trips_wkdy, df_trips_sat, df_trips_sun])
 
-#total_departure_arrival_trips(df_trips, chart_path + 'sun_departure_arrival_trips.png')
+total_departure_arrival_trips(df_trips, chart_path + 'departure_time_modes.png')
 #origin_destination_county(df_trips, chart_path + 'origin_destination_county.png')
 #origin_destination_nyc_transit(df_trips, chart_path + 'od_transit.png')
 #origin_destination_purpose(df_trips, chart_path + 'od_purpose.png')
@@ -736,11 +749,11 @@ df_trips = pd.concat([df_trips_wkdy, df_trips_sat, df_trips_sun])
 # plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_wkdy, 5), 'Number of Destinations per PUMA on Weekday', chart_path + 'destination_puma_wkdy.png')
 # plot_puma(shp_puma, get_count_destinations_per_puma(df_trips, 5), 'Number of Destinations per PUMA', chart_path + 'destination_puma.png')
 
-df_trips_transit = df_trips[df_trips['MODE_G2'] == 1]
-plot_puma(shp_puma, get_count_origins_per_puma(df_trips_transit, 5), 'Transit Origins per PUMA', chart_path + 'origins_transit_puma.png')
-# plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_transit, 5), ' Transit Destinations per PUMA', chart_path + 'destination_transit_puma.png')
-df_trips_taxi = df_trips[df_trips['MODE_G10'] == 7]
-plot_puma(shp_puma, get_count_origins_per_puma(df_trips_taxi, 5), 'Taxi Origins per PUMA', chart_path + 'origins_taxi_puma.png')
+# df_trips_transit = df_trips[df_trips['MODE_G2'] == 1]
+# plot_puma(shp_puma, get_count_origins_per_puma(df_trips_transit, 5), 'Transit Origins per PUMA', chart_path + 'origins_transit_puma.png')
+# # plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_transit, 5), ' Transit Destinations per PUMA', chart_path + 'destination_transit_puma.png')
+# df_trips_taxi = df_trips[df_trips['MODE_G10'] == 7]
+# plot_puma(shp_puma, get_count_origins_per_puma(df_trips_taxi, 5), 'Taxi Origins per PUMA', chart_path + 'origins_taxi_puma.png')
 # plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_taxi, 5), 'Taxi Destinations per PUMA', chart_path + 'destination_taxi_puma.png')
 
 #od_matrix(df_trips_wkdy, df_trips_sat, df_trips_sun)
