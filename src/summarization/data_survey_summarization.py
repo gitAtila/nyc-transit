@@ -69,12 +69,14 @@ def total_departure_arrival_trips(df_trips, chart_name):
 	df_total_grouped_hour = pd.concat([departure_subway.rename('NYC Transit'),\
 	departure_subway_bus.rename('Subway + Bus'), departure_bus.rename('NY-MTA Bus (only)'),\
 	departure_taxi.rename('Taxi, Car/Van Service')], axis=1)
-	# df_total_grouped_hour = df_normaliser(df_total_grouped_hour)
+	print df_total_grouped_hour
+	df_total_grouped_hour = df_normaliser(df_total_grouped_hour)
 
 	df_total_grouped_hour = df_total_grouped_hour.drop(99)
 	print df_total_grouped_hour
 	ax = df_total_grouped_hour.plot()
 	ax.set_xlabel('hour')
+	plt.tight_layout()
 	fig = ax.get_figure()
 	fig.savefig(chart_name)
 
