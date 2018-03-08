@@ -58,9 +58,9 @@ def total_departure_arrival_trips(df_trips, chart_name):
 
 	# arrival_count = df_trips.groupby('HR_ARR')['TRIP_ID'].count()
 	# 'NYC Subway', 'Subway + Bus', 'NY-MTA Bus (only)', 'Other Transit', 'Taxi, Car/Van'
-	df_total_grouped_hour = pd.concat([departure_transit.rename('NYC Transit'),\
-	arrival_taxi.rename('Subway + Bus'), departure_transit.rename('NY-MTA Bus (only)'),\
-	arrival_taxi.rename('Taxi, Car/Van Service')], axis=1)
+	df_total_grouped_hour = pd.concat([departure_subway.rename('NYC Transit'),\
+	departure_subway_bus.rename('Subway + Bus'), departure_bus.rename('NY-MTA Bus (only)'),\
+	departure_taxi.rename('Taxi, Car/Van Service')], axis=1)
 
 	df_total_grouped_hour = df_total_grouped_hour.drop(99)
 	print df_total_grouped_hour
