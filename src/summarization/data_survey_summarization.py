@@ -478,12 +478,12 @@ def plot_puma(shapefile_base_path, dict_puma_count, map_title, map_path):
 	shapefile_puma = shapefile.Reader(shapefile_base_path)
 
 	# set range of colors
-	cmap = plt.cm.GnBu
+	# cmap = plt.cm.GnBu
 	#cmap = plt.cm.Blues
 	#cmap = plt.cm.OrRd
 	#cmap = plt.cm.Purples
 	# cmap = plt.cm.Reds
-	#cmap = plt.cm.Greens
+	cmap = plt.cm.Greens
 	vmin = min(dict_puma_count.values()); vmax = max(dict_puma_count.values())
 	norm = Normalize(vmin=vmin, vmax=vmax)
 
