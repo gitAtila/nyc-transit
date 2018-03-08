@@ -560,11 +560,11 @@ def plot_census_tranct(shapefile_base_path, dict_ct_count, map_title, map_path):
 	shapefile_puma = shapefile.Reader(shapefile_base_path)
 
 	# set range of colors
-	#cmap = plt.cm.GnBu
+	cmap = plt.cm.GnBu
 	#cmap = plt.cm.Blues
 	#cmap = plt.cm.OrRd
 	#cmap = plt.cm.Purples
-	cmap = plt.cm.Reds
+	# cmap = plt.cm.Reds
 	#cmap = plt.cm.Greens
 	vmin = min(dict_census_tract_count.values()); vmax = max(dict_census_tract_count.values())
 	norm = Normalize(vmin=vmin, vmax=vmax)
@@ -737,11 +737,11 @@ df_trips = pd.concat([df_trips_wkdy, df_trips_sat, df_trips_sun])
 # plot_puma(shp_puma, get_count_destinations_per_puma(df_trips, 5), 'Number of Destinations per PUMA', chart_path + 'destination_puma.png')
 
 df_trips_transit = df_trips[df_trips['MODE_G2'] == 1]
-# plot_puma(shp_puma, get_count_origins_per_puma(df_trips_transit, 5), 'Transit Origins per PUMA', chart_path + 'origins_transit_puma.png')
-plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_transit, 5), ' Transit Destinations per PUMA', chart_path + 'destination_transit_puma.png')
+plot_puma(shp_puma, get_count_origins_per_puma(df_trips_transit, 5), 'Transit Origins per PUMA', chart_path + 'origins_transit_puma.png')
+# plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_transit, 5), ' Transit Destinations per PUMA', chart_path + 'destination_transit_puma.png')
 df_trips_taxi = df_trips[df_trips['MODE_G10'] == 7]
-# plot_puma(shp_puma, get_count_origins_per_puma(df_trips_taxi, 5), 'Taxi Origins per PUMA', chart_path + 'origins_taxi_puma.png')
-plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_taxi, 5), 'Taxi Destinations per PUMA', chart_path + 'destination_taxi_puma.png')
+plot_puma(shp_puma, get_count_origins_per_puma(df_trips_taxi, 5), 'Taxi Origins per PUMA', chart_path + 'origins_taxi_puma.png')
+# plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_taxi, 5), 'Taxi Destinations per PUMA', chart_path + 'destination_taxi_puma.png')
 
 #od_matrix(df_trips_wkdy, df_trips_sat, df_trips_sun)
 
