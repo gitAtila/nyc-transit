@@ -473,7 +473,7 @@ def get_subway_stations_per_puma(shp_subway_stations, shp_puma):
 
 	return dict_puma_count
 
-def plot_puma(shapefile_base_path, dict_puma_count, map_tile, map_path):
+def plot_puma(shapefile_base_path, dict_puma_count, map_title, map_path):
 
 	shapefile_puma = shapefile.Reader(shapefile_base_path)
 
@@ -543,7 +543,7 @@ def plot_puma(shapefile_base_path, dict_puma_count, map_tile, map_path):
 	ax.axis('scaled')
 	plt.xticks([])
 	plt.yticks([])
-	ax.set_title(map_tile)
+	ax.set_title(map_title)
 
 	ax.set_yscale('log')
 
@@ -553,6 +553,90 @@ def plot_puma(shapefile_base_path, dict_puma_count, map_tile, map_path):
 
 	#fig.tight_layout()
 	fig.savefig(map_path)
+
+
+def plot_census_tranct(shapefile_base_path, dict_ct_count, map_title, map_path):
+
+	shapefile_puma = shapefile.Reader(shapefile_base_path)
+
+	# set range of colors
+	#cmap = plt.cm.GnBu
+	#cmap = plt.cm.Blues
+	#cmap = plt.cm.OrRd
+	#cmap = plt.cm.Purples
+	cmap = plt.cm.Reds
+	#cmap = plt.cm.Greens
+	vmin = min(dict_census_tract_count.values()); vmax = max(dict_census_tract_count.values())
+	norm = Normalize(vmin=vmin, vmax=vmax)
+
+	# color mapper to covert values to colors
+	mapper = ScalarMappable(norm=norm, cmap=cmap)
+
+	list_nyc_census_tracts = []
+	for row in shapefile_census_tract.iterShapeRecords():
+		list_nyc_census_tracts.append(row.record[0])
+
+	# set colors to each census_tract
+	colors = dict()
+	# for key, count in dict_census_tract_count.iteritems():
+	# 	if key in list_nyc_census_tracts:
+	# 	colors[key] = mapper.to_rgba(count)
+
+	for census_tract in list_nyc_census_tracts:
+		if census_tract in dict_census_tract_count.keys():
+			colors[census_tract] = mapper.to_rgba(dict_census_tract_count[census_tract])
+		else:
+			colors[census_tract] = (1.0,1.0,1.0)
+			#print rgb2hex('w')
+
+	fig = plt.figure()
+	ax = fig.gca()
+
+	# manipulate shapefile
+	fields = shapefile_census_tract.fields[1:]
+	field_names = [field[0] for field in fields]
+
+	for record, shape in zip(shapefile_census_tract.iterRecords(), shapefile_census_tract.iterShapes()):
+		attributes = dict(zip(field_names, record))
+		print attributes, shape
+
+		# check number of parts (could use MultiPolygon class of shapely?)
+		nparts = len(shape.parts) # total parts
+		if nparts == 1:
+			polygon = Polygon(shape.points)
+			facecolor = rgb2hex(colors[attributes['ct_2010']])
+			patch = PolygonPatch(polygon, alpha=1.0, zorder=2, facecolor=facecolor, linewidth=.25)
+			ax.add_patch(patch)
+
+		else: # loop over parts of each shape, plot separately
+			for ip in range(nparts): # loop over parts, plot separately
+				i0=shape.parts[ip]
+				if ip < nparts-1:
+					i1 = shape.parts[ip+1]-1
+				else:
+					i1 = len(shape.points)
+
+				polygon = Polygon(shape.points[i0:i1+1])
+				facecolor = rgb2hex(colors[attributes['ct_2010']])
+				patch = PolygonPatch(polygon, alpha=1.0, zorder=2, facecolor=facecolor, linewidth=.25)
+				ax.add_patch(patch)
+
+	    #icolor = icolor + 1
+	ax.axis('scaled')
+	plt.xticks([])
+	plt.yticks([])
+	ax.set_title(map_title)
+
+	# ax.set_yscale('log')
+
+	# range color legend
+	cax = fig.add_axes([0.85, 0.25, 0.05, 0.5]) # posititon
+	cb = ColorbarBase(cax,cmap=cmap,norm=norm, orientation='vertical')
+
+	#fig.tight_layout()
+	fig.savefig(map_path)
+
+
 
 def matrix_od_county(df_trips):
 	dict_county_od = dict()
@@ -650,7 +734,14 @@ df_trips = pd.concat([df_trips_wkdy, df_trips_sat, df_trips_sun])
 # plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_sun, 5), 'Number of Destinations per PUMA on Sunday', chart_path + 'destination_puma_sun.png')
 # plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_sat, 5), 'Number of Destinations per PUMA on Saturday', chart_path + 'destination_puma_sat.png')
 # plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_wkdy, 5), 'Number of Destinations per PUMA on Weekday', chart_path + 'destination_puma_wkdy.png')
-plot_puma(shp_puma, get_count_destinations_per_puma(df_trips, 5), 'Number of Destinations per PUMA', chart_path + 'destination_puma.png')
+# plot_puma(shp_puma, get_count_destinations_per_puma(df_trips, 5), 'Number of Destinations per PUMA', chart_path + 'destination_puma.png')
+
+df_trips_transit = df_trips[df_trips['MODE_G2'] == 1]
+plot_puma(shp_puma, get_count_origins_per_puma(df_trips_transit, 5), 'Origins Transit per PUMA', chart_path + 'origins_transit_puma.png')
+plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_transit, 5), 'Destinations Transit per PUMA', chart_path + 'destination_transit_puma.png')
+df_trips_taxi = df_trips[df_trips['MODE_G10'] == 7]
+plot_puma(shp_puma, get_count_origins_per_puma(df_trips_taxi, 5), 'Origins Taxi per PUMA', chart_path + 'origins_taxi_puma.png')
+plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_taxi, 5), 'Destinations Taxi per PUMA', chart_path + 'destination_taxi_puma.png')
 
 #od_matrix(df_trips_wkdy, df_trips_sat, df_trips_sun)
 
