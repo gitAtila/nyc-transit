@@ -45,7 +45,7 @@ def df_from_csv(travel_survey_file):
 	return pd.read_csv(travel_survey_file)
 
 def df_normaliser(df):
-	return df.T.div(df.sum(axis=0), axis=0)
+	return df.T.div(df.sum(axis=0), axis=0).T
 
 def ecdf_df(df, column_name):
 	list_column = df[column_name].tolist()
@@ -71,6 +71,7 @@ def total_departure_arrival_trips(df_trips, chart_name):
 	departure_taxi.rename('Taxi, Car/Van Service')], axis=1)
 
 	df_total_grouped_hour = df_total_grouped_hour.drop(99)
+
 	print df_total_grouped_hour
 	df_total_grouped_hour = df_normaliser(df_total_grouped_hour)
 
