@@ -23,9 +23,9 @@ from statsmodels.distributions.empirical_distribution import ECDF
 travel_survey_file_wkdy = argv[1]
 travel_survey_file_sat = argv[2]
 travel_survey_file_sun = argv[3]
-# shp_puma = argv[4]
+shp_puma = argv[4]
 # shp_subway_stations = argv[5]
-chart_path = argv[4]
+chart_path = argv[5]
 
 # shapefile_census_tract = argv[4]
 # shapefile_borough = argv[6]
@@ -599,6 +599,7 @@ def od_matrix(df_trips_wkdy, df_trips_sat, df_trips_sun):
 df_trips_wkdy = df_from_csv(travel_survey_file_wkdy)
 df_trips_sat = df_from_csv(travel_survey_file_sat)
 df_trips_sun = df_from_csv(travel_survey_file_sun)
+df_trips = pd.concat([df_trips_wkdy, df_trips_sat, df_trips_sun])
 
 #total_departure_arrival_trips(df_trips, chart_path + 'sun_departure_arrival_trips.png')
 #origin_destination_county(df_trips, chart_path + 'origin_destination_county.png')
@@ -615,8 +616,7 @@ df_trips_sun = df_from_csv(travel_survey_file_sun)
 # travel_duration_per_mode(df_trips_sat, chart_path + 'travel_time_mode_sat.png')
 # travel_duration_per_mode(df_trips_sun, chart_path + 'travel_time_mode_sun.png')
 
-df_trips = pd.concat([df_trips_wkdy, df_trips_sat, df_trips_sun])
-travel_duration_per_mode(df_trips, chart_path + 'travel_time_mode.png')
+# travel_duration_per_mode(df_trips, chart_path + 'travel_time_mode.png')
 
 # plot_puma(shp_puma, get_count_origins_per_puma(df_trips_wkdy, 1), 'Number of Origins at Home per PUMA on Weekdays', chart_path + 'home_origin_puma_wkdy.png')
 # plot_puma(shp_puma, get_count_origins_per_puma(df_trips_sat, 1), 'Number of Origins at Home per PUMA on Satuday', chart_path + 'home_origin_puma_sat.png')
@@ -643,6 +643,7 @@ travel_duration_per_mode(df_trips, chart_path + 'travel_time_mode.png')
 # plot_puma(shp_puma, get_count_origins_per_puma(df_trips_sun, 5), 'Number of Origins per PUMA on Sunday', chart_path + 'origins_puma_sun.png')
 # plot_puma(shp_puma, get_count_origins_per_puma(df_trips_sat, 5), 'Number of Origins per PUMA on Saturday', chart_path + 'origins_puma_sat.png')
 # plot_puma(shp_puma, get_count_origins_per_puma(df_trips_wkdy, 5), 'Number of Origins per PUMA on Weekday', chart_path + 'origins_puma_wkdy.png')
+plot_puma(shp_puma, get_count_origins_per_puma(df_trips, 5), 'Number of Origins per PUMA', chart_path + 'origins_puma.png')
 
 # plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_sun, 5), 'Number of Destinations per PUMA on Sunday', chart_path + 'destination_puma_sun.png')
 # plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_sat, 5), 'Number of Destinations per PUMA on Saturday', chart_path + 'destination_puma_sat.png')
