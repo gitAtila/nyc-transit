@@ -44,6 +44,9 @@ def list_from_csv(travel_survey_file):
 def df_from_csv(travel_survey_file):
 	return pd.read_csv(travel_survey_file)
 
+def df_normaliser(df):
+	return df.div(df.sum(axis=1), axis=0)
+
 # total departure and arrival time by hour
 def total_departure_arrival_trips(df_trips, chart_name):
 	df_trips_subway = df_trips[df_trips['MODE_G8'] == 1]
@@ -61,6 +64,7 @@ def total_departure_arrival_trips(df_trips, chart_name):
 	df_total_grouped_hour = pd.concat([departure_subway.rename('NYC Transit'),\
 	departure_subway_bus.rename('Subway + Bus'), departure_bus.rename('NY-MTA Bus (only)'),\
 	departure_taxi.rename('Taxi, Car/Van Service')], axis=1)
+	df_total_grouped_hour = df_normaliser(df_total_grouped_hour)
 
 	df_total_grouped_hour = df_total_grouped_hour.drop(99)
 	print df_total_grouped_hour
