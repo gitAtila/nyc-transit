@@ -648,6 +648,7 @@ plot_puma(shp_puma, get_count_origins_per_puma(df_trips, 5), 'Number of Origins 
 # plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_sun, 5), 'Number of Destinations per PUMA on Sunday', chart_path + 'destination_puma_sun.png')
 # plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_sat, 5), 'Number of Destinations per PUMA on Saturday', chart_path + 'destination_puma_sat.png')
 # plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_wkdy, 5), 'Number of Destinations per PUMA on Weekday', chart_path + 'destination_puma_wkdy.png')
+plot_puma(shp_puma, get_count_destinations_per_puma(df_trips, 5), 'Number of Destinations per PUMA', chart_path + 'destination_puma.png')
 
 #od_matrix(df_trips_wkdy, df_trips_sat, df_trips_sun)
 
