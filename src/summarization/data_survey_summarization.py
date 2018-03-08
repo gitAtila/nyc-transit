@@ -58,7 +58,7 @@ def total_departure_arrival_trips(df_trips, chart_name):
 	df_trips_subway_bus = df_trips[df_trips['MODE_G8'] == 2]
 	df_trips_bus = df_trips[df_trips['MODE_G8'] == 3]
 	df_trips_taxi = df_trips[df_trips['MODE_G8'] == 5]
-	print df_trips_subway
+	print df_trips_subway['HR_DEP']
 	df_trips_subway = df_trips_subway[df_trips_subway['HR_DEP'] != 99]
 	df_trips_subway_bus = df_trips_subway_bus[df_trips_subway_bus['HR_DEP'] != 99]
 	df_trips_bus = df_trips_bus[df_trips_bus['HR_DEP'] != 99]
