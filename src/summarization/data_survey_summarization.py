@@ -482,8 +482,8 @@ def plot_puma(shapefile_base_path, dict_puma_count, map_tile, map_path):
 	#cmap = plt.cm.Blues
 	#cmap = plt.cm.OrRd
 	#cmap = plt.cm.Purples
-	#cmap = plt.cm.Reds
-	cmap = plt.cm.Greens
+	cmap = plt.cm.Reds
+	#cmap = plt.cm.Greens
 	vmin = min(dict_puma_count.values()); vmax = max(dict_puma_count.values())
 	norm = Normalize(vmin=vmin, vmax=vmax)
 
@@ -544,6 +544,8 @@ def plot_puma(shapefile_base_path, dict_puma_count, map_tile, map_path):
 	plt.xticks([])
 	plt.yticks([])
 	ax.set_title(map_tile)
+
+	ax.set_yscale('log')
 
 	# range color legend
 	cax = fig.add_axes([0.85, 0.25, 0.05, 0.5]) # posititon
@@ -643,7 +645,7 @@ df_trips = pd.concat([df_trips_wkdy, df_trips_sat, df_trips_sun])
 # plot_puma(shp_puma, get_count_origins_per_puma(df_trips_sun, 5), 'Number of Origins per PUMA on Sunday', chart_path + 'origins_puma_sun.png')
 # plot_puma(shp_puma, get_count_origins_per_puma(df_trips_sat, 5), 'Number of Origins per PUMA on Saturday', chart_path + 'origins_puma_sat.png')
 # plot_puma(shp_puma, get_count_origins_per_puma(df_trips_wkdy, 5), 'Number of Origins per PUMA on Weekday', chart_path + 'origins_puma_wkdy.png')
-plot_puma(shp_puma, get_count_origins_per_puma(df_trips, 5), 'Number of Origins per PUMA', chart_path + 'origins_puma.png')
+# plot_puma(shp_puma, get_count_origins_per_puma(df_trips, 5), 'Number of Origins per PUMA', chart_path + 'origins_puma.png')
 
 # plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_sun, 5), 'Number of Destinations per PUMA on Sunday', chart_path + 'destination_puma_sun.png')
 # plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_sat, 5), 'Number of Destinations per PUMA on Saturday', chart_path + 'destination_puma_sat.png')
