@@ -45,7 +45,7 @@ def df_from_csv(travel_survey_file):
 	return pd.read_csv(travel_survey_file)
 
 def df_normaliser(df):
-	return df.div(df.sum(axis=1), axis=0)
+	return df.T.div(df.sum(axis=0), axis=0)
 
 def ecdf_df(df, column_name):
 	list_column = df[column_name].tolist()
