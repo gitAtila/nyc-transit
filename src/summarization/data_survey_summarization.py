@@ -133,7 +133,7 @@ def travels_per_mode(df_trips_wkdy, df_trips_sat, df_trips_sun, chart_name):
 	df_modes.sort_values('count', inplace=True,  ascending=False)
 	print df_modes
 
-	ax = df_modes.plot(x='mode',  kind='barh', rot=0, legend=False, color='bbbbrrrbbr')
+	ax = df_modes.plot(x='mode',  kind='barh', rot=0, legend=False, color='rbbrrrbbbb')
 	ax.set_xlabel('Frequency')
 	ax.set_ylabel('Mode')
 	#ax = df_modes['count'].plot(kind='pie', autopct='%.2f')
