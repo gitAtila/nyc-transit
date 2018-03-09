@@ -7,6 +7,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
+from geopy.distance import vincenty
+
 from statsmodels.distributions.empirical_distribution import ECDF
 
 computed_trips_path = argv[1]
@@ -57,7 +59,15 @@ def trips_duration(dict_trips):
             list_durations.append(time_delta)
     return list_durations
 
-def walk_distance(dict_transit_trips):
+def straight_line_distance(dict_trips):
+    list_distances = []
+    for sampn_perno_tripno, list_trip in dict_trips.iteritems():
+         distance = vincenty((list_trip[-1]['longitude'], list_trip[-1]['latitude']),\
+         (list_trip[0]['longitude'], list_trip[0]['latitude'])).meters
+        list_distances.append(time_delta)
+    return list_distances
+
+def walking_distances(dict_transit_trips):
     list_distances = []
     for sampn_perno_tripno, list_trip in dict_transit_trips.iteritems():
         df_trip = pd.DataFrame(list_trip)
@@ -67,7 +77,6 @@ def walk_distance(dict_transit_trips):
         list_distances.append(max_distances['distance'].sum())
 
     return list_distances
-
 
 # read computed trips
 df_computed_trips = pd.read_csv(computed_trips_path)
@@ -118,31 +127,65 @@ print 'dict_bus_subway_trips', len(dict_bus_subway_trips)
 # plt.tight_layout()
 # fig.savefig(result_path + 'mode_durations.png')
 
-# compute transit walk distances
-list_bus_walk_distance = walk_distance(dict_bus_trips)
-list_subway_walk_distance = walk_distance(dict_subway_trips)
-list_bus_subway_walk_distance = walk_distance(dict_bus_subway_trips)
+# # compute transit walk distances
+# list_bus_walk_distance = walk_distance(dict_bus_trips)
+# list_subway_walk_distance = walk_distance(dict_subway_trips)
+# list_bus_subway_walk_distance = walk_distance(dict_bus_subway_trips)
+#
+# # plot walk distances
+# fig, ax = plt.subplots()
+#
+# list_subway_walk_distance.sort()
+# ecdf_subway = ECDF(list_subway_walk_distance)
+# plt.plot(ecdf_subway.x, ecdf_subway.y, label='NYC Subway')
+#
+# list_bus_subway_walk_distance.sort()
+# ecdf_bus_subway = ECDF(list_bus_subway_walk_distance)
+# plt.plot(ecdf_bus_subway.x, ecdf_bus_subway.y, label='Subway + Bus')
+#
+# list_bus_walk_distance.sort()
+# ecdf_bus = ECDF(list_bus_walk_distance)
+# plt.plot(ecdf_bus.x, ecdf_bus.y, label='NY-MTA Bus (only)')
+#
+# # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x ticks as multiple of sixty
+# plt.grid()
+# plt.legend(loc=4)
+# # ax.set_title('')
+# ax.set_xlabel('Computed Walking Distace (meters)')
+# ax.set_ylabel('ECDF')
+# plt.tight_layout()
+# fig.savefig(result_path + 'walking_distances.png')
 
-# plot walk distances
+# compute straight line distance
+list_bus_distances = walking_distances(dict_bus_trips)
+list_taxi_distances = walking_distances(dict_taxi_trips)
+list_subway_distances = walking_distances(dict_subway_trips)
+list_bus_subway_distances = walking_distances(dict_bus_subway_trips)
+
+# plot distances
 fig, ax = plt.subplots()
 
-list_subway_walk_distance.sort()
-ecdf_subway = ECDF(list_subway_walk_distance)
+list_subway_distances.sort()
+ecdf_subway = ECDF(list_subway_distances)
 plt.plot(ecdf_subway.x, ecdf_subway.y, label='NYC Subway')
 
-list_bus_subway_walk_distance.sort()
-ecdf_bus_subway = ECDF(list_bus_subway_walk_distance)
+list_bus_subway_distances.sort()
+ecdf_bus_subway = ECDF(list_bus_subway_distances)
 plt.plot(ecdf_bus_subway.x, ecdf_bus_subway.y, label='Subway + Bus')
 
-list_bus_walk_distance.sort()
-ecdf_bus = ECDF(list_bus_walk_distance)
+list_bus_distances.sort()
+ecdf_bus = ECDF(list_bus_distances)
 plt.plot(ecdf_bus.x, ecdf_bus.y, label='NY-MTA Bus (only)')
+
+list_taxi_distances.sort()
+ecdf_taxi = ECDF(list_taxi_distances)
+plt.plot(ecdf_taxi.x, ecdf_taxi.y, label='Taxi')
 
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x ticks as multiple of sixty
 plt.grid()
-plt.legend(loc=4)
+# plt.legend(loc=4)
 # ax.set_title('')
-ax.set_xlabel('Computed Walking Distace (meters)')
+ax.set_xlabel('Straight Linge Distance (meters)')
 ax.set_ylabel('ECDF')
 plt.tight_layout()
-fig.savefig(result_path + 'walk_distances.png')
+fig.savefig(result_path + 'mode_distances.png')
