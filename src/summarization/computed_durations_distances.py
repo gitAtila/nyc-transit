@@ -63,7 +63,7 @@ def straight_line_distances(dict_trips):
     list_distances = []
     for sampn_perno_tripno, list_trip in dict_trips.iteritems():
         distance = vincenty((list_trip[-1]['longitude'], list_trip[-1]['latitude']),\
-        (list_trip[0]['longitude'], list_trip[0]['latitude'])).meters
+        (list_trip[0]['longitude'], list_trip[0]['latitude'])).meters/1000
         list_distances.append(distance)
     return list_distances
 
@@ -185,7 +185,7 @@ plt.plot(ecdf_taxi.x, ecdf_taxi.y, label='Taxi')
 plt.grid()
 plt.legend(loc=4)
 # ax.set_title('')
-ax.set_xlabel('Straight Line Distance (meters)')
+ax.set_xlabel('Straight Line Distance (km)')
 ax.set_ylabel('ECDF')
 plt.tight_layout()
 fig.savefig(result_path + 'mode_distances.png')
