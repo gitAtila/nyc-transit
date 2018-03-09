@@ -133,7 +133,7 @@ def travels_per_mode(df_trips_wkdy, df_trips_sat, df_trips_sun, chart_name):
 	df_modes.sort_values('count', inplace=True,  ascending=False)
 	print df_modes
 
-	ax = df_modes.plot(x='mode',  kind='barh', rot=0, legend=False)
+	ax = df_modes.plot(x='mode',  kind='barh', rot=0, legend=False, color='bbbbrrrbbr')
 	ax.set_xlabel('Frequency')
 	#ax = df_modes['count'].plot(kind='pie', autopct='%.2f')
 	fig = ax.get_figure()
@@ -740,12 +740,12 @@ df_trips_sat = df_from_csv(travel_survey_file_sat)
 df_trips_sun = df_from_csv(travel_survey_file_sun)
 df_trips = pd.concat([df_trips_wkdy, df_trips_sat, df_trips_sun])
 
-total_departure_arrival_trips(df_trips, chart_path + 'departure_time_modes.png')
+# total_departure_arrival_trips(df_trips, chart_path + 'departure_time_modes.png')
 #origin_destination_county(df_trips, chart_path + 'origin_destination_county.png')
 #origin_destination_nyc_transit(df_trips, chart_path + 'od_transit.png')
 #origin_destination_purpose(df_trips, chart_path + 'od_purpose.png')
 
-# travels_per_mode(df_trips_wkdy, df_trips_sat, df_trips_sun, chart_path + 'travels_per_mode.png')
+travels_per_mode(df_trips_wkdy, df_trips_sat, df_trips_sun, chart_path + 'travels_per_mode.png')
 # travels_per_purpose(df_trips_wkdy, df_trips_sat, df_trips_sun, chart_path)
 #travels_per_county(df_trips_wkdy, df_trips_sat, df_trips_sun, chart_path)
 
