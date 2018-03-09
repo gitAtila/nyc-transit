@@ -52,7 +52,7 @@ def split_modals(dict_trips):
 def trips_duration(dict_trips):
     list_durations = []
     for sampn_perno_tripno, list_trip in dict_trips.iteritems():
-        list_trip = sorted(list_trip, key=lambda k: k['date_time'])
+        # list_trip = sorted(list_trip, key=lambda k: k['date_time'])
         list_durations.append((list_trip[-1]['date_time'] - list_trip[0]['date_time']).total_seconds()/60)
     return list_durations
 
