@@ -52,8 +52,9 @@ def split_modals(dict_trips):
 def trips_duration(dict_trips):
     list_durations = []
     for sampn_perno_tripno, list_trip in dict_trips.iteritems():
-        # list_trip = sorted(list_trip, key=lambda k: k['date_time'])
-        list_durations.append((list_trip[-1]['date_time'] - list_trip[0]['date_time']).total_seconds()/60)
+        time_delta = (list_trip[-1]['date_time'] - list_trip[0]['date_time']).total_seconds()/60
+        if time_delta > 0:
+            list_durations.append(time_delta)
     return list_durations
 
 # read computed trips
@@ -94,7 +95,7 @@ list_taxi_durations.sort()
 ecdf_taxi = ECDF(list_taxi_durations)
 plt.plot(ecdf_taxi.x, ecdf_taxi.y, label='Taxi')
 
-# ax.xaxis.set_major_locator(ticker.MultipleLocator(60)) # set x ticks as multiple of sixty
+ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x ticks as multiple of sixty
 plt.grid()
 plt.legend(loc=4)
 # ax.set_title('')
