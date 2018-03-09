@@ -59,12 +59,12 @@ def trips_duration(dict_trips):
             list_durations.append(time_delta)
     return list_durations
 
-def straight_line_distance(dict_trips):
+def straight_line_distances(dict_trips):
     list_distances = []
     for sampn_perno_tripno, list_trip in dict_trips.iteritems():
-         distance = vincenty((list_trip[-1]['longitude'], list_trip[-1]['latitude']),\
-         (list_trip[0]['longitude'], list_trip[0]['latitude'])).meters
-        list_distances.append(time_delta)
+        distance = vincenty((list_trip[-1]['longitude'], list_trip[-1]['latitude']),\
+        (list_trip[0]['longitude'], list_trip[0]['latitude'])).meters
+        list_distances.append(distance)
     return list_distances
 
 def walking_distances(dict_transit_trips):
@@ -157,10 +157,10 @@ print 'dict_bus_subway_trips', len(dict_bus_subway_trips)
 # fig.savefig(result_path + 'walking_distances.png')
 
 # compute straight line distance
-list_bus_distances = walking_distances(dict_bus_trips)
-list_taxi_distances = walking_distances(dict_taxi_trips)
-list_subway_distances = walking_distances(dict_subway_trips)
-list_bus_subway_distances = walking_distances(dict_bus_subway_trips)
+list_bus_distances = straight_line_distances(dict_bus_trips)
+list_taxi_distances = straight_line_distances(dict_taxi_trips)
+list_subway_distances = straight_line_distances(dict_subway_trips)
+list_bus_subway_distances = straight_line_distances(dict_bus_subway_trips)
 
 # plot distances
 fig, ax = plt.subplots()
@@ -183,9 +183,9 @@ plt.plot(ecdf_taxi.x, ecdf_taxi.y, label='Taxi')
 
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x ticks as multiple of sixty
 plt.grid()
-# plt.legend(loc=4)
+plt.legend(loc=4)
 # ax.set_title('')
-ax.set_xlabel('Straight Linge Distance (meters)')
+ax.set_xlabel('Straight Line Distance (meters)')
 ax.set_ylabel('ECDF')
 plt.tight_layout()
 fig.savefig(result_path + 'mode_distances.png')
