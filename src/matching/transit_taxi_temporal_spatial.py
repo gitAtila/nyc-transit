@@ -119,7 +119,7 @@ def taxis_near_stop(stop, dict_running_taxis, max_distance):
         for taxi_position in list_taxi_positions:
 
             # not consider positions too near from the last evaluated
-            if last_taxi_pos[0] != -1 and great_circle(last_taxi_pos,\
+            if last_taxi_pos[0] == -1 or great_circle(last_taxi_pos,\
             (taxi_position['latitude'], taxi_position['longitude'])).meters >= 500:
 
                 distance_stop_taxi_pos = great_circle((stop['latitude'], stop['longitude']),\
