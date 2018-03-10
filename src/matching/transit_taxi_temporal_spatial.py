@@ -281,7 +281,7 @@ def match_transit_taxi_trips(router_id, list_transit_trip, dict_taxi_trips, max_
 
                     # if there is any match add to result
                     if len(dict_match_times_distances) > 0:
-
+                        print '\tGood candidate'
                         dict_match_times_distances['transit_id'] = transit_id
                         dict_match_times_distances['stop_id'] = transit_stop_position['stop_id']
 
