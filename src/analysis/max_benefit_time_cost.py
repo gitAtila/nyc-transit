@@ -6,9 +6,11 @@ from sys import argv
 import pandas as pd
 import numpy as np
 
-import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')
+
+import matplotlib.pyplot as plt
+
 from statsmodels.distributions.empirical_distribution import ECDF
 
 max_benefit_trips_path = argv[1]
