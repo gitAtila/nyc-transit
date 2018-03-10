@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 
 import matplotlib.pyplot as plt
+import matplotlib
 matplotlib.use('Agg')
 from statsmodels.distributions.empirical_distribution import ECDF
 
