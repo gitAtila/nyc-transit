@@ -255,67 +255,40 @@ def match_transit_taxi_trips(router_id, list_transit_trip, dict_taxi_trips, max_
             for taxi_near_stop in list_taxis_near_stop:
 
                 list_taxi_positions = dict_taxi_trips[taxi_near_stop['taxi_id']]
+
+                # acceptance position as the taxi nearest position to transit stop
                 taxi_acceptance_position = [position for position in list_taxi_positions\
                 if position['pos_sequence'] == taxi_near_stop['pos_sequence']][0]
-                # print list_transit_trip
+
                 dict_transit_private_destination = list_transit_trip[-1]
                 dict_taxi_private_destination = list_taxi_positions[-1]
 
-                dict_match_times_distances = integration_route(router_id,\
-                transit_stop_position, taxi_acceptance_position, dict_transit_private_destination,\
-                dict_taxi_private_destination)
+                # preprocessing
+                # transit stop time must be before taxi destination time
+                # taxi acceptance time must be before transit passenger destination time
+                # distance between integrations shoud be less than distance from taxi integration to its destination
+                if transit_stop_position['date_time'] < dict_taxi_private_destination['date_time'] \
+                and taxi_acceptance_position['date_time'] < dict_transit_private_destination['date_time']\
+                and great_circle((taxi_acceptance_position['longitude'], taxi_acceptance_position['latitude']),\
+                (transit_stop_position['longitude'],transit_stop_position['latitude']))\
+                < great_circle((taxi_acceptance_position['longitude'], taxi_acceptance_position['latitude']),\
+                (dict_taxi_private_destination['longitude'], dict_taxi_private_destination['latitude'])):
 
-                if len(dict_match_times_distances) > 0:
-                    # print 'match', dict_match_times_distances
-                    # for key, value in dict_match_times_distances.iteritems():
-                    #     print key, value
-                    taxi_private_distance = list_taxi_positions[-1]['distance']
-                    taxi_private_destination_time = list_taxi_positions[-1]['date_time']
-                    taxi_shared_destination_time = dict_match_times_distances['taxi_destination_time']
+                    # compute transit taxi integration route
+                    dict_match_times_distances = integration_route(router_id,\
+                    transit_stop_position, taxi_acceptance_position, dict_transit_private_destination,\
+                    dict_taxi_private_destination)
 
-                    if taxi_shared_destination_time < taxi_private_destination_time:
+                    # if there is any match add to result
+                    if len(dict_match_times_distances) > 0:
 
-                        df_taxi_pos = pd.DataFrame(list_taxi_positions)
-                        print df_taxi_pos
-                        individual_integration_distance = df_taxi_pos[(df_taxi_pos['sampn_perno_tripno'] == taxi_near_stop['taxi_id']) & \
-                        (df_taxi_pos['trip_sequence'] == taxi_near_stop['trip_sequence']) & \
-                        (df_taxi_pos['pos_sequence'] == taxi_near_stop['pos_sequence'])]
-                        print individual_integration_distance
-                        individual_integration_distance = individual_integration_distance['distance'].iloc[0]
+                        dict_match_times_distances['transit_id'] = transit_id
+                        dict_match_times_distances['stop_id'] = transit_stop_position['stop_id']
 
-                        individual_integration_distance = individual_integration_distance
-                        taxi_shared_distance = individual_integration_distance + dict_match_times_distances['integration_distance'] +\
-                        dict_match_times_distances['shared_distance']
+                        dict_match_times_distances['taxi_id'] = taxi_near_stop['taxi_id']
+                        dict_match_times_distances['taxi_pos_sequence'] = taxi_near_stop['pos_sequence']
 
-                        if dict_match_times_distances['taxi_destination_time'] > dict_match_times_distances['transit_destination_time']:
-                            taxi_shared_distance += dict_match_times_distances['destinations_distance']
-                        # 
-                        # print ''
-                        # print 'taxi_arrival_time_transit_stop\t', dict_match_times_distances['taxi_arrival_time_transit_stop']
-                        # print 'transit_destination_time\t', dict_match_times_distances['transit_destination_time']
-                        # print 'taxi_destination_time\t', dict_match_times_distances['taxi_destination_time']
-                        # print 'individual_integration_distance\t', individual_integration_distance
-                        # print 'shared_distance\t', dict_match_times_distances['shared_distance']
-                        # print 'destinations_distance\t', dict_match_times_distances['destinations_distance']
-                        # print 'integration_distance\t', dict_match_times_distances['integration_distance']
-                        # print ''
-                        # print 'taxi_shared_destination_time', taxi_shared_destination_time
-                        # print 'taxi_private_destination_time', taxi_private_destination_time
-                        # print ''
-                        # print 'taxi_private_distance', taxi_private_distance
-                        # print 'taxi_shared_distance', taxi_shared_distance
-                        # print ''
-                        # stop
-                    # print taxi_near_stop
-
-
-                    dict_match_times_distances['transit_id'] = transit_id
-                    dict_match_times_distances['stop_id'] = transit_stop_position['stop_id']
-
-                    dict_match_times_distances['taxi_id'] = taxi_near_stop['taxi_id']
-                    dict_match_times_distances['taxi_pos_sequence'] = taxi_near_stop['pos_sequence']
-
-                    list_transit_taxi_matches.append(dict_match_times_distances)
+                        list_transit_taxi_matches.append(dict_match_times_distances)
 
         elapsed = timeit.default_timer() - start_time
         list_time_per_transit_id.append({'transit_id': transit_id, 'elapsed': elapsed})
