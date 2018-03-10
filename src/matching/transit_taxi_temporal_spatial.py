@@ -124,7 +124,7 @@ def taxis_near_stop(stop, dict_running_taxis, max_distance):
 
                 distance_stop_taxi_pos = great_circle((stop['latitude'], stop['longitude']),\
                 (taxi_position['latitude'], taxi_position['longitude'])).meters
-                if distance_stop_taxi_pos <= max_distance:
+                if max_distance == -1 or distance_stop_taxi_pos <= max_distance:
                     list_taxis_near_stop.append({'taxi_id': key, 'trip_sequence': taxi_position['trip_sequence'],\
                     'pos_sequence': taxi_position['pos_sequence'], 'distance': distance_stop_taxi_pos})
                     last_taxi_pos = (taxi_position['latitude'], taxi_position['longitude'])
