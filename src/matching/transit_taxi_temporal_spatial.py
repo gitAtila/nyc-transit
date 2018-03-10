@@ -289,7 +289,8 @@ def match_transit_taxi_trips(router_id, list_transit_trip, dict_taxi_trips, max_
                         dict_match_times_distances['taxi_pos_sequence'] = taxi_near_stop['pos_sequence']
 
                         list_transit_taxi_matches.append(dict_match_times_distances)
-
+                else:
+                    print '\tCandidate eliminated'
         elapsed = timeit.default_timer() - start_time
         list_time_per_transit_id.append({'transit_id': transit_id, 'elapsed': elapsed})
     return list_transit_taxi_matches, list_time_per_transit_id
