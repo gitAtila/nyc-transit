@@ -115,13 +115,19 @@ def taxis_near_stop(stop, dict_running_taxis, max_distance):
     list_taxis_near_stop = []
 
     for key, list_taxi_positions in dict_running_taxis.iteritems():
+        last_taxi_pos = (-1, -1)
         for taxi_position in list_taxi_positions:
-            # straight line distance
-            distance_stop_taxi_pos = great_circle((stop['latitude'], stop['longitude']),\
-            (taxi_position['latitude'], taxi_position['longitude'])).meters
-            if distance_stop_taxi_pos <= max_distance:
-                list_taxis_near_stop.append({'taxi_id': key, 'trip_sequence': taxi_position['trip_sequence'],\
-                'pos_sequence': taxi_position['pos_sequence'], 'distance': distance_stop_taxi_pos})
+
+            # not consider positions too near from the last evaluated
+            if last_taxi_pos[0] != -1 and great_circle(last_taxi_pos,\
+            (taxi_position['latitude'], taxi_position['longitude'])).meters >= 500:
+
+                distance_stop_taxi_pos = great_circle((stop['latitude'], stop['longitude']),\
+                (taxi_position['latitude'], taxi_position['longitude'])).meters
+                if distance_stop_taxi_pos <= max_distance:
+                    list_taxis_near_stop.append({'taxi_id': key, 'trip_sequence': taxi_position['trip_sequence'],\
+                    'pos_sequence': taxi_position['pos_sequence'], 'distance': distance_stop_taxi_pos})
+                    last_taxi_pos = (taxi_position['latitude'], taxi_position['longitude'])
 
     return list_taxis_near_stop
 
@@ -269,10 +275,10 @@ def match_transit_taxi_trips(router_id, list_transit_trip, dict_taxi_trips, max_
                 # distance between integrations shoud be less than distance from taxi integration to its destination
                 if transit_stop_position['date_time'] < dict_taxi_private_destination['date_time'] \
                 and taxi_acceptance_position['date_time'] < dict_transit_private_destination['date_time']\
-                and great_circle((taxi_acceptance_position['longitude'], taxi_acceptance_position['latitude']),\
-                (transit_stop_position['longitude'],transit_stop_position['latitude']))\
-                < great_circle((taxi_acceptance_position['longitude'], taxi_acceptance_position['latitude']),\
-                (dict_taxi_private_destination['longitude'], dict_taxi_private_destination['latitude'])):
+                and great_circle((taxi_acceptance_position['latitude'], taxi_acceptance_position['longitude']),\
+                (transit_stop_position['latitude'], transit_stop_position['longitude']))\
+                < great_circle((taxi_acceptance_position['latitude'], taxi_acceptance_position['longitude']),\
+                ( dict_taxi_private_destination['latitude'], dict_taxi_private_destination['longitude'])):
 
                     # compute transit taxi integration route
                     dict_match_times_distances = integration_route(router_id,\
