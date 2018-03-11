@@ -5,6 +5,9 @@
 from sys import argv
 import pandas as pd
 
+import matplotlib
+matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 from statsmodels.distributions.empirical_distribution import ECDF
 
