@@ -46,4 +46,4 @@ plot_cdf_two_curves(list_taxi_per_transit, list_transit_per_taxi, 'taxi per tran
 'transit per taxi', '# of Options', result_path + 'cdf_trip_possibilities.png')
 
 plot_cdf_two_curves(list_transit_stop_options, list_taxi_position_options, 'transit stops',\
-'taxi stop', '# of Options', result_path + 'cdf_integration_possibilities.png')
+'taxi positions', '# of Options', result_path + 'cdf_integration_possibilities.png')
