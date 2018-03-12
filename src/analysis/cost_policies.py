@@ -47,7 +47,7 @@ dict_counts = distinct_taxi_transit_pair(cost_1_1_1_path, dict_counts)
 df_counts = pd.DataFrame(dict_counts, )
 df_counts = df_counts[['taxi', 'transit', 'pair']]
 ax = df_counts.plot(kind='bar')
-ax.xaxis.set_ticklabels(['0.5 0.5 0.5', '1 0.5 0.5', '0.5 1 0.5', '0.5 0.5 1',\
-'1 1 0.5', '1 0.5 1', '0.5 1 1', '1 1 1'])
+ax.xaxis.set_ticklabels(['.5 .5 .5', '1 .5 .5', '.5 1 .5', '.5 .5 1',\
+'1 1 .5', '1 .5 1', '.5 1 1', '1 1 1'])
 fig = ax.get_figure()
 fig.savefig(result_path, bbox_inches='tight')
