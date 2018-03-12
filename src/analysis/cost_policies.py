@@ -49,5 +49,7 @@ df_counts = df_counts[['taxi', 'transit', 'pair']]
 ax = df_counts.plot(kind='bar')
 ax.xaxis.set_ticklabels(['.5 .5 .5', '1 .5 .5', '.5 1 .5', '.5 .5 1',\
 '1 1 .5', '1 .5 1', '.5 1 1', '1 1 1'])
+ax.set_xlabel('Pricing Policy')
+ax.set_ylabel('# of Unique Elements')
 fig = ax.get_figure()
 fig.savefig(result_path, bbox_inches='tight')
