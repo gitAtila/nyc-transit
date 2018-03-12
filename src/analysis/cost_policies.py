@@ -21,7 +21,7 @@ cost_1_05_1_path = argv[6]
 cost_05_1_1_path = argv[7]
 cost_1_1_1_path = argv[8]
 #
-result_path[9]
+result_path = argv[9]
 
 def distinct_taxi_transit_pair(cost_path, dict_counts):
     df_cost = pd.read_csv(cost_path)
