@@ -65,7 +65,7 @@ def scatter_plot(list_x_values, list_y_values, x_label, y_label, chart_path):
     fig.savefig(chart_path)
 
 df_max_benefit_trip = pd.read_csv(max_benefit_trips_path)
-df_max_benefit_trip['transit_original_destination_time'] = pd.to_datetime(df_max_benefit_trip['transit_original_destination_time'])
+# df_max_benefit_trip['transit_original_destination_time'] = pd.to_datetime(df_max_benefit_trip['transit_original_destination_time'])
 df_max_benefit_trip['transit_destination_time'] = pd.to_datetime(df_max_benefit_trip['transit_destination_time'])
 df_max_benefit_trip['taxi_destination_time'] = pd.to_datetime(df_max_benefit_trip['taxi_destination_time'])
 # print df_max_benefit_trip
