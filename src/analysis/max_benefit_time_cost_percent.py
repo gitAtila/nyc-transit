@@ -100,11 +100,11 @@ for index, max_benefit_trip in df_max_benefit_trip.iterrows():
     # transit passenger saving time
     transit_passenger_original_duration = (dict_transit_private_trip[max_benefit_trip['transit_id']][-1]['date_time']\
     - dict_transit_private_trip[max_benefit_trip['transit_id']][0]['date_time']).total_seconds()
-    
+
     transit_passenger_new_duration = (max_benefit_trip['transit_destination_time']\
     - dict_transit_private_trip[max_benefit_trip['transit_id']][0]['date_time']).total_seconds()
 
-    transit_passenger_saving_time = (transit_passenger_original_duration - transit_passenger_new_duration) #/transit_passenger_original_duration
+    transit_passenger_saving_time = (transit_passenger_original_duration - transit_passenger_new_duration)/60
     list_transit_passenger_saving_time.append(transit_passenger_saving_time)
 
     # taxi passenger extra time
@@ -114,7 +114,7 @@ for index, max_benefit_trip in df_max_benefit_trip.iterrows():
     taxi_passenger_new_duration = (max_benefit_trip['taxi_destination_time']\
     - dict_taxi_private_trip[max_benefit_trip['taxi_id']][0]['date_time']).total_seconds()
 
-    taxi_passenger_extra_time = (taxi_passenger_new_duration - taxi_passenger_original_duration)#/taxi_passenger_new_duration
+    taxi_passenger_extra_time = (taxi_passenger_new_duration - taxi_passenger_original_duration)/60
     list_taxi_passenger_extra_time.append(taxi_passenger_extra_time)
 
     # transit passenger extra cost
@@ -125,13 +125,13 @@ for index, max_benefit_trip in df_max_benefit_trip.iterrows():
     - max_benefit_trip['taxi_shared_cost'])#/max_benefit_trip['taxi_private_cost']
     list_taxi_passenger_saving_money.append(taxi_passenger_saving_money)
 
-# plot_cdf_two_curves(list_transit_passenger_saving_time, list_taxi_passenger_extra_time,\
-# 'transit passenger saving time (orig - new)/orig', 'taxi passenger extra time', 'difference of time (minutes)',\
-# times_chart_path)
-#
-# plot_cdf_two_curves(list_transit_passenger_extra_cost, list_taxi_passenger_saving_money,\
-# 'transit passenger sharing cost', 'taxi passenger saving money (orig - new)/orig', 'difference of money (dollars)',\
-# money_chart_path)
+plot_cdf_two_curves(list_transit_passenger_saving_time, list_taxi_passenger_extra_time,\
+'transit passenger saving time (minutes)', 'taxi passenger extra time', 'difference of time (minutes)',\
+times_chart_path)
+
+plot_cdf_two_curves(list_transit_passenger_extra_cost, list_taxi_passenger_saving_money,\
+'transit passenger sharing cost', 'taxi passenger saving money (dollars)', 'difference of money (dollars)',\
+money_chart_path)
 
 scatter_plot(list_transit_passenger_saving_time, list_transit_passenger_extra_cost,\
 'saving time (minutes)', 'extra cost (dollars)', transit_passenger_chart_path)
