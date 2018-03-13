@@ -129,8 +129,8 @@ plot_cdf_two_curves(list_transit_passenger_saving_time, list_taxi_passenger_extr
 'transit passenger saving time (orig - new)/orig', 'taxi passenger extra time', 'difference of time (minutes)',\
 times_chart_path)
 
-plot_cdf_two_curves(list_transit_passenger_extra_cost, list_taxi_passenger_saving_money,\
-'transit passenger sharing cost', 'taxi passenger saving money (orig - new)/orig', 'difference of money (dollars)',\
+plot_cdf_two_curves(list_taxi_passenger_saving_money, list_transit_passenger_extra_cost,\
+'taxi passenger saving money (orig - new)/orig', 'transit passenger sharing cost', 'difference of money (dollars)',\
 money_chart_path)
 
 scatter_plot(list_transit_passenger_extra_cost, list_transit_passenger_saving_time,\
