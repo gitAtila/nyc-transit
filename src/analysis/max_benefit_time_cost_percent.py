@@ -96,6 +96,8 @@ list_transit_passenger_extra_cost = []
 list_taxi_passenger_saving_money = []
 
 for index, max_benefit_trip in df_max_benefit_trip.iterrows():
+
+    # transit passenger saving time
     transit_passenger_original_duration = (dict_transit_private_trip[max_benefit_trip['transit_id']][-1]['date_time']\
     - dict_transit_private_trip[max_benefit_trip['transit_id']][0]['date_time']).total_seconds()
 
@@ -105,6 +107,7 @@ for index, max_benefit_trip in df_max_benefit_trip.iterrows():
     transit_passenger_saving_time = (transit_passenger_original_duration - transit_passenger_new_duration)/transit_passenger_original_duration
     list_transit_passenger_saving_time.append(transit_passenger_saving_time)
 
+    # taxi passenger extra time
     taxi_passenger_original_duration = (dict_taxi_private_trip[max_benefit_trip['taxi_id']][-1]['date_time']\
     - dict_taxi_private_trip[max_benefit_trip['taxi_id']][0]['date_time']).total_seconds()
 
@@ -114,9 +117,12 @@ for index, max_benefit_trip in df_max_benefit_trip.iterrows():
     taxi_passenger_extra_time = (taxi_passenger_new_duration - taxi_passenger_original_duration)/60
     list_taxi_passenger_extra_time.append(taxi_passenger_extra_time)
 
+    # transit passenger extra cost
     list_transit_passenger_extra_cost.append(max_benefit_trip['transit_shared_cost'])
 
-    taxi_passenger_saving_money = (max_benefit_trip['taxi_private_cost'] - max_benefit_trip['taxi_shared_cost'])/max_benefit_trip['taxi_private_cost']
+    # taxi passenger saving money
+    taxi_passenger_saving_money = (max_benefit_trip['taxi_private_cost']\
+    - max_benefit_trip['taxi_shared_cost'])/max_benefit_trip['taxi_private_cost']
     list_taxi_passenger_saving_money.append(taxi_passenger_saving_money)
 
 plot_cdf_two_curves(list_transit_passenger_saving_time, list_taxi_passenger_extra_time,\
