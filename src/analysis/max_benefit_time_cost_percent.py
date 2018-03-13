@@ -100,11 +100,11 @@ for index, max_benefit_trip in df_max_benefit_trip.iterrows():
     # transit passenger saving time
     transit_passenger_original_duration = (dict_transit_private_trip[max_benefit_trip['transit_id']][-1]['date_time']\
     - dict_transit_private_trip[max_benefit_trip['transit_id']][0]['date_time']).total_seconds()
-
+    
     transit_passenger_new_duration = (max_benefit_trip['transit_destination_time']\
     - dict_transit_private_trip[max_benefit_trip['transit_id']][0]['date_time']).total_seconds()
 
-    transit_passenger_saving_time = (transit_passenger_original_duration - transit_passenger_new_duration)#/transit_passenger_original_duration
+    transit_passenger_saving_time = (transit_passenger_original_duration - transit_passenger_new_duration) #/transit_passenger_original_duration
     list_transit_passenger_saving_time.append(transit_passenger_saving_time)
 
     # taxi passenger extra time
@@ -114,7 +114,7 @@ for index, max_benefit_trip in df_max_benefit_trip.iterrows():
     taxi_passenger_new_duration = (max_benefit_trip['taxi_destination_time']\
     - dict_taxi_private_trip[max_benefit_trip['taxi_id']][0]['date_time']).total_seconds()
 
-    taxi_passenger_extra_time = (taxi_passenger_new_duration - taxi_passenger_original_duration)/60
+    taxi_passenger_extra_time = (taxi_passenger_new_duration - taxi_passenger_original_duration)#/taxi_passenger_new_duration
     list_taxi_passenger_extra_time.append(taxi_passenger_extra_time)
 
     # transit passenger extra cost
