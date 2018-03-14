@@ -90,17 +90,10 @@ def get_count_destinations_per_puma(df_trips, destination_type):
 
 	return dict_puma_count
 
-def plot_puma(shapefile_base_path, dict_puma_count, map_title, x_label, range_colors, map_path):
+def plot_puma(shapefile_base_path, dict_puma_count, map_title, y_label, range_colors, map_path):
 
 	shapefile_puma = shapefile.Reader(shapefile_base_path)
 
-	# set range of colors
-	# cmap = plt.cm.GnBu
-	#cmap = plt.cm.Blues
-	#cmap = plt.cm.OrRd
-	#cmap = plt.cm.Purples
-	# cmap = plt.cm.Reds
-	#cmap = plt.cm.Greens
 	cmap = range_colors
 	vmin = min(dict_puma_count.values()); vmax = max(dict_puma_count.values())
 	norm = Normalize(vmin=vmin, vmax=vmax)
@@ -162,7 +155,7 @@ def plot_puma(shapefile_base_path, dict_puma_count, map_title, x_label, range_co
 	plt.xticks([])
 	plt.yticks([])
 	ax.set_title(map_title)
-	ax.set_xlabel(x_label)
+	ax.set_ylabel(y_label)
 
 	# ax.set_yscale('log')
 
@@ -170,7 +163,7 @@ def plot_puma(shapefile_base_path, dict_puma_count, map_title, x_label, range_co
 	cax = fig.add_axes([0.85, 0.25, 0.05, 0.5]) # posititon
 	cb = ColorbarBase(cax,cmap=cmap,norm=norm, orientation='vertical')
 
-	fig.tight_layout()
+	# fig.tight_layout()
 	fig.savefig(map_path)
 
 
