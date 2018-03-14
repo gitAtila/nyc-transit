@@ -90,7 +90,7 @@ def get_count_destinations_per_puma(df_trips, destination_type):
 
 	return dict_puma_count
 
-def plot_puma(shapefile_base_path, dict_puma_count, range_colors, map_path):
+def plot_puma(shapefile_base_path, dict_puma_count, map_title, x_label, range_colors, map_path):
 
 	shapefile_puma = shapefile.Reader(shapefile_base_path)
 
@@ -161,15 +161,16 @@ def plot_puma(shapefile_base_path, dict_puma_count, range_colors, map_path):
 	ax.axis('scaled')
 	plt.xticks([])
 	plt.yticks([])
-	# ax.set_title(map_title)
+	ax.set_title(map_title)
+	ax.set_xlabel(x_label)
 
-	ax.set_yscale('log')
+	# ax.set_yscale('log')
 
 	# range color legend
 	cax = fig.add_axes([0.85, 0.25, 0.05, 0.5]) # posititon
 	cb = ColorbarBase(cax,cmap=cmap,norm=norm, orientation='vertical')
 
-	#fig.tight_layout()
+	fig.tight_layout()
 	fig.savefig(map_path)
 
 
@@ -180,9 +181,13 @@ df_trips = pd.concat([df_trips_wkdy, df_trips_sat, df_trips_sun])
 
 # transit
 df_trips_transit = df_trips[df_trips['MODE_G2'] == 1]
-plot_puma(shp_puma, get_count_origins_per_puma(df_trips_transit, 5), plt.cm.Greens, spatial_result_path + 'origens_coletivo_puma.png')
-plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_transit, 5), plt.cm.Reds, spatial_result_path + 'destinos_coletivo_puma.png')
+plot_puma(shp_puma, get_count_origins_per_puma(df_trips_transit, 5), 'Transporte Coletivo', 'Origens',\
+plt.cm.Greens, spatial_result_path + 'origens_coletivo_puma.png')
+plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_transit, 5), '', 'Destinos',\
+plt.cm.Reds, spatial_result_path + 'destinos_coletivo_puma.png')
 # taxi
 df_trips_taxi = df_trips[df_trips['MODE_G10'] == 7]
-plot_puma(shp_puma, get_count_origins_per_puma(df_trips_taxi, 5), plt.cm.Greens, spatial_result_path + 'origens_taxi_puma.png')
-plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_taxi, 5), plt.cm.Reds, spatial_result_path + 'destinos_taxi_puma.png')
+plot_puma(shp_puma, get_count_origins_per_puma(df_trips_taxi, 5), 'Transporte Particular','',\
+plt.cm.Greens, spatial_result_path + 'origens_taxi_puma.png')
+plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_taxi, 5), '','',\
+plt.cm.Reds, spatial_result_path + 'destinos_taxi_puma.png')
