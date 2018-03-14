@@ -15,20 +15,12 @@ import shapefile
 from shapely.geometry import Polygon
 from descartes.patch import PolygonPatch
 
-import geopandas as gpd
-from geopandas.tools import sjoin
-
-from statsmodels.distributions.empirical_distribution import ECDF
-
 travel_survey_file_wkdy = argv[1]
 travel_survey_file_sat = argv[2]
 travel_survey_file_sun = argv[3]
 shp_puma = argv[4]
-# shp_subway_stations = argv[5]
-chart_path = argv[5]
 
-# shapefile_census_tract = argv[4]
-# shapefile_borough = argv[6]
+spatial_result_path = argv[5]
 
 def df_from_csv(travel_survey_file):
 	return pd.read_csv(travel_survey_file)
@@ -185,5 +177,5 @@ df_trips_sat = df_from_csv(travel_survey_file_sat)
 df_trips_sun = df_from_csv(travel_survey_file_sun)
 df_trips = pd.concat([df_trips_wkdy, df_trips_sat, df_trips_sun])
 
-plot_puma(shp_puma, get_count_origins_per_puma(df_trips, 5), chart_path + 'origins_puma.png')
-plot_puma(shp_puma, get_count_destinations_per_puma(df_trips, 5), chart_path + 'destination_puma.png')
+plot_puma(shp_puma, get_count_origins_per_puma(df_trips, 5), spatial_result_path + 'origins_puma.png')
+plot_puma(shp_puma, get_count_destinations_per_puma(df_trips, 5), spatial_result_path + 'destination_puma.png')
