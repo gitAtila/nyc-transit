@@ -153,7 +153,7 @@ plt.grid()
 plt.legend(loc=4)
 # ax.set_title('')
 ax.set_xlabel('Distancias a pe (km)')
-ax.set_ylabel('ECDF')
+ax.set_ylabel('CDF')
 plt.tight_layout()
 fig.savefig(spatial_result_path + 'distancias_a_pe.png')
 
