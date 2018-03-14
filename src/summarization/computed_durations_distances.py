@@ -126,7 +126,7 @@ plt.legend(loc=4)
 ax.set_xlabel('Duracao Calculada da Viagem (minutos)')
 ax.set_ylabel('CDF')
 plt.tight_layout()
-fig.savefig(temporal_result_path + 'duracao_calculada_por_modal.png')
+fig.savefig(temporal_result_path + 'duracao_calculada_por_modal.pdf')
 
 # compute transit walk distances
 list_bus_walk_distance = walking_distances(dict_bus_trips)
@@ -155,7 +155,7 @@ plt.legend(loc=4)
 ax.set_xlabel('Distancias a pe (km)')
 ax.set_ylabel('CDF')
 plt.tight_layout()
-fig.savefig(spatial_result_path + 'distancias_a_pe.png')
+fig.savefig(spatial_result_path + 'distancias_a_pe.pdf')
 
 # compute straight line distance
 list_bus_distances = straight_line_distances(dict_bus_trips)
@@ -189,4 +189,4 @@ plt.legend(loc=4)
 ax.set_xlabel('Distancia em Linha Reta (km)')
 ax.set_ylabel('CDF')
 plt.tight_layout()
-fig.savefig(spatial_result_path + 'distancias_por_modal.png')
+fig.savefig(spatial_result_path + 'distancias_por_modal.pdf')
