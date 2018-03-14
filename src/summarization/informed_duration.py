@@ -78,9 +78,9 @@ def travel_duration_per_mode(df_trips, chart_name):
 	# s_mode_name_10 = pd.Series(['NYC Subway Only', 'NYC Subway + Bus', 'NY or MTA Bus (no sub)', 'Commuter Rail (no nyct)', 'Other Rail (no nyct)',\
 	# 'Other Transit (no nyct)', 'Taxi, Car/Van Service', 'Auto Driver/Passenger', 'Walk (bike)', 'At-Home/Refused'], index = [1,2,3,4,5,6,7,8,9,10])
 
-	s_mode_name_8 = pd.Series(['Metrô', 'Metrô + Ônibus', 'Ônibus', 'Outro Transp. Coletivo',\
-	'Taxi, Carro/Van', 'Automóvel', 'A pé (bicicleta)',\
-	 'At-Home/Refused'], index = [1,2,3,4,5,6,7,8])
+	s_mode_name_8 = pd.Series(['Metro', 'Metro + Onibus', 'Onibus', 'Outro Transp. Coletivo',\
+	'Taxi, Carro/Van', 'Automovel', 'A pe (bicicleta)',\
+	 'Em Casa/Recusado'], index = [1,2,3,4,5,6,7,8])
 
 	dict_commute_time_mode = dict()
 
