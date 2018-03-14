@@ -35,9 +35,9 @@ def demand_time(df_trips, chart_name):
 
 	# arrival_count = df_trips.groupby('HR_ARR')['TRIP_ID'].count()
 	# 'NYC Subway', 'Subway + Bus', 'NY-MTA Bus (only)', 'Other Transit', 'Taxi, Car/Van'
-	df_total_grouped_hour = pd.concat([departure_subway.rename('NYC Subway'),\
-	departure_subway_bus.rename('Subway + Bus'), departure_bus.rename('NY-MTA Bus (only)'),\
-	departure_taxi.rename('Taxi, Car/Van Service')], axis=1)
+	df_total_grouped_hour = pd.concat([departure_subway.rename('Metro'),\
+	departure_subway_bus.rename('Metro + Onibus'), departure_bus.rename('Onibus'),\
+	departure_taxi.rename('Taxi, Servicos Carro/Van')], axis=1)
 
 	df_total_grouped_hour = df_total_grouped_hour.drop(99)
 
@@ -79,7 +79,7 @@ def travel_duration_per_mode(df_trips, chart_name):
 	# 'Other Transit (no nyct)', 'Taxi, Car/Van Service', 'Auto Driver/Passenger', 'Walk (bike)', 'At-Home/Refused'], index = [1,2,3,4,5,6,7,8,9,10])
 
 	s_mode_name_8 = pd.Series(['Metro', 'Metro + Onibus', 'Onibus', 'Outro Transp. Coletivo',\
-	'Taxi, Carro/Van', 'Automovel', 'A pe (bicicleta)',\
+	'Taxi, Servicos Carro/Van', 'Automovel', 'A pe (bicicleta)',\
 	 'Em Casa/Recusado'], index = [1,2,3,4,5,6,7,8])
 
 	dict_commute_time_mode = dict()
