@@ -90,7 +90,7 @@ def get_count_destinations_per_puma(df_trips, destination_type):
 
 	return dict_puma_count
 
-def plot_puma(shapefile_base_path, dict_puma_count, map_path):
+def plot_puma(shapefile_base_path, dict_puma_count, range_colors, map_path):
 
 	shapefile_puma = shapefile.Reader(shapefile_base_path)
 
@@ -100,7 +100,8 @@ def plot_puma(shapefile_base_path, dict_puma_count, map_path):
 	#cmap = plt.cm.OrRd
 	#cmap = plt.cm.Purples
 	# cmap = plt.cm.Reds
-	cmap = plt.cm.Greens
+	#cmap = plt.cm.Greens
+	cmap = range_colors
 	vmin = min(dict_puma_count.values()); vmax = max(dict_puma_count.values())
 	norm = Normalize(vmin=vmin, vmax=vmax)
 
@@ -177,5 +178,11 @@ df_trips_sat = df_from_csv(travel_survey_file_sat)
 df_trips_sun = df_from_csv(travel_survey_file_sun)
 df_trips = pd.concat([df_trips_wkdy, df_trips_sat, df_trips_sun])
 
-plot_puma(shp_puma, get_count_origins_per_puma(df_trips, 5), spatial_result_path + 'origins_puma.png')
-plot_puma(shp_puma, get_count_destinations_per_puma(df_trips, 5), spatial_result_path + 'destination_puma.png')
+# transit
+df_trips_transit = df_trips[df_trips['MODE_G2'] == 1]
+plot_puma(shp_puma, get_count_origins_per_puma(df_trips_transit, 5), plt.cm.Greens, chart_path + 'origens_coletivo_puma.png')
+plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_transit, 5), plt.cm.Reds, chart_path + 'destinos_coletivo_puma.png')
+# taxi
+df_trips_taxi = df_trips[df_trips['MODE_G10'] == 7]
+plot_puma(shp_puma, get_count_origins_per_puma(df_trips_taxi, 5), plt.cm.Greens, chart_path + 'origens_taxi_puma.png')
+plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_taxi, 5), plt.cm.Reds, chart_path + 'destinos_taxi_puma.png')
