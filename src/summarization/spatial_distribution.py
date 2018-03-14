@@ -180,9 +180,9 @@ df_trips = pd.concat([df_trips_wkdy, df_trips_sat, df_trips_sun])
 
 # transit
 df_trips_transit = df_trips[df_trips['MODE_G2'] == 1]
-plot_puma(shp_puma, get_count_origins_per_puma(df_trips_transit, 5), plt.cm.Greens, chart_path + 'origens_coletivo_puma.png')
-plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_transit, 5), plt.cm.Reds, chart_path + 'destinos_coletivo_puma.png')
+plot_puma(shp_puma, get_count_origins_per_puma(df_trips_transit, 5), plt.cm.Greens, spatial_result_path + 'origens_coletivo_puma.png')
+plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_transit, 5), plt.cm.Reds, spatial_result_path + 'destinos_coletivo_puma.png')
 # taxi
 df_trips_taxi = df_trips[df_trips['MODE_G10'] == 7]
-plot_puma(shp_puma, get_count_origins_per_puma(df_trips_taxi, 5), plt.cm.Greens, chart_path + 'origens_taxi_puma.png')
-plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_taxi, 5), plt.cm.Reds, chart_path + 'destinos_taxi_puma.png')
+plot_puma(shp_puma, get_count_origins_per_puma(df_trips_taxi, 5), plt.cm.Greens, spatial_result_path + 'origens_taxi_puma.png')
+plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_taxi, 5), plt.cm.Reds, spatial_result_path + 'destinos_taxi_puma.png')
