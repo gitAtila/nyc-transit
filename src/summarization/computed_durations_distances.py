@@ -92,7 +92,7 @@ print 'dict_taxi_trips', len(dict_taxi_trips)
 print 'dict_subway_trips', len(dict_subway_trips)
 print 'dict_bus_subway_trips', len(dict_bus_subway_trips)
 
-# walk_distance(dict_bus_trips)
+# walking_distances(dict_bus_trips)
 
 # compute total travel duration
 list_bus_durations = trips_duration(dict_bus_trips)
@@ -129,9 +129,9 @@ plt.tight_layout()
 fig.savefig(temporal_result_path + 'duracao_por_modal.png')
 
 # compute transit walk distances
-list_bus_walk_distance = walk_distance(dict_bus_trips)
-list_subway_walk_distance = walk_distance(dict_subway_trips)
-list_bus_subway_walk_distance = walk_distance(dict_bus_subway_trips)
+list_bus_walk_distance = walking_distances(dict_bus_trips)
+list_subway_walk_distance = walking_distances(dict_subway_trips)
+list_bus_subway_walk_distance = walking_distances(dict_bus_subway_trips)
 
 # plot walk distances
 fig, ax = plt.subplots()
