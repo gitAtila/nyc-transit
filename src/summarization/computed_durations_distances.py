@@ -180,7 +180,7 @@ plt.plot(ecdf_bus.x, ecdf_bus.y, label='Onibus')
 
 list_taxi_distances.sort()
 ecdf_taxi = ECDF(list_taxi_distances)
-plt.plot(ecdf_taxi.x, ecdf_taxi.y, label='Táxi')
+plt.plot(ecdf_taxi.x, ecdf_taxi.y, label='Taxi')
 
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x ticks as multiple of sixty
 plt.grid()
