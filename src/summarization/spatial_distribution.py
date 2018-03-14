@@ -1,4 +1,4 @@
-png# read and processing bus data survey
+# read and processing bus data survey
 from sys import argv
 import pandas as pd
 import numpy as np
