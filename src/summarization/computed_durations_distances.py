@@ -75,7 +75,7 @@ def walking_distances(dict_transit_trips):
         # sum the maximum walk distance for each trip sequence
         df_walking = df_trip[df_trip['mode'] == 'WALK']
         max_distances = df_walking.groupby('trip_sequence')['distance'].max().reset_index()
-        list_distances.append(max_distances['distance'].sum())
+        list_distances.append(max_distances['distance'].sum()/1000)
 
     return list_distances
 
@@ -126,7 +126,7 @@ plt.legend(loc=4)
 ax.set_xlabel('Duracao Calculada da Viagem (minutos)')
 ax.set_ylabel('CDF')
 plt.tight_layout()
-fig.savefig(temporal_result_path + 'duracao_por_modal.png')
+fig.savefig(temporal_result_path + 'duracao_calculada_por_modal.png')
 
 # compute transit walk distances
 list_bus_walk_distance = walking_distances(dict_bus_trips)
@@ -152,7 +152,7 @@ plt.plot(ecdf_bus.x, ecdf_bus.y, label='Onibus')
 plt.grid()
 plt.legend(loc=4)
 # ax.set_title('')
-ax.set_xlabel('Distancias a pe (metros)')
+ax.set_xlabel('Distancias a pe (km)')
 ax.set_ylabel('ECDF')
 plt.tight_layout()
 fig.savefig(spatial_result_path + 'distancias_a_pe.png')

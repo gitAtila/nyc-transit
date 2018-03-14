@@ -118,4 +118,4 @@ df_trips_sun = df_from_csv(travel_survey_file_sun)
 df_trips = pd.concat([df_trips_wkdy, df_trips_sat, df_trips_sun])
 
 demand_time(df_trips, temporal_result_path + 'demanda_por_modal.png')
-travel_duration_per_mode(df_trips, temporal_result_path + 'viagens_por_modal.png')
+travel_duration_per_mode(df_trips, temporal_result_path + 'duracao_informada_por_modal.png')
