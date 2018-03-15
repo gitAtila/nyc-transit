@@ -24,7 +24,7 @@ max_benefit_1_1_1_path = argv[9]
 saving_money_chart_path = argv[10]
 saving_time_chart_path = argv[11]
 
-colormap = plt.cm.nipy_spectral
+# colormap = plt.cm.nipy_spectral
 
 def group_df_rows(df, key_label):
     dict_grouped = dict()
@@ -118,7 +118,7 @@ plt.plot(ecdf_saving_money_1_1_1.x, ecdf_saving_money_1_1_1.y, label='a=1.0 b=1.
 plt.grid()
 plt.legend(loc=4)
 # ax.set_title('saturday')
-ax.set_xlabel('Economia de Dinheiro (orig - new)/orig')
+ax.set_xlabel('Economia de Dinheiro (orig - novo)/orig')
 ax.set_ylabel('CDF')
 plt.tight_layout()
 fig.savefig(saving_money_chart_path)
@@ -137,7 +137,7 @@ ecdf_saving_time_05_1_1 = ECDF(list_saving_time[6])
 ecdf_saving_time_1_1_1 = ECDF(list_saving_time[7])
 
 fig, ax = plt.subplots()
-ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,len(list_saving_time))])
+# ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,len(list_saving_time))])
 plt.plot(ecdf_saving_time_05_05_05.x, ecdf_saving_time_05_05_05.y, label='a=0.5 b=0.5 c=0.5')
 plt.plot(ecdf_saving_time_1_05_05.x, ecdf_saving_time_1_05_05.y, label='a=1.0 b=0.5 c=0.5')
 plt.plot(ecdf_saving_time_05_1_05.x, ecdf_saving_time_05_1_05.y, label='a=0.5 b=1.0 c=0.5')
@@ -151,7 +151,7 @@ plt.plot(ecdf_saving_time_1_1_1.x, ecdf_saving_time_1_1_1.y, label='a=1.0 b=1.0 
 plt.grid()
 plt.legend(loc=2)
 # ax.set_title('saturday')
-ax.set_xlabel('Economia de Tempo (orig - new)/orig')
+ax.set_xlabel('Economia de Tempo (orig - novo)/orig')
 ax.set_ylabel('CDF')
 plt.tight_layout()
 fig.savefig(saving_time_chart_path)
