@@ -52,14 +52,15 @@ def transit_passenger_saving_time(transit_private_trips_path, df_max_benefit):
     df_transit_private_trips['date_time'] = pd.to_datetime(df_transit_private_trips['date_time'])
     dict_transit_private_trips = group_df_rows(df_transit_private_trips, 'sampn_perno_tripno')
 
-    df_max_benefit['transit_original_destination_time'] = pd.to_datetime(df_max_benefit['transit_original_destination_time'])
+    # df_max_benefit['transit_original_destination_time'] = pd.to_datetime(df_max_benefit['transit_original_destination_time'])
     df_max_benefit['transit_destination_time'] = pd.to_datetime(df_max_benefit['transit_destination_time'])
     df_max_benefit['taxi_destination_time'] = pd.to_datetime(df_max_benefit['taxi_destination_time'])
 
     for index, max_benefit_trip in df_max_benefit.iterrows():
         # print max_benefit_trip
-        transit_origin_time = dict_transit_private_trips[max_benefit_trip['transit_id']][-1]['date_time']
-        transit_original_duration = (dict_transit_private_trips[max_benefit_trip['transit_id']][0]['date_time']\
+        transit_origin_time = dict_transit_private_trips[max_benefit_trip['transit_id']][0]['date_time']
+
+        transit_original_duration = (dict_transit_private_trips[max_benefit_trip['transit_id']][-1]['date_time']\
         - transit_origin_time).total_seconds()
         transit_new_duration = (max_benefit_trip['transit_destination_time'] - transit_origin_time).total_seconds()
 
