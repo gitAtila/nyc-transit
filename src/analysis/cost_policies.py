@@ -46,13 +46,13 @@ dict_counts = distinct_taxi_transit_pair(cost_1_1_1_path, dict_counts)
 
 df_counts = pd.DataFrame(dict_counts, )
 df_counts = df_counts[['taxi', 'transit', 'pair']]
-df_counts.rename(columns={'taxi': 'Particular', 'transit': 'Coletivo', 'pair': 'Par'},\
-inplace=True)
+# df_counts.rename(columns={'taxi': 'Particular', 'transit': 'Coletivo', 'pair': 'Par'},\
+# inplace=True)
 ax = df_counts.plot(kind='bar')
 # ax.xaxis.set_ticklabels(['.5 .5 .5', '1 .5 .5', '.5 1 .5', '.5 .5 1',\
 # '1 1 .5', '1 .5 1', '.5 1 1', '1 1 1'])
 ax.xaxis.set_ticklabels(['.5 .5 .5', '1 .5 .5', '.5 1 .5', '1 1 .5', '1 1 1'])
-ax.set_xlabel('Politicas de Precificacao')
+ax.set_xlabel('Politicas de Precificacao (taxa inicial, integracao, compartilhamento)')
 ax.set_ylabel('# de Viagens Distintas')
 fig = ax.get_figure()
 fig.savefig(result_path, bbox_inches='tight')
