@@ -128,7 +128,7 @@ for index, max_benefit_trip in df_max_benefit_trip.iterrows():
 
 plot_cdf_two_curves(list_transit_passenger_saving_time, list_taxi_passenger_saving_money,\
 'Economia de Tempo Transp.Coletivo', 'Economia de Dinheiro Transp. Particular', '(orig - novo)/orig',\
-times_chart_path)
+savings_percent_path)
 
 # scatter_plot(list_transit_passenger_extra_cost, list_transit_passenger_saving_time,\
 # 'extra cost (dollars)', 'saving time (minutes)', transit_passenger_chart_path)
