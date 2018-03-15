@@ -9,6 +9,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 from statsmodels.distributions.empirical_distribution import ECDF
 
 temporal_spatial_path = argv[1]
