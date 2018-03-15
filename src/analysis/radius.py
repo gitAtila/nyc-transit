@@ -1,5 +1,5 @@
 '''
-    Evaluate pricing policies
+    Radius and distinct trips
 '''
 
 from sys import argv

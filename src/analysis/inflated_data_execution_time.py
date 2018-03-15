@@ -1,5 +1,5 @@
 '''
-    Inflating data
+    Inflating data execution time
 '''
 
 from sys import argv
