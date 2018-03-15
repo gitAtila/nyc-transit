@@ -104,7 +104,7 @@ ecdf_saving_money_05_1_1 = ECDF(list_saving_money[6])
 ecdf_saving_money_1_1_1 = ECDF(list_saving_money[7])
 
 fig, ax = plt.subplots()
-ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,len(list_saving_money))])
+# ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,len(list_saving_money))])
 plt.plot(ecdf_saving_money_05_05_05.x, ecdf_saving_money_05_05_05.y, label='a=0.5 b=0.5 c=0.5')
 plt.plot(ecdf_saving_money_1_05_05.x, ecdf_saving_money_1_05_05.y, label='a=1.0 b=0.5 c=0.5')
 plt.plot(ecdf_saving_money_05_1_05.x, ecdf_saving_money_05_1_05.y, label='a=0.5 b=1.0 c=0.5')
