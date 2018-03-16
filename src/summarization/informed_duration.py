@@ -43,11 +43,11 @@ def demand_time(df_trips, chart_name):
 
 	print df_total_grouped_hour
 	df_total_grouped_hour = df_normaliser(df_total_grouped_hour)
-
+	df_total_grouped_hour *= 100
 	print df_total_grouped_hour
 	ax = df_total_grouped_hour.plot()
 	ax.xaxis.set_major_locator(ticker.MultipleLocator(3)) # set x sticks interal
-	ax.set_xlabel('Hora')
+	ax.set_xlabel('Hora do Dia')
 	ax.set_ylabel('% das Viagens')
 	plt.tight_layout()
 	fig = ax.get_figure()
