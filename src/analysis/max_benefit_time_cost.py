@@ -112,8 +112,10 @@ money_chart_path)
 
 scatter_plot(list_transit_passenger_saving_time, list_transit_passenger_extra_cost,\
 'Economia de Tempo (minutos)', 'Custo Extra (dolares)', transit_passenger_chart_path)
-# print np.corrcoef(list_transit_passenger_extra_cost, list_transit_passenger_saving_time)
+print np.corrcoef(list_transit_passenger_extra_cost, list_transit_passenger_saving_time)
+print np.polyfit(list_transit_passenger_saving_time, list_transit_passenger_extra_cost)
 
 scatter_plot(list_taxi_passenger_saving_money, list_taxi_passenger_extra_time,\
 'Economia de Dinheiro (dolares)', 'Tempo Extra (minutos)', taxi_passenger_chart_path)
-# print np.corrcoef(list_taxi_passenger_saving_money, list_taxi_passenger_extra_time)
+print np.corrcoef(list_taxi_passenger_saving_money, list_taxi_passenger_extra_time)
+print np.polyfit(list_taxi_passenger_saving_money, list_taxi_passenger_extra_time)
