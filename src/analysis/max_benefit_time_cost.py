@@ -52,8 +52,12 @@ def plot_cdf_two_curves(list_curve_1, list_curve_2, label_curve_1, label_curve_2
 
 def scatter_plot(list_x_values, list_y_values, x_label, y_label, chart_path):
 
+    z = np.polyfit(list_x_values, list_y_values, 1)
+    p = numpy.poly1d(z)
+
     fig, ax = plt.subplots()
     plt.plot(list_x_values, list_y_values, 'o')
+    plt.plot(x,p(x),'r-')
 
     # ax.set_title('saturday')
     ax.set_xlabel(x_label)
