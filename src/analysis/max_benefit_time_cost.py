@@ -57,7 +57,7 @@ def scatter_plot(list_x_values, list_y_values, x_label, y_label, chart_path):
 
     fig, ax = plt.subplots()
     plt.plot(list_x_values, list_y_values, 'o')
-    plt.plot(x,p(x),'r-')
+    plt.plot(list_x_values,p(list_x_values),'r-')
 
     # ax.set_title('saturday')
     ax.set_xlabel(x_label)
