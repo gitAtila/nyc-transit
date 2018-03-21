@@ -180,7 +180,7 @@ plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_transit, 5), '', 'D
 plt.cm.Reds, spatial_result_path + 'destinos_coletivo_puma.png')
 # taxi
 df_trips_taxi = df_trips[df_trips['MODE_G10'] == 7]
-plot_puma(shp_puma, get_count_origins_per_puma(df_trips_taxi, 5), 'Transporte Particular','',\
+plot_puma(shp_puma, get_count_origins_per_puma(df_trips_taxi, 5), 'Taxi','',\
 plt.cm.Greens, spatial_result_path + 'origens_taxi_puma.png')
 plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_taxi, 5), '','',\
 plt.cm.Reds, spatial_result_path + 'destinos_taxi_puma.png')

@@ -43,8 +43,8 @@ list_transit_per_taxi = df_temporal_spatial.groupby('taxi_id')['transit_id'].nun
 list_transit_stop_options = df_temporal_spatial.groupby('transit_id')['stop_id'].nunique().tolist()
 list_taxi_position_options = df_temporal_spatial.groupby('taxi_id')['taxi_pos_sequence'].nunique().tolist()
 
-plot_cdf_two_curves(list_taxi_per_transit, list_transit_per_taxi, 'Transp. Particular por Transp. Coletivo',\
-'Transp. Coletivo por Transp. Particular', '# de Opcoes de Integracao', result_path + 'cdf_opcoes_integracao_viagens.pdf')
+plot_cdf_two_curves(list_taxi_per_transit, list_transit_per_taxi, 'Taxi por Transp. Coletivo',\
+'Transp. Coletivo por Taxi', '# de Opcoes de Integracao', result_path + 'cdf_opcoes_integracao_viagens.pdf')
 
 plot_cdf_two_curves(list_transit_stop_options, list_taxi_position_options, 'Paradas de Transp. Coletivo',\
-'Posicoes de Transp. Particular', '# de Opcoes de Integracao', result_path + 'cdf_opcoes_integracao_posicoes.pdf')
+'Posicoes de Taxi', '# de Opcoes de Integracao', result_path + 'cdf_opcoes_integracao_posicoes.pdf')
