@@ -26,7 +26,7 @@ def plot_cdf_two_curves(list_curve_1, list_curve_2, label_curve_1, label_curve_2
     plt.plot(ecdf_curve_1.x, ecdf_curve_1.y, label=label_curve_1)
     plt.plot(ecdf_curve_2.x, ecdf_curve_2.y, label=label_curve_2)
 
-    ax.xaxis.set_major_locator(ticker.MultipleLocator(5)) # set x sticks interal
+    # ax.xaxis.set_major_locator(ticker.MultipleLocator(5)) # set x sticks interal
     plt.grid()
     plt.legend(loc=4)
     # ax.set_title('saturday')
