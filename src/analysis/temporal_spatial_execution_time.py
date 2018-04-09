@@ -5,6 +5,9 @@ from sys import argv
 import pandas as pd
 import numpy as np
 
+import matplotlib
+matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 from statsmodels.distributions.empirical_distribution import ECDF
 
@@ -72,7 +75,7 @@ def ecdf_plot(list_times, chart_path):
     plt.plot(ecdf_2.x, ecdf_2.y, label='2km')
     plt.plot(ecdf_3.x, ecdf_3.y, label='3km')
     plt.plot(ecdf_4.x, ecdf_4.y, label='4km')
-    plt.plot(ecdf_5.x, ecdf_5.y, label='5km')
+    plt.plot(ecdf_5.x, ecdf_5.y, label='inf')
 
     # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x sticks interal
     # plt.grid()
