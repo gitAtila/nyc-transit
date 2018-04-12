@@ -16,16 +16,18 @@ matching_2_path = argv[2]
 matching_3_path = argv[3]
 matching_4_path = argv[4]
 matching_5_path = argv[5]
+matching_inf_path = argv[6]
 
-clock_times_1_path = argv[6]
-clock_times_2_path = argv[7]
-clock_times_3_path = argv[8]
-clock_times_4_path = argv[9]
-clock_times_5_path = argv[10]
+clock_times_1_path = argv[7]
+clock_times_2_path = argv[8]
+clock_times_3_path = argv[9]
+clock_times_4_path = argv[10]
+clock_times_5_path = argv[11]
+clock_times_inf_path = argv[12]
 
-xlabel = argv[11]
-chart_path = argv[12]
-chart_file = argv[13]
+xlabel = argv[13]
+chart_path = argv[14]
+chart_file = argv[15]
 
 colormap = plt.cm.nipy_spectral
 
@@ -68,18 +70,20 @@ def ecdf_plot(list_times, chart_path):
     ecdf_3 = ECDF(sorted(list_times[2]))
     ecdf_4 = ECDF(sorted(list_times[3]))
     ecdf_5 = ECDF(sorted(list_times[4]))
+    ecdf_inf = ECDF(sorted(list_times[5]))
 
     fig, ax = plt.subplots()
-    ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,5)])
+    # ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,5)])
     plt.plot(ecdf_1.x, ecdf_1.y, label='1km')
     plt.plot(ecdf_2.x, ecdf_2.y, label='2km')
     plt.plot(ecdf_3.x, ecdf_3.y, label='3km')
     plt.plot(ecdf_4.x, ecdf_4.y, label='4km')
-    plt.plot(ecdf_5.x, ecdf_5.y, label='inf')
+    plt.plot(ecdf_5.x, ecdf_5.y, label='5km')
+    plt.plot(ecdf_inf.x, ecdf_inf.y, label='inf')
 
     # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x sticks interal
     # plt.grid()
-    plt.legend(loc=4)
+    # plt.legend(loc=4)
     # ax.set_title('saturday')
     ax.set_xlabel('clock time (seconds)')
     ax.set_ylabel('ECDF')
@@ -92,15 +96,16 @@ dict_statistics_2 = clock_times_matched_unmatched(matching_2_path, clock_times_2
 dict_statistics_3 = clock_times_matched_unmatched(matching_3_path, clock_times_3_path)
 dict_statistics_4 = clock_times_matched_unmatched(matching_4_path, clock_times_4_path)
 dict_statistics_5 = clock_times_matched_unmatched(matching_5_path, clock_times_5_path)
+dict_statistics_inf = clock_times_matched_unmatched(matching_inf_path, clock_times_inf_path)
 
 # xticks = [1000, 2000, 3000, 4000, 5000]
 clock_time_matched = [dict_statistics_1['matched'].tolist(), dict_statistics_2['matched'].tolist(),\
 dict_statistics_3['matched'].tolist(), dict_statistics_4['matched'].tolist(),\
-dict_statistics_5['matched'].tolist()]
+dict_statistics_5['matched'].tolist(), dict_statistics_inf['matched'].tolist()]
 
 clock_time_unmatched = [dict_statistics_1['unmatched'].tolist(), dict_statistics_2['unmatched'].tolist(),\
 dict_statistics_3['unmatched'].tolist(), dict_statistics_4['unmatched'].tolist(),\
-dict_statistics_5['unmatched'].tolist()]
+dict_statistics_5['unmatched'].tolist(), dict_statistics_inf['unmatched'].tolist()]
 
 box_plot(clock_time_matched, xlabel, chart_path + 'matched_' + chart_file)
 box_plot(clock_time_unmatched, xlabel, chart_path + 'unmatched_' + chart_file)
