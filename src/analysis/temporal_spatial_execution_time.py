@@ -83,7 +83,7 @@ def ecdf_plot(list_times, chart_path):
 
     # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x sticks interal
     # plt.grid()
-    # plt.legend(loc=4)
+    plt.legend()
     # ax.set_title('saturday')
     ax.set_xlabel('clock time (seconds)')
     ax.set_ylabel('ECDF')
