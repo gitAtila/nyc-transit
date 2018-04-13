@@ -56,7 +56,7 @@ def box_plot(data_to_plot, xlabel, chart_path):
     ax.set_xlabel(xlabel)
     ax.set_ylabel('clock time (seconds)')
 
-    plt.xticks([1, 2, 3, 4, 5], [1000, 2000, 3000, 4000, 5000, 'inf'])
+    plt.xticks([1, 2, 3, 4, 5], ['1km', '2km', '3km', '4km', '5km', 'inf'])
     # plt.xticks([1, 2, 3, 4, 5], ['real', '5x_10min', '5x_20min', '10x_10min', '10x_20min'])
 
     plt.tight_layout()
