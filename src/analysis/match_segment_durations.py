@@ -11,10 +11,24 @@ private_trips = argv[1]
 matches_path = argv[2]
 result_path = argv[3]
 
+def group_df_rows(df, key_label):
+    dict_grouped = dict()
+    for index, row in df.iterrows():
+        key = row[key_label]
+        del row[key_label]
+        dict_grouped.setdefault(key, []).append(row.to_dict())
+    return dict_grouped
+
 # read and transform
 df_private = pd.read_csv(private_trips)
+df_private['date_time'] = pd.to_datetime(df_private['date_time'])
+dict_private_trip = group_df_rows(df_private, 'sampn_perno_tripno')
+for key, list_positions in dict_private_trip.iteritems():
+    new_list_positions = [list_positions[0], list_positions[-1]]
+    dict_private_trip[key] = new_list_positions
+print len(dict_private_trip)
+
 df_matches = pd.read_csv(matches_path)
-print df_private
 df_matches['transit_destination_time'] = pd.to_datetime(df_matches['transit_destination_time'])
 df_matches['taxi_destination_time'] = pd.to_datetime(df_matches['taxi_destination_time'])
 
