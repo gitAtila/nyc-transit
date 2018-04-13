@@ -14,9 +14,7 @@ result_path = argv[3]
 # read and transform
 df_private = pd.read_csv(private_trips)
 df_matches = pd.read_csv(matches_path)
-print df_matches
-df_private = df_private[df_private['sampn_perno_tripno']\
-.isin(set(df_matches['transit_id'].unique() | df_matches['taxi_id'].unique()))]
+print df_private
 df_matches['transit_destination_time'] = pd.to_datetime(df_matches['transit_destination_time'])
 df_matches['taxi_destination_time'] = pd.to_datetime(df_matches['taxi_destination_time'])
 
