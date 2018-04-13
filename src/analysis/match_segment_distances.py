@@ -12,6 +12,7 @@ result_path = argv[2]
 
 # read and transform
 df_matches = pd.read_csv(matches_path)
+df_matches['taxi_arrival_time_transit_stop'] = pd.to_datetime(df_matches['taxi_arrival_time_transit_stop'])
 df_matches['transit_destination_time'] = pd.to_datetime(df_matches['transit_destination_time'])
 df_matches['taxi_destination_time'] = pd.to_datetime(df_matches['taxi_destination_time'])
 

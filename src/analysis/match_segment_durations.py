@@ -12,7 +12,7 @@ matches_path = argv[2]
 result_path = argv[3]
 
 # read and transform
-df_private = df.read_csv(private_trips)
+df_private = pd.read_csv(private_trips)
 df_matches = pd.read_csv(matches_path)
 print df_matches
 df_private = df_private[df_private['sampn_perno_tripno']\
