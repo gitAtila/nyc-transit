@@ -75,12 +75,12 @@ for index, match in df_matches.iterrows():
     # list_taxi_private_duration.append(taxi_private_duration/60)
 
     # waiting time
-    # if transit_integration_datetime < match['taxi_arrival_time_transit_stop']:
-    #     transit_private_duration += (match['taxi_arrival_time_transit_stop'] - transit_integration_datetime).total_seconds()
-    #     shared_origin_time = match['taxi_arrival_time_transit_stop']
-    # else:
-    #     taxi_private_duration += (transit_integration_datetime - match['taxi_arrival_time_transit_stop']).total_seconds()
-    #     shared_origin_time = transit_integration_datetime
+    if transit_integration_datetime < match['taxi_arrival_time_transit_stop']:
+        # transit_private_duration += (match['taxi_arrival_time_transit_stop'] - transit_integration_datetime).total_seconds()
+        shared_origin_time = match['taxi_arrival_time_transit_stop']
+    else:
+        # taxi_private_duration += (transit_integration_datetime - match['taxi_arrival_time_transit_stop']).total_seconds()
+        shared_origin_time = transit_integration_datetime
 
     # shared and destination durations
     if match['taxi_destination_time'] < match['transit_destination_time']:
