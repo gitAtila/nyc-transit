@@ -76,10 +76,10 @@ for index, match in df_matches.iterrows():
 
     # waiting time
     if transit_integration_datetime < match['taxi_arrival_time_transit_stop']:
-        # transit_private_duration += (match['taxi_arrival_time_transit_stop'] - transit_integration_datetime).total_seconds()
+        transit_private_duration += (match['taxi_arrival_time_transit_stop'] - transit_integration_datetime).total_seconds()
         shared_origin_time = match['taxi_arrival_time_transit_stop']
     else:
-        # taxi_private_duration += (transit_integration_datetime - match['taxi_arrival_time_transit_stop']).total_seconds()
+        taxi_private_duration += (transit_integration_datetime - match['taxi_arrival_time_transit_stop']).total_seconds()
         shared_origin_time = transit_integration_datetime
 
     # shared and destination durations
@@ -87,15 +87,27 @@ for index, match in df_matches.iterrows():
         shared_duration = (match['taxi_destination_time'] - shared_origin_time).total_seconds()
         taxi_destination_duration = 0
         transit_destination_duration = (match['transit_destination_time'] - match['taxi_destination_time']).total_seconds()
+        if shared_duration < 0:
+            print 'taxi_destination_time', match['taxi_destination_time']
+            print 'shared_origin_time', shared_origin_time
+            print 'shared_duration', shared_duration
 
     elif match['taxi_destination_time'] > match['transit_destination_time']:
         shared_duration = (match['transit_destination_time'] - shared_origin_time).total_seconds()
         taxi_destination_duration = (match['taxi_destination_time'] - match['transit_destination_time']).total_seconds()
         transit_destination_duration = 0
+        if shared_duration < 0:
+            print 'taxi_destination_time', match['taxi_destination_time']
+            print 'shared_origin_time', shared_origin_time
+            print 'shared_duration', shared_duration
     else:
         shared_duration = (match['transit_destination_time'] - shared_origin_time).total_seconds()
         taxi_destination_duration = 0
         transit_destination_duration = 0
+        if shared_duration < 0:
+            print 'taxi_destination_time', match['taxi_destination_time']
+            print 'shared_origin_time', shared_origin_time
+            print 'shared_duration', shared_duration
 
     total_transit_duration = (match['transit_destination_time'] - transit_origin_datetime).total_seconds()
     total_taxi_duration = (match['taxi_destination_time'] - taxi_origin_datetime).total_seconds()
