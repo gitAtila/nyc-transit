@@ -53,12 +53,14 @@ df_matches['transit_destination_time'] = pd.to_datetime(df_matches['transit_dest
 df_matches['taxi_destination_time'] = pd.to_datetime(df_matches['taxi_destination_time'])
 df_matches['taxi_arrival_time_transit_stop'] = pd.to_datetime(df_matches['taxi_arrival_time_transit_stop'])
 
-# get durations
+# compute durations
 list_transit_private_duration = []
+list_transit_shared_duration = []
+list_transit_destination_duration = []
+
 list_taxi_private_duration = []
-list_integration_duration = []
-list_shared_duration = []
-list_destinations_distance = []
+list_taxi_shared_duration = []
+list_taxi_destination_duration = []
 for index, match in df_matches.iterrows():
     # private time
     df_transit_private_trip = df_private[df_private['sampn_perno_tripno']== match['transit_id']]
