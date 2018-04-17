@@ -66,51 +66,54 @@ for index, match in df_matches.iterrows():
     df_transit_private_trip = df_private[df_private['sampn_perno_tripno']== match['transit_id']]
     transit_origin_datetime = df_transit_private_trip.loc[df_transit_private_trip['date_time'].idxmin()]['date_time']
     transit_integration_datetime = df_transit_private_trip[df_transit_private_trip['stop_id'] == match['stop_id']]['date_time'].iloc[0]
-    transit_private_duration = (transit_integration_datetime - transit_origin_datetime).total_seconds()/60
+    transit_private_duration = (transit_integration_datetime - transit_origin_datetime).total_seconds()
     # list_transit_private_duration.append(transit_private_duration/60)
 
     df_taxi_private_trip = df_private[df_private['sampn_perno_tripno'] == match['taxi_id']]
     taxi_origin_datetime = df_taxi_private_trip.loc[df_taxi_private_trip['date_time'].idxmin()]['date_time']
-    taxi_private_duration = (match['taxi_arrival_time_transit_stop'] - taxi_origin_datetime).total_seconds()/60
+    taxi_private_duration = (match['taxi_arrival_time_transit_stop'] - taxi_origin_datetime).total_seconds()
     # list_taxi_private_duration.append(taxi_private_duration/60)
 
     # waiting time
     if transit_integration_datetime < match['taxi_arrival_time_transit_stop']:
-        transit_private_duration += (match['taxi_arrival_time_transit_stop'] - transit_integration_datetime).total_seconds()/60
+        transit_private_duration += (match['taxi_arrival_time_transit_stop'] - transit_integration_datetime).total_seconds()
         shared_origin_time = match['taxi_arrival_time_transit_stop']
     else:
-        taxi_private_duration += (transit_integration_datetime - match['taxi_arrival_time_transit_stop']).total_seconds()/60
+        taxi_private_duration += (transit_integration_datetime - match['taxi_arrival_time_transit_stop']).total_seconds()
         shared_origin_time = transit_integration_datetime
 
     # shared and destination durations
     if match['taxi_destination_time'] < match['transit_destination_time']:
-        shared_duration = (match['taxi_destination_time'] - shared_origin_time).total_seconds()/60
+        shared_duration = (match['taxi_destination_time'] - shared_origin_time).total_seconds()
         taxi_destination_duration = 0
-        transit_destination_duration = (match['transit_destination_time'] - match['taxi_destination_time']).total_seconds()/60
+        transit_destination_duration = (match['transit_destination_time'] - match['taxi_destination_time']).total_seconds()
         if shared_duration < 0:
             print 'taxi_destination_time', match['taxi_destination_time']
+            print 'shared_distance', match['shared_distance']
             print 'shared_origin_time', shared_origin_time
             print 'shared_duration', shared_duration
 
     elif match['taxi_destination_time'] > match['transit_destination_time']:
-        shared_duration = (match['transit_destination_time'] - shared_origin_time).total_seconds()/60
-        taxi_destination_duration = (match['taxi_destination_time'] - match['transit_destination_time']).total_seconds()/60
+        shared_duration = (match['transit_destination_time'] - shared_origin_time).total_seconds()
+        taxi_destination_duration = (match['taxi_destination_time'] - match['transit_destination_time']).total_seconds()
         transit_destination_duration = 0
         if shared_duration < 0:
             print 'transit_destination_time', match['transit_destination_time']
+            print 'shared_distance', match['shared_distance']
             print 'shared_origin_time', shared_origin_time
             print 'shared_duration', shared_duration
     else:
-        shared_duration = (match['transit_destination_time'] - shared_origin_time).total_seconds()/60
+        shared_duration = (match['transit_destination_time'] - shared_origin_time).total_seconds()
         taxi_destination_duration = 0
         transit_destination_duration = 0
         if shared_duration < 0:
             print 'taxi_destination_time', match['taxi_destination_time']
+            print 'shared_distance', match['shared_distance']
             print 'shared_origin_time', shared_origin_time
             print 'shared_duration', shared_duration
 
-    total_transit_duration = (match['transit_destination_time'] - transit_origin_datetime).total_seconds()/60
-    total_taxi_duration = (match['taxi_destination_time'] - taxi_origin_datetime).total_seconds()/60
+    total_transit_duration = (match['transit_destination_time'] - transit_origin_datetime).total_seconds()
+    total_taxi_duration = (match['taxi_destination_time'] - taxi_origin_datetime).total_seconds()
 
     # compute and add to response relative durations
     list_transit_private_duration.append(float(transit_private_duration)/float(total_transit_duration))
