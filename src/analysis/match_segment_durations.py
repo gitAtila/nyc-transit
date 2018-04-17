@@ -30,6 +30,7 @@ print df_private
 # print len(dict_private_trip)
 
 df_matches = pd.read_csv(matches_path)
+print df_matches
 df_matches['transit_destination_time'] = pd.to_datetime(df_matches['transit_destination_time'])
 df_matches['taxi_destination_time'] = pd.to_datetime(df_matches['taxi_destination_time'])
 
