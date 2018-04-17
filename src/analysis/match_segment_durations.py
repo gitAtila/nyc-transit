@@ -76,7 +76,7 @@ for index, match in df_matches.iterrows():
     if transit_integration_datetime < match['taxi_arrival_time_transit_stop']:
         transit_private_duration += (match['taxi_arrival_time_transit_stop'] - transit_integration_datetime).total_seconds()
         shared_origin_time = match['taxi_arrival_time_transit_stop']
-    else
+    else:
         taxi_private_duration += (transit_integration_datetime - match['taxi_arrival_time_transit_stop']).total_seconds()
         shared_origin_time = transit_integration_datetime
 
