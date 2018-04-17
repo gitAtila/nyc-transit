@@ -95,7 +95,7 @@ for index, match in df_matches.iterrows():
         taxi_destination_duration = 0
         transit_destination_duration = 0
 
-    total_transit_duration = (match['transit_destination_time'] - transit_origin_datetime).totoal_seconds()
+    total_transit_duration = (match['transit_destination_time'] - transit_origin_datetime).total_seconds()
     total_taxi_duration = (match['taxi_destination_time'] - taxi_origin_datetime).total_seconds()
 
     # compute and add to response relative durations
