@@ -35,6 +35,7 @@ df_matches = pd.read_csv(matches_path)
 print df_matches
 df_matches['transit_destination_time'] = pd.to_datetime(df_matches['transit_destination_time'])
 df_matches['taxi_destination_time'] = pd.to_datetime(df_matches['taxi_destination_time'])
+df_matches['taxi_arrival_time_transit_stop'] = pd.to_datetime(df_matches['taxi_arrival_time_transit_stop'])
 
 # get durations
 list_transit_private_duration = []
