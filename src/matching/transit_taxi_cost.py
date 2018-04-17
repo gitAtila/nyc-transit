@@ -149,28 +149,34 @@ transit_shared_cost_parcel, dict_transit_private_trip, dict_taxi_private_trip, d
         transit_stop_position = [position for position in list_transit_trip\
         if position['stop_id'] == matching['stop_id']][0]
 
-        integration_stopped_time = 0
-        if transit_stop_position['date_time'] > matching['taxi_arrival_time_transit_stop']:
-            integration_stopped_time = (transit_stop_position['date_time'] - matching['taxi_arrival_time_transit_stop']).total_seconds()
+        # verify if it is a valid matching
+        if transit_stop_position['date_time'] < matching['transit_destination_time']\
+        and transit_stop_position['date_time'] < matching['taxi_destination_time']\
+        and matching['taxi_arrival_time_transit_stop'] < matching['transit_destination_time']\
+        and matching['taxi_arrival_time_transit_stop'] < matching['taxi_destination_time']:
 
-        transit_destination_first = False
-        if matching['transit_destination_time'] < matching['taxi_destination_time']:
-            transit_destination_first = True
+            integration_stopped_time = 0
+            if transit_stop_position['date_time'] > matching['taxi_arrival_time_transit_stop']:
+                integration_stopped_time = (transit_stop_position['date_time'] - matching['taxi_arrival_time_transit_stop']).total_seconds()
 
-        transit_shared_cost, taxi_shared_cost = nyc_transit_taxi_shared_costs(transit_initial_cost_parcel,\
-        transit_integration_cost_parcel, transit_shared_cost_parcel,\
-        list_taxi_private_trip[0]['date_time'], taxi_acceptance_position['distance'], 0,\
-        matching['integration_distance'], integration_stopped_time,\
-        matching['shared_distance'], 0,\
-        transit_destination_first, matching['destinations_distance'], 0)
+            transit_destination_first = False
+            if matching['transit_destination_time'] < matching['taxi_destination_time']:
+                transit_destination_first = True
 
-        # taxi passenger save money
-        if taxi_shared_cost < taxi_private_cost:
-            list_integration_costs.append({'transit_id': matching['transit_id'], 'stop_id': matching['stop_id'],\
-            'taxi_id': matching['taxi_id'], 'taxi_pos_sequence': matching['taxi_pos_sequence'],\
-            'taxi_private_cost': taxi_private_cost, 'taxi_shared_cost': taxi_shared_cost,\
-            'transit_shared_cost': transit_shared_cost})
+            transit_shared_cost, taxi_shared_cost = nyc_transit_taxi_shared_costs(transit_initial_cost_parcel,\
+            transit_integration_cost_parcel, transit_shared_cost_parcel,\
+            list_taxi_private_trip[0]['date_time'], taxi_acceptance_position['distance'], 0,\
+            matching['integration_distance'], integration_stopped_time,\
+            matching['shared_distance'], 0,\
+            transit_destination_first, matching['destinations_distance'], 0)
 
+            # taxi passenger save money
+            if taxi_shared_cost < taxi_private_cost:
+                list_integration_costs.append({'transit_id': matching['transit_id'], 'stop_id': matching['stop_id'],\
+                'taxi_id': matching['taxi_id'], 'taxi_pos_sequence': matching['taxi_pos_sequence'],\
+                'taxi_private_cost': taxi_private_cost, 'taxi_shared_cost': taxi_shared_cost,\
+                'transit_shared_cost': transit_shared_cost})
+            
     return list_integration_costs
 
 # read matches
