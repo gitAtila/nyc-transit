@@ -97,7 +97,7 @@ for index, match in df_matches.iterrows():
         taxi_destination_duration = (match['taxi_destination_time'] - match['transit_destination_time']).total_seconds()
         transit_destination_duration = 0
         if shared_duration < 0:
-            print 'taxi_destination_time', match['transit_destination_time']
+            print 'transit_destination_time', match['transit_destination_time']
             print 'shared_origin_time', shared_origin_time
             print 'shared_duration', shared_duration
     else:
