@@ -45,15 +45,17 @@ list_destinations_distance = []
 for index, match in df_matches.iterrows():
     df_transit_private_trip = df_private[df_private['sampn_perno_tripno']== match['transit_id']]
     transit_origin_datetime = df_transit_private_trip.loc[df_transit_private_trip['date_time'].idxmin()]['date_time']
-    transit_integration_datetime = df_transit_private_trip[df_transit_private_trip['stop_id'] == match['stop_id']]['date_time']
+    transit_integration_datetime = df_transit_private_trip[df_transit_private_trip['stop_id'] == match['stop_id']]['date_time'].iloc[0]
+    transit_private_duration = (transit_integration_datetime - transit_origin_datetime).total_seconds()/60
 
     df_taxi_private_trip = df_private[df_private['sampn_perno_tripno'] == match['taxi_id']]
     taxi_origin_datetime = df_taxi_private_trip.loc[df_taxi_private_trip['date_time'].idxmin()]['date_time']
+    taxi_private_duration = (match['taxi_arrival_time_transit_stop'] - taxi_origin_datetime).total_seconds()/60
 
-    print 'transit_origin_datetime', transit_origin_datetime
-    print 'transit_integration_datetime', transit_integration_datetime
+    print 'transit_private_duration', transit_private_duration
+    print 'taxi_private_duration', taxi_private_duration
 
-    print '\ntaxi_origin_datetime', taxi_origin_datetime
+    # print '\ntaxi_origin_datetime', taxi_origin_datetime
 
 
 
