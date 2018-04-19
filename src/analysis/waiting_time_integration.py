@@ -42,9 +42,8 @@ for index, match in df_matches.iterrows():
 
     list_transit_waiting_time.append(transit_waiting_time/60)
     list_taxi_waiting_time.append(taxi_waiting_time/60)
-    
-print count_taxi_waiting, len(list_taxi_waiting_time)
-print 'taxi waiting', float(count_taxi_waiting)/float(len(list_taxi_waiting_time))
+
+print 'taxi waiting', float(len(list_taxi_waiting_time))/float(len(df_matches))
 # plot waiting time
 list_transit_waiting_time.sort()
 list_taxi_waiting_time.sort()
