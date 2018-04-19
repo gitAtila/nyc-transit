@@ -40,8 +40,8 @@ for index, match in df_matches.iterrows():
         taxi_waiting_time = (transit_integration_datetime - match['taxi_arrival_time_transit_stop']).total_seconds()
         transit_waiting_time = 0
 
-    list_transit_waiting_time.append(transit_waiting_time/60)
-    list_taxi_waiting_time.append(taxi_waiting_time/60)
+list_transit_waiting_time.append(transit_waiting_time/60)
+list_taxi_waiting_time.append(taxi_waiting_time/60)
 
 print 'taxi waiting', float(count_taxi_waiting)/float(len(list_taxi_waiting_time))
 # plot waiting time
