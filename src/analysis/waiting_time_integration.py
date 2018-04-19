@@ -25,13 +25,14 @@ df_matches['taxi_arrival_time_transit_stop'] = pd.to_datetime(df_matches['taxi_a
 
 list_taxi_waiting_time = []
 list_transit_waiting_time = []
+count_taxi_waiting = 0
 for index, match in df_matches.iterrows():
     # private time
     df_transit_private_trip = df_private[df_private['sampn_perno_tripno']== match['transit_id']]
     transit_integration_datetime = df_transit_private_trip[df_transit_private_trip['stop_id'] == match['stop_id']]['date_time'].iloc[0]
 
     # waiting time
-    count_taxi_waiting = 0
+
     if transit_integration_datetime < match['taxi_arrival_time_transit_stop']:
         transit_waiting_time = (match['taxi_arrival_time_transit_stop'] - transit_integration_datetime).total_seconds()
         taxi_waiting_time = 0
