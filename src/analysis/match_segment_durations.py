@@ -67,12 +67,10 @@ for index, match in df_matches.iterrows():
     transit_origin_datetime = df_transit_private_trip.loc[df_transit_private_trip['date_time'].idxmin()]['date_time']
     transit_integration_datetime = df_transit_private_trip[df_transit_private_trip['stop_id'] == match['stop_id']]['date_time'].iloc[0]
     transit_private_duration = (transit_integration_datetime - transit_origin_datetime).total_seconds()
-    # list_transit_private_duration.append(transit_private_duration/60)
 
     df_taxi_private_trip = df_private[df_private['sampn_perno_tripno'] == match['taxi_id']]
     taxi_origin_datetime = df_taxi_private_trip.loc[df_taxi_private_trip['date_time'].idxmin()]['date_time']
     taxi_private_duration = (match['taxi_arrival_time_transit_stop'] - taxi_origin_datetime).total_seconds()
-    # list_taxi_private_duration.append(taxi_private_duration/60)
 
     # waiting time
     if transit_integration_datetime < match['taxi_arrival_time_transit_stop']:
@@ -87,35 +85,14 @@ for index, match in df_matches.iterrows():
         shared_duration = (match['taxi_destination_time'] - shared_origin_time).total_seconds()
         taxi_destination_duration = 0
         transit_destination_duration = (match['transit_destination_time'] - match['taxi_destination_time']).total_seconds()
-        if shared_duration < 0:
-            print '\nshared_duration', shared_duration
-            print 'taxi_arrival_time_transit_stop', match['taxi_arrival_time_transit_stop']
-            print 'transit_integration_datetime', transit_integration_datetime
-            print 'Shared segment ==================='
-            print 'taxi_destination_time', match['taxi_destination_time']
-            print 'transit_destination_time', match['transit_destination_time']
-            print match
-
     elif match['taxi_destination_time'] > match['transit_destination_time']:
         shared_duration = (match['transit_destination_time'] - shared_origin_time).total_seconds()
         taxi_destination_duration = (match['taxi_destination_time'] - match['transit_destination_time']).total_seconds()
         transit_destination_duration = 0
-        if shared_duration < 0:
-            print '\nshared_duration', shared_duration
-            print 'taxi_arrival_time_transit_stop', match['taxi_arrival_time_transit_stop']
-            print 'transit_integration_datetime', transit_integration_datetime
-            print 'Shared segment ==================='
-            print 'taxi_destination_time', match['taxi_destination_time']
-            print 'transit_destination_time', match['transit_destination_time']
-            print match
     else:
         shared_duration = (match['transit_destination_time'] - shared_origin_time).total_seconds()
         taxi_destination_duration = 0
         transit_destination_duration = 0
-        if shared_duration < 0:
-            print 'taxi_destination_time', match['taxi_destination_time']
-            print 'shared_origin_time', shared_origin_time
-            print 'shared_duration', shared_duration
 
     total_transit_duration = (match['transit_destination_time'] - transit_origin_datetime).total_seconds()
     total_taxi_duration = (match['taxi_destination_time'] - taxi_origin_datetime).total_seconds()
