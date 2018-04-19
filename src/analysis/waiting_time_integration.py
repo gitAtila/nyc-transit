@@ -38,8 +38,8 @@ for index, match in df_matches.iterrows():
         taxi_waiting_time = (transit_integration_datetime - match['taxi_arrival_time_transit_stop']).total_seconds()
         transit_waiting_time = 0
 
-    list_transit_waiting_time.append(transit_waiting_time)
-    list_taxi_waiting_time.append(taxi_waiting_time)
+    list_transit_waiting_time.append(transit_waiting_time/60)
+    list_taxi_waiting_time.append(taxi_waiting_time/60)
 
 # plot waiting time
 list_transit_waiting_time.sort()
@@ -54,7 +54,7 @@ plt.plot(ecdf_taxi_waiting_time.x, ecdf_taxi_waiting_time.y, label='taxi')
 
 plt.grid()
 plt.legend()
-ax.set_xlabel('waiting time (seconds)')
+ax.set_xlabel('waiting time (minutes)')
 ax.set_ylabel('CDF')
 plt.tight_layout()
 fig.savefig(result_path)
