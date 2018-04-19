@@ -31,16 +31,19 @@ for index, match in df_matches.iterrows():
     transit_integration_datetime = df_transit_private_trip[df_transit_private_trip['stop_id'] == match['stop_id']]['date_time'].iloc[0]
 
     # waiting time
+    count_taxi_waiting = 0
     if transit_integration_datetime < match['taxi_arrival_time_transit_stop']:
         transit_waiting_time = (match['taxi_arrival_time_transit_stop'] - transit_integration_datetime).total_seconds()
         taxi_waiting_time = 0
     else:
+        count_taxi_waiting += 1
         taxi_waiting_time = (transit_integration_datetime - match['taxi_arrival_time_transit_stop']).total_seconds()
         transit_waiting_time = 0
 
     list_transit_waiting_time.append(transit_waiting_time/60)
     list_taxi_waiting_time.append(taxi_waiting_time/60)
 
+print 'taxi waiting', float(count_taxi_waiting)/float(list_taxi_waiting_time)
 # plot waiting time
 list_transit_waiting_time.sort()
 list_taxi_waiting_time.sort()
