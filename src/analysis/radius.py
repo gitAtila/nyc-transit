@@ -19,7 +19,7 @@ temporal_spatial_4000_path = argv[4]
 temporal_spatial_5000_path = argv[5]
 temporal_spatial_inf_path = argv[6]
 #
-result_path = argv[9]
+result_path = argv[7]
 
 def distinct_taxi_transit_pair(cost_path, dict_counts):
     df_cost = pd.read_csv(cost_path)

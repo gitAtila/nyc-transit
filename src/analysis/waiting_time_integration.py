@@ -32,7 +32,6 @@ for index, match in df_matches.iterrows():
     transit_integration_datetime = df_transit_private_trip[df_transit_private_trip['stop_id'] == match['stop_id']]['date_time'].iloc[0]
 
     # waiting time
-
     if transit_integration_datetime < match['taxi_arrival_time_transit_stop']:
         transit_waiting_time = (match['taxi_arrival_time_transit_stop'] - transit_integration_datetime).total_seconds()
         taxi_waiting_time = 0
