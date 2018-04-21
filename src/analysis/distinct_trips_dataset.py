@@ -58,9 +58,9 @@ dict_counts = distinct_taxi_transit_pair(dict_counts, temporal_spatial_20min_10x
 
 df_counts = pd.DataFrame(dict_counts, )
 df_counts = df_counts[['temporal_spatial', 'cost', 'max_benefit']]
-# ax = df_counts.plot(kind='bar')
-ax = df_counts.plot()
-ax.xaxis.set_major_locator(ticker.MultipleLocator(1)) # set x sticks interal
+ax = df_counts.plot(kind='bar')
+# ax = df_counts.plot()
+# ax.xaxis.set_major_locator(ticker.MultipleLocator(1)) # set x sticks interal
 ax.xaxis.set_ticklabels(['real', '5x_10min', '5x_20min', '10x_10min', '10x_20min'])
 fig = ax.get_figure()
 fig.savefig(result_path, bbox_inches='tight')
