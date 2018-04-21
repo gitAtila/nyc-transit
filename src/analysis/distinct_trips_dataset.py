@@ -10,6 +10,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 from statsmodels.distributions.empirical_distribution import ECDF
 
 temporal_spatial_real_path = argv[1]
@@ -59,6 +60,7 @@ df_counts = pd.DataFrame(dict_counts, )
 df_counts = df_counts[['temporal_spatial', 'cost', 'max_benefit']]
 # ax = df_counts.plot(kind='bar')
 ax = df_counts.plot()
-# ax.xaxis.set_ticklabels(['real', '5x_10min', '5x_20min', '10x_10min', '10x_20min'])
+ax.xaxis.set_major_locator(ticker.MultipleLocator(1)) # set x sticks interal
+ax.xaxis.set_ticklabels(['real', '5x_10min', '5x_20min', '10x_10min', '10x_20min'])
 fig = ax.get_figure()
 fig.savefig(result_path, bbox_inches='tight')
