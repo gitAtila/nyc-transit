@@ -35,7 +35,7 @@ max_benefit_20min_10x_path = argv[15]
 result_path = argv[16]
 
 def distinct_taxi_transit_pair(temporal_spatial_path, cost_path, max_benefit_path, dict_counts):
-    df_temporal_spatial = pd.read_csv(temporal_spatial_paths_path)
+    df_temporal_spatial = pd.read_csv(temporal_spatial_path)
     df_cost = pd.read_csv(cost_path)
     df_max_benefit = pd.read_csv(max_benefit_path)
 
