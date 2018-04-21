@@ -8,7 +8,8 @@ transit_private_trips_path = argv[1]
 taxi_private_trips_path = argv[2]
 temporal_spatial_match_path = argv[3]
 cost_match_path = argv[4]
-result_path = argv[5]
+transit_factor = float(argv[5])
+result_path = argv[6]
 
 def group_df_rows(df, key_label):
     dict_grouped = dict()
@@ -32,7 +33,7 @@ def merge_matches(df_temporal_spatial_match, df_cost_match):
 
     return list_matches
 
-def best_integration_possibility(df_matches, df_transit_private_trip):
+def best_integration_possibility(df_matches, df_transit_private_trip, factor):
 
     dict_transit_taxis = group_df_rows(df_matches, 'transit_id')
     dict_best_possibilities = dict()
@@ -47,7 +48,8 @@ def best_integration_possibility(df_matches, df_transit_private_trip):
             taxi_saving_money = possibility['taxi_private_cost'] - possibility['taxi_shared_cost']
 
             # combine utilities
-            integration_utility = transit_saving_time * taxi_saving_money
+            integration_utility = (transit_saving_time * factor) + (taxi_saving_money * (1-factor))
+            # integration_utility = transit_saving_time * taxi_saving_money
 
             # get the maximum utility
             if integration_utility > maximum_utility:
@@ -79,7 +81,7 @@ dict_taxi_private_trip = group_df_rows(df_taxi_private_trip, 'sampn_perno_tripno
 list_matches = merge_matches(df_temporal_spatial_match, df_cost_match)
 df_matches = pd.DataFrame(list_matches)
 
-dict_best_possibilities = best_integration_possibility(df_matches, df_transit_private_trip)
+dict_best_possibilities = best_integration_possibility(df_matches, df_transit_private_trip, factor)
 
 list_best_integration = []
 for transit_id, dict_integration in dict_best_possibilities.iteritems():
