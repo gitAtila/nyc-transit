@@ -49,7 +49,8 @@ def best_integration_possibility(df_matches, df_transit_private_trip, transit_fa
 
             # combine utilities
             integration_utility = (transit_saving_time * transit_factor) + (taxi_saving_money * (1-transit_factor))
-            # integration_utility = transit_saving_time * taxi_saving_money
+            # integration_utility2 = transit_saving_time * taxi_saving_money
+            # print integration_utility, integration_utility2
 
             # get the maximum utility
             if integration_utility > maximum_utility:
