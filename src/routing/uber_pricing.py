@@ -2,7 +2,7 @@
     Compute uber pricing given origin and destination positions
 '''
 from sys import argv
-import panas as pd
+import pandas as pd
 
 from uber_rides.session import Session
 from uber_rides.client import UberRidesClient
@@ -10,10 +10,6 @@ from uber_rides.client import UberRidesClient
 import requests
 import json
 
-# start_latitude = 37.7752315
-# start_longitude = -122.418075
-# end_latitude = 37.7752415
-# end_longitude = -122.518075
 token = argv[1]
 private_trips_path = argv[2]
 
