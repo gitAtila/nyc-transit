@@ -33,7 +33,7 @@ def uber_prices(token, start_latitude, start_longitude, end_latitude, end_longit
 
 df_all_trips = pd.read_csv(private_trips_path)
 df_taxi_trips = df_all_trips[df_all_trips['MODE_G10'] == 7]
-print len(df_taxi_trips)
+count_taxi_trips = len(df_taxi_trips)
 
 list_estimatives = []
 for index, trip in df_taxi_trips.iterrows():
@@ -43,10 +43,11 @@ for index, trip in df_taxi_trips.iterrows():
     trip['lat_destination'], trip['lon_destination'])
 
     list_estimatives.append({'trip_id': trip_id, 'estimatives': estimatives})
-    # print trip_id
-    # print estimatives
 
-    break
+    print count_taxi_trips
+    count_taxi_trips -= 1
+
 
 df_pricing = pd.DataFrame(list_estimatives)
-print df_pricing
+df_pricing = df_pricing[['trip_id', 'estimatives']]
+df_pricing.to_csv(result_path)
