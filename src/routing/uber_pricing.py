@@ -57,4 +57,4 @@ for index, trip in df_taxi_trips.iterrows():
 
 df_pricing = pd.DataFrame(list_estimatives)
 df_pricing = df_pricing[['trip_id', 'estimatives']]
-df_pricing.to_csv(result_path)
+df_pricing.to_csv(result_path, index=False)
