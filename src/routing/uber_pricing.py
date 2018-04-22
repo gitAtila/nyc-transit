@@ -12,6 +12,7 @@ import json
 
 token = argv[1]
 private_trips_path = argv[2]
+result_path = argv[3]
 
 def uber_prices(token, start_latitude, start_longitude, end_latitude, end_longitude):
 
@@ -32,14 +33,20 @@ def uber_prices(token, start_latitude, start_longitude, end_latitude, end_longit
 
 df_all_trips = pd.read_csv(private_trips_path)
 df_taxi_trips = df_all_trips[df_all_trips['MODE_G10'] == 7]
+print len(df_taxi_trips)
 
+list_estimatives = []
 for index, trip in df_taxi_trips.iterrows():
     trip_id = str(trip['sampn']) + '_' + str(trip['perno']) + '_' + str(trip['tripno'])
 
     estimatives = uber_prices(token, trip['lat_origin'], trip['lon_origin'],\
     trip['lat_destination'], trip['lon_destination'])
 
-    print trip_id
-    print estimatives
+    list_estimatives.append({'trip_id': trip_id, 'estimatives': estimatives})
+    # print trip_id
+    # print estimatives
 
     break
+
+df_pricing = pd.DataFrame(list_estimatives)
+print df_pricing
