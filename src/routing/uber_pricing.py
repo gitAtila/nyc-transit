@@ -53,7 +53,7 @@ for index, trip in df_taxi_trips.iterrows():
 
     print count_taxi_trips
     count_taxi_trips -= 1
-
+    break
 
 df_pricing = pd.DataFrame(list_estimatives)
 df_pricing = df_pricing[['trip_id', 'estimatives']]
