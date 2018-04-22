@@ -34,7 +34,7 @@ df_all_trips = pd.read_csv(private_trips_path)
 df_taxi_trips = df_all_trips[df_all_trips['MODE_G10'] == 7]
 
 for index, trip in df_taxi_trips.iterrows():
-    trip_id = trip['sampn_perno_tripno']
+    trip_id = trip['sampn'] + '_' + trip['perno'] + '_' + trip['tripno']
 
     estimatives = uber_prices(token, trip['lat_origin'], trip['lon_origin'],\
     trip['lat_destination'], trip['lon_destination'])
