@@ -6,6 +6,7 @@ import pandas as pd
 
 from uber_rides.session import Session
 from uber_rides.client import UberRidesClient
+import uber_rides.errors
 
 import requests
 import json
