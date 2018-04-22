@@ -18,14 +18,20 @@ def uber_prices(token, start_latitude, start_longitude, end_latitude, end_longit
 
     session = Session(server_token=token)
     client = UberRidesClient(session)
-
-    response = client.get_price_estimates(
-        start_latitude=start_latitude,
-        start_longitude=start_longitude,
-        end_latitude=end_latitude,
-        end_longitude=end_longitude,
-        seat_count=2
-    )
+    try:
+        response = client.get_price_estimates(
+            start_latitude=start_latitude,
+            start_longitude=start_longitude,
+            end_latitude=end_latitude,
+            end_longitude=end_longitude,
+            seat_count=2
+        )
+    except uber_rides.errors.ClientError:
+        print 'client error', 'start_latitude=', start_latitude,\
+        'start_longitude=', start_longitude,\
+        'end_latitude=', end_latitude,
+        'end_longitude='end_longitude
+        return ''
 
     estimate = response.json.get('prices')
     print estimate
