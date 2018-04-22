@@ -29,8 +29,8 @@ def uber_prices(token, start_latitude, start_longitude, end_latitude, end_longit
     except uber_rides.errors.ClientError:
         print 'client error', 'start_latitude=', start_latitude,\
         'start_longitude=', start_longitude,\
-        'end_latitude=', end_latitude,
-        'end_longitude='end_longitude
+        'end_latitude=', end_latitude,\
+        'end_longitude=', end_longitude
         return ''
 
     estimate = response.json.get('prices')
