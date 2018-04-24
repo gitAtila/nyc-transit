@@ -57,7 +57,8 @@ dict_counts = distinct_taxi_transit_pair(dict_counts, temporal_spatial_10min_10x
 dict_counts = distinct_taxi_transit_pair(dict_counts, temporal_spatial_20min_10x_path, cost_20min_10x_path, max_benefit_20min_10x_path)
 
 df_counts = pd.DataFrame(dict_counts, index=['real', '5x_10min', '5x_20min', '10x_10min', '10x_20min'])
-df_counts = df_counts[['temporal_spatial', 'cost', 'max_benefit']]
+# df_counts = df_counts[['temporal_spatial', 'cost', 'max_benefit']]
+df_counts = df_counts[['max_benefit']]
 print df_counts
 ax = df_counts.plot(kind='line')
 # ax = df_counts.plot()
