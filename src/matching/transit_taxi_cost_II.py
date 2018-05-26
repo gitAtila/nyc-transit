@@ -8,10 +8,10 @@ from datetime import datetime
 transit_private_trips_path = argv[1]
 taxi_private_trips_path = argv[2]
 temporal_spatial_match_path = argv[3]
-transit_initial_cost_parcel = float(argv[4])
+# transit_initial_cost_parcel = float(argv[4])
 # transit_integration_cost_parcel = float(argv[5])
 # transit_shared_cost_parcel = float(argv[6])
-result_path = argv[5]
+result_path = argv[4]
 
 def nyc_taxi_cost(date_time_origin, trip_distance_meters, stopped_duration_sec):
 
@@ -59,7 +59,7 @@ def group_df_rows(df, key_label):
         dict_grouped.setdefault(key, []).append(row.to_dict())
     return dict_grouped
 
-def compute_integration_costs(transit_initial_cost_parcel, transit_integration_cost_parcel,\
+def compute_integration_costs(transit_integration_cost_parcel,\
 transit_shared_cost_parcel, dict_transit_private_trip, dict_taxi_private_trip, df_matches):
 
     list_integration_costs = []
