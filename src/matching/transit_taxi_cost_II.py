@@ -138,7 +138,7 @@ df_taxi_private_trip['date_time'] = pd.to_datetime(df_taxi_private_trip['date_ti
 dict_taxi_private_trip = group_df_rows(df_taxi_private_trip, 'sampn_perno_tripno')
 
 # compute and compare costs
-list_integration_costs = compute_integration_costs(transit_initial_cost_parcel, transit_integration_cost_parcel,\
+list_integration_costs = compute_integration_costs(transit_integration_cost_parcel,\
 transit_shared_cost_parcel, dict_transit_private_trip, dict_taxi_private_trip, df_matches)
 
 # save
