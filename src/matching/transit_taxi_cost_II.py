@@ -100,8 +100,6 @@ def compute_integration_costs(dict_transit_private_trip, dict_taxi_private_trip,
             if matching['transit_destination_time'] < matching['taxi_destination_time']:
                 transit_destination_first = True
 
-            transit_shared_cost,
-
             taxi_shared_cost = nyc_transit_taxi_shared_costs(list_taxi_private_trip[0]['date_time'], \
             (taxi_acceptance_position['distance'] + matching['destinations_distance']\
             + matching['integration_distance'] + matching['shared_distance']), integration_stopped_time)
