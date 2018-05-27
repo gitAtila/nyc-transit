@@ -11,7 +11,10 @@ temporal_spatial_match_path = argv[3]
 # transit_initial_cost_parcel = float(argv[4])
 # transit_integration_cost_parcel = float(argv[5])
 # transit_shared_cost_parcel = float(argv[6])
-result_path = argv[4]
+# result_path = argv[4]
+detour_factor_path = argv[4]
+integration_costs_path = argv[5]
+
 
 def nyc_taxi_cost(date_time_origin, trip_distance_meters, stopped_duration_sec):
 
@@ -64,7 +67,7 @@ def compute_integration_costs(dict_transit_private_trip, dict_taxi_private_trip,
     list_integration_costs = []
 
     for index, matching in df_matches.iterrows():
-
+        list_detour_factor = []
         list_transit_trip = dict_transit_private_trip[matching['transit_id']]
         list_taxi_private_trip = dict_taxi_private_trip[matching['taxi_id']]
 
@@ -92,6 +95,9 @@ def compute_integration_costs(dict_transit_private_trip, dict_taxi_private_trip,
             taxi_time_relative_detour = (sharing_duration - private_duration)/private_duration
             detour_factor = 1/taxi_time_relative_detour
 
+            list_detour_factor.append({'transit_id':matching['transit_id'], 'taxi_id':matching['taxi_id'],\
+            'detour_factor':detour_factor})
+
             integration_stopped_time = 0
             if transit_stop_position['date_time'] > matching['taxi_arrival_time_transit_stop']:
                 integration_stopped_time = (transit_stop_position['date_time'] - matching['taxi_arrival_time_transit_stop']).total_seconds()
@@ -114,7 +120,7 @@ def compute_integration_costs(dict_transit_private_trip, dict_taxi_private_trip,
                 'taxi_private_cost': taxi_private_cost, 'taxi_shared_cost': taxi_shared_cost,\
                 'transit_shared_cost': transit_shared_cost})
 
-    return list_integration_costs
+    return list_integration_costs, list_detour_factor
 
 # read matches
 df_matches = pd.read_csv(temporal_spatial_match_path)
@@ -135,11 +141,16 @@ df_taxi_private_trip['date_time'] = pd.to_datetime(df_taxi_private_trip['date_ti
 dict_taxi_private_trip = group_df_rows(df_taxi_private_trip, 'sampn_perno_tripno')
 
 # compute and compare costs
-list_integration_costs = compute_integration_costs(dict_transit_private_trip, dict_taxi_private_trip, df_matches)
+list_integration_costs, list_detour_factor = compute_integration_costs(dict_transit_private_trip,\
+dict_taxi_private_trip, df_matches)
 
 # save
+df_detour_factor = pd.DataFrame(list_detour_factor)
+df_detour_factor = df_detour_factor[['transit_id', 'taxi_id', 'detour_factor']]
+df_detour_factor.to_csv(detour_factor_path,index=False)
+
 df_integration_costs = pd.DataFrame(list_integration_costs)
-df_integration_costs = df_integration_costs[['transit_id', 'stop_id', 'taxi_id', 'taxi_pos_sequence', 'taxi_private_cost',\
-'taxi_shared_cost', 'transit_shared_cost']]
+df_integration_costs = df_integration_costs[['transit_id', 'stop_id', 'taxi_id', 'taxi_pos_sequence',\
+'taxi_private_cost', 'taxi_shared_cost', 'transit_shared_cost']]
 print df_integration_costs
-df_integration_costs.to_csv(result_path, index=False)
+df_integration_costs.to_csv(integration_costs_path, index=False)
