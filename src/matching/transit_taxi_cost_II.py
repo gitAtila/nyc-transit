@@ -97,6 +97,8 @@ def compute_integration_costs(dict_transit_private_trip, dict_taxi_private_trip,
             taxi_time_relative_detour = (sharing_duration - private_duration)/private_duration
             detour_factor = 1/taxi_time_relative_detour
 
+            print detour_factor
+
             list_detour_factor.append({'transit_id':matching['transit_id'], 'taxi_id':matching['taxi_id'],\
             'detour_factor':detour_factor})
 
