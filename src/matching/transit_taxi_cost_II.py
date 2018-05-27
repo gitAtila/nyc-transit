@@ -64,10 +64,11 @@ def group_df_rows(df, key_label):
 
 def compute_integration_costs(dict_transit_private_trip, dict_taxi_private_trip, df_matches):
 
+    list_detour_factor = []
     list_integration_costs = []
 
     for index, matching in df_matches.iterrows():
-        list_detour_factor = []
+
         list_transit_trip = dict_transit_private_trip[matching['transit_id']]
         list_taxi_private_trip = dict_taxi_private_trip[matching['taxi_id']]
 
