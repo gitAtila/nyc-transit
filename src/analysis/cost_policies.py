@@ -46,14 +46,14 @@ dict_counts = distinct_taxi_transit_pair(cost_1_1_1_path, dict_counts)
 
 df_counts = pd.DataFrame(dict_counts)
 df_counts = df_counts[['taxi', 'transit', 'pair']]
-df_counts.rename(columns={'taxi': 'Taxi', 'transit': 'Coletivo', 'pair': 'Par'},\
+df_counts.rename(columns={'taxi': 'Taxi', 'transit': 'Transit', 'pair': 'Pair'},\
 inplace=True)
 print df_counts
 ax = df_counts.plot(kind='bar')
 # ax.xaxis.set_ticklabels(['.5 .5 .5', '1 .5 .5', '.5 1 .5', '.5 .5 1',\
 # '1 1 .5', '1 .5 1', '.5 1 1', '1 1 1'])
 ax.xaxis.set_ticklabels(['.5 .5 .5', '1 .5 .5', '.5 1 .5', '1 1 .5', '1 1 1'])
-ax.set_xlabel('Politicas de Precificacao (taxa inicial, integracao, compartilhamento)')
-ax.set_ylabel('# de Viagens Distintas')
+ax.set_xlabel('Pricing Policies (Initial Charge, Integragion, Sharing)')
+ax.set_ylabel('# of Distinct Trips')
 fig = ax.get_figure()
-fig.savefig(result_path + 'viagens_distintas.pdf', bbox_inches='tight')
+fig.savefig(result_path + 'distinct_trips.png', bbox_inches='tight')
