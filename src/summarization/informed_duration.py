@@ -38,9 +38,9 @@ def demand_time(df_trips, chart_name):
 
 	# arrival_count = df_trips.groupby('HR_ARR')['TRIP_ID'].count()
 	# 'NYC Subway', 'Subway + Bus', 'NY-MTA Bus (only)', 'Other Transit', 'Taxi, Car/Van'
-	df_total_grouped_hour = pd.concat([departure_subway.rename('Metro'),\
-	departure_subway_bus.rename('Metro + Onibus'), departure_bus.rename('Onibus'),\
-	departure_taxi.rename('Servicos Taxi, Carro e Van')], axis=1)
+	df_total_grouped_hour = pd.concat([departure_subway.rename('Subway'),\
+	departure_subway_bus.rename('Subway + Bus'), departure_bus.rename('Bus'),\
+	departure_taxi.rename('Taxi, Car, and Van Services')], axis=1)
 
 	df_total_grouped_hour = df_total_grouped_hour.drop(99)
 
@@ -50,8 +50,8 @@ def demand_time(df_trips, chart_name):
 	print df_total_grouped_hour
 	ax = df_total_grouped_hour.plot()
 	ax.xaxis.set_major_locator(ticker.MultipleLocator(3)) # set x sticks interal
-	ax.set_xlabel('Hora do Dia')
-	ax.set_ylabel('% das Viagens')
+	ax.set_xlabel('Hour')
+	ax.set_ylabel('% of Trips')
 	plt.tight_layout()
 	fig = ax.get_figure()
 	fig.savefig(chart_name)
@@ -81,9 +81,13 @@ def travel_duration_per_mode(df_trips, chart_name):
 	# s_mode_name_10 = pd.Series(['NYC Subway Only', 'NYC Subway + Bus', 'NY or MTA Bus (no sub)', 'Commuter Rail (no nyct)', 'Other Rail (no nyct)',\
 	# 'Other Transit (no nyct)', 'Taxi, Car/Van Service', 'Auto Driver/Passenger', 'Walk (bike)', 'At-Home/Refused'], index = [1,2,3,4,5,6,7,8,9,10])
 
-	s_mode_name_8 = pd.Series(['Metro', 'Metro + Onibus', 'Onibus', 'Outro Transp. Coletivo',\
-	'Servicos Taxi, Carro e Van', 'Automovel', 'A pe (bicicleta)',\
-	 'Em Casa/Recusado'], index = [1,2,3,4,5,6,7,8])
+	# s_mode_name_8 = pd.Series(['Metro', 'Metro + Onibus', 'Onibus', 'Outro Transp. Coletivo',\
+	# 'Servicos Taxi, Carro e Van', 'Automovel', 'A pe (bicicleta)',\
+	#  'Em Casa/Recusado'], index = [1,2,3,4,5,6,7,8])
+
+	s_mode_name_8 = pd.Series(['Subway', 'Subway + Bus', 'Bus', 'Other Transit',\
+	'Taxi, Car, and Van Services', 'Auto Driver/Passenger', 'Walk (bike)',\
+	'At-Home/Refused'], index = [1,2,3,4,5,6,7,8])
 
 	dict_commute_time_mode = dict()
 
@@ -110,7 +114,7 @@ def travel_duration_per_mode(df_trips, chart_name):
 	plt.grid()
 	plt.legend(loc=4)
 	# ax.set_title('')
-	ax.set_xlabel('Duracao Informada da Viagem (minutos)')
+	ax.set_xlabel('Informed Duration (minutes)')
 	ax.set_ylabel('CDF')
 	plt.tight_layout()
 	fig.savefig(chart_name)
@@ -120,5 +124,5 @@ df_trips_sat = df_from_csv(travel_survey_file_sat)
 df_trips_sun = df_from_csv(travel_survey_file_sun)
 df_trips = pd.concat([df_trips_wkdy, df_trips_sat, df_trips_sun])
 
-demand_time(df_trips, temporal_result_path + 'demanda_por_modal.pdf')
-travel_duration_per_mode(df_trips, temporal_result_path + 'duracao_informada_por_modal.pdf')
+demand_time(df_trips, temporal_result_path + 'modal_demmand.pdf')
+travel_duration_per_mode(df_trips, temporal_result_path + 'informed_duration_per_modal.pdf')
