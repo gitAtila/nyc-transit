@@ -149,8 +149,12 @@ transit_shared_cost_parcel, dict_transit_private_trip, dict_taxi_private_trip, d
         transit_stop_position = [position for position in list_transit_trip\
         if position['stop_id'] == matching['stop_id']][0]
 
+        sharing_duration = (matching['taxi_destination_time'] - list_taxi_private_trip[0]['date_time']).total_seconds()
+        private_duration = (list_taxi_private_trip[-1]['date_time'] - list_taxi_private_trip[0]['date_time']).total_seconds()
+
         # verify if it is a valid matching
-        if transit_stop_position['date_time'] < matching['transit_destination_time']\
+        if sharing_duration <= 2* private_duration\
+        and transit_stop_position['date_time'] < matching['transit_destination_time']\
         and transit_stop_position['date_time'] < matching['taxi_destination_time']\
         and matching['taxi_arrival_time_transit_stop'] < matching['transit_destination_time']\
         and matching['taxi_arrival_time_transit_stop'] < matching['taxi_destination_time']:
@@ -176,7 +180,7 @@ transit_shared_cost_parcel, dict_transit_private_trip, dict_taxi_private_trip, d
                 'taxi_id': matching['taxi_id'], 'taxi_pos_sequence': matching['taxi_pos_sequence'],\
                 'taxi_private_cost': taxi_private_cost, 'taxi_shared_cost': taxi_shared_cost,\
                 'transit_shared_cost': transit_shared_cost})
-            
+
     return list_integration_costs
 
 # read matches
