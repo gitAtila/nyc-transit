@@ -53,7 +53,7 @@ ax = df_counts.plot(kind='bar')
 # ax.xaxis.set_ticklabels(['.5 .5 .5', '1 .5 .5', '.5 1 .5', '.5 .5 1',\
 # '1 1 .5', '1 .5 1', '.5 1 1', '1 1 1'])
 ax.xaxis.set_ticklabels(['.5 .5 .5', '1 .5 .5', '.5 1 .5', '1 1 .5', '1 1 1'])
-ax.set_xlabel('Pricing Policies (Initial Charge, Integragion, Sharing)')
+ax.set_xlabel('Pricing Policies (Initial Costs, Integragion, Sharing)')
 ax.set_ylabel('# of Distinct Trips')
 fig = ax.get_figure()
 fig.savefig(result_path + 'distinct_trips.png', bbox_inches='tight')
