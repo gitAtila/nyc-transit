@@ -4,6 +4,9 @@ import pandas as pd
 from datetime import datetime
 import csv
 
+import matplotlib
+matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
