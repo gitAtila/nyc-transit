@@ -105,28 +105,28 @@ fig, ax = plt.subplots()
 
 list_subway_durations.sort()
 ecdf_subway = ECDF(list_subway_durations)
-plt.plot(ecdf_subway.x, ecdf_subway.y, label='Metro')
+plt.plot(ecdf_subway.x, ecdf_subway.y, label='Subway')
 
 list_bus_subway_durations.sort()
 ecdf_bus_subway = ECDF(list_bus_subway_durations)
-plt.plot(ecdf_bus_subway.x, ecdf_bus_subway.y, label='Metro + Onibus')
+plt.plot(ecdf_bus_subway.x, ecdf_bus_subway.y, label='Subway + Bus')
 
 list_bus_durations.sort()
 ecdf_bus = ECDF(list_bus_durations)
-plt.plot(ecdf_bus.x, ecdf_bus.y, label='Onibus')
+plt.plot(ecdf_bus.x, ecdf_bus.y, label='Bus')
 
 list_taxi_durations.sort()
 ecdf_taxi = ECDF(list_taxi_durations)
-plt.plot(ecdf_taxi.x, ecdf_taxi.y, label='Servicos Taxi, Carro e Van')
+plt.plot(ecdf_taxi.x, ecdf_taxi.y, label='Taxi, Auto, and Van Services')
 
 ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x ticks as multiple of sixty
 plt.grid()
 plt.legend(loc=4)
 # ax.set_title('')
-ax.set_xlabel('Duracao Calculada da Viagem (minutos)')
+ax.set_xlabel('Computed Duration (minutes)')
 ax.set_ylabel('CDF')
 plt.tight_layout()
-fig.savefig(temporal_result_path + 'duracao_calculada_por_modal.pdf')
+fig.savefig(temporal_result_path + 'computed_duration_per_modal.pdf')
 
 # compute transit walk distances
 list_bus_walk_distance = walking_distances(dict_bus_trips)
@@ -138,24 +138,24 @@ fig, ax = plt.subplots()
 
 list_subway_walk_distance.sort()
 ecdf_subway = ECDF(list_subway_walk_distance)
-plt.plot(ecdf_subway.x, ecdf_subway.y, label='Metro')
+plt.plot(ecdf_subway.x, ecdf_subway.y, label='Subway')
 
 list_bus_subway_walk_distance.sort()
 ecdf_bus_subway = ECDF(list_bus_subway_walk_distance)
-plt.plot(ecdf_bus_subway.x, ecdf_bus_subway.y, label='Metro + Onibus')
+plt.plot(ecdf_bus_subway.x, ecdf_bus_subway.y, label='Subway + Bus')
 
 list_bus_walk_distance.sort()
 ecdf_bus = ECDF(list_bus_walk_distance)
-plt.plot(ecdf_bus.x, ecdf_bus.y, label='Onibus')
+plt.plot(ecdf_bus.x, ecdf_bus.y, label='Bus')
 
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x ticks as multiple of sixty
 plt.grid()
 plt.legend(loc=4)
 # ax.set_title('')
-ax.set_xlabel('Distancias a pe (km)')
+ax.set_xlabel('Walking Distaces (km)')
 ax.set_ylabel('CDF')
 plt.tight_layout()
-fig.savefig(spatial_result_path + 'distancias_a_pe.pdf')
+fig.savefig(spatial_result_path + 'walking_distances.pdf')
 
 # compute straight line distance
 list_bus_distances = straight_line_distances(dict_bus_trips)
@@ -168,25 +168,25 @@ fig, ax = plt.subplots()
 
 list_subway_distances.sort()
 ecdf_subway = ECDF(list_subway_distances)
-plt.plot(ecdf_subway.x, ecdf_subway.y, label='Metro')
+plt.plot(ecdf_subway.x, ecdf_subway.y, label='Subway')
 
 list_bus_subway_distances.sort()
 ecdf_bus_subway = ECDF(list_bus_subway_distances)
-plt.plot(ecdf_bus_subway.x, ecdf_bus_subway.y, label='Metro + Onibus')
+plt.plot(ecdf_bus_subway.x, ecdf_bus_subway.y, label='Subway + Bus')
 
 list_bus_distances.sort()
 ecdf_bus = ECDF(list_bus_distances)
-plt.plot(ecdf_bus.x, ecdf_bus.y, label='Onibus')
+plt.plot(ecdf_bus.x, ecdf_bus.y, label='Bus')
 
 list_taxi_distances.sort()
 ecdf_taxi = ECDF(list_taxi_distances)
-plt.plot(ecdf_taxi.x, ecdf_taxi.y, label='Servicos Taxi, Carro e Van')
+plt.plot(ecdf_taxi.x, ecdf_taxi.y, label='Taxi, Car, and Van Services')
 
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x ticks as multiple of sixty
 plt.grid()
 plt.legend(loc=4)
 # ax.set_title('')
-ax.set_xlabel('Distancia em Linha Reta (km)')
+ax.set_xlabel('Straight Line Distances (km)')
 ax.set_ylabel('CDF')
 plt.tight_layout()
-fig.savefig(spatial_result_path + 'distancias_por_modal.pdf')
+fig.savefig(spatial_result_path + 'distances_per_modal.pdf')
