@@ -7,6 +7,9 @@ import pandas as pd
 import numpy as np
 import time
 
+import matplotlib
+matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 from statsmodels.distributions.empirical_distribution import ECDF
 
