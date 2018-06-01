@@ -105,21 +105,21 @@ for index, max_benefit_trip in df_max_benefit_trip.iterrows():
     list_taxi_passenger_saving_money.append(max_benefit_trip['taxi_private_cost'] - max_benefit_trip['taxi_shared_cost'])
 
 plot_cdf_two_curves(list_transit_passenger_saving_time, list_taxi_passenger_extra_time,\
-'Economia de Tempo do Passageiro de Transp. Coletivo', 'Tempo Extra do Passageiro de Transp. Particular',\
-'Diferenca de Tempo (minutos)',\
+'Time Saving Transit Passenger', 'Extra Time Taxi Passenger',\
+'Difference of Time (minutes)',\
 times_chart_path)
 
 plot_cdf_two_curves(list_transit_passenger_extra_cost, list_taxi_passenger_saving_money,\
-'Custo do Passageiro de Transp. Coletivo', 'Economia de Dinheiro do Passageiro de Transp. Particular',\
-'Diferenca de Valores (dolares)',\
+'Extra Cost Transit Passenger', 'Saving Money Taxi Passenger',\
+'Difference of Cost (dollars)',\
 money_chart_path)
 
 scatter_plot(list_transit_passenger_saving_time, list_transit_passenger_extra_cost,\
-'Economia de Tempo (minutos)', 'Custo Extra (dolares)', transit_passenger_chart_path)
+'Saving Time (minutes)', 'Extra Cost (dollars)', transit_passenger_chart_path)
 print np.corrcoef(list_transit_passenger_extra_cost, list_transit_passenger_saving_time)
 print np.polyfit(list_transit_passenger_saving_time, list_transit_passenger_extra_cost, 1)
 
 scatter_plot(list_taxi_passenger_extra_time, list_taxi_passenger_saving_money,\
-'Tempo Extra (minutos)', 'Economia de Dinheiro (dolares)', taxi_passenger_chart_path)
+'Extra Time (minutes)', 'Saving Money (dollars)', taxi_passenger_chart_path)
 print np.corrcoef(list_taxi_passenger_extra_time, list_taxi_passenger_saving_money)
 print np.polyfit(list_taxi_passenger_extra_time, list_taxi_passenger_saving_money, 1)
