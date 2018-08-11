@@ -178,12 +178,12 @@ df_trips = pd.concat([df_trips_wkdy, df_trips_sat, df_trips_sun])
 # transit
 df_trips_transit = df_trips[df_trips['MODE_G2'] == 1]
 plot_puma(shp_puma, get_count_origins_per_puma(df_trips_transit, 5), '', '',\
-plt.cm.Greens, spatial_result_path + 'transit_origins_puma.png')
+plt.cm.Greens, spatial_result_path + 'transit_origins_puma.pdf')
 plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_transit, 5), '', '',\
-plt.cm.Reds, spatial_result_path + 'transit_destination_puma.png')
+plt.cm.Reds, spatial_result_path + 'transit_destination_puma.pdf')
 # taxi
 df_trips_taxi = df_trips[df_trips['MODE_G10'] == 7]
 plot_puma(shp_puma, get_count_origins_per_puma(df_trips_taxi, 5), '','',\
-plt.cm.Greens, spatial_result_path + 'taxi_origin_puma.png')
+plt.cm.Greens, spatial_result_path + 'taxi_origin_puma.pdf')
 plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_taxi, 5), '','',\
-plt.cm.Reds, spatial_result_path + 'taxi_destination_puma.png')
+plt.cm.Reds, spatial_result_path + 'taxi_destination_puma.pdf')
