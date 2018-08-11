@@ -166,7 +166,7 @@ def plot_puma(shapefile_base_path, dict_puma_count, map_title, y_label, range_co
 	cax = fig.add_axes([0.85, 0.25, 0.05, 0.5]) # posititon
 	cb = ColorbarBase(cax,cmap=cmap,norm=norm, orientation='vertical')
 
-	fig.tight_layout()
+	# fig.tight_layout()
 	fig.savefig(map_path)
 
 
