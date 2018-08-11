@@ -166,7 +166,7 @@ def plot_puma(shapefile_base_path, dict_puma_count, map_title, y_label, range_co
 	cax = fig.add_axes([0.85, 0.25, 0.05, 0.5]) # posititon
 	cb = ColorbarBase(cax,cmap=cmap,norm=norm, orientation='vertical')
 
-	# fig.tight_layout()
+	fig.tight_layout()
 	fig.savefig(map_path)
 
 
@@ -177,13 +177,13 @@ df_trips = pd.concat([df_trips_wkdy, df_trips_sat, df_trips_sun])
 
 # transit
 df_trips_transit = df_trips[df_trips['MODE_G2'] == 1]
-plot_puma(shp_puma, get_count_origins_per_puma(df_trips_transit, 5), 'Transit', 'Origin',\
+plot_puma(shp_puma, get_count_origins_per_puma(df_trips_transit, 5), '', '',\
 plt.cm.Greens, spatial_result_path + 'transit_origins_puma.png')
-plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_transit, 5), '', 'Destination',\
+plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_transit, 5), '', '',\
 plt.cm.Reds, spatial_result_path + 'transit_destination_puma.png')
 # taxi
 df_trips_taxi = df_trips[df_trips['MODE_G10'] == 7]
-plot_puma(shp_puma, get_count_origins_per_puma(df_trips_taxi, 5), 'Taxi','',\
+plot_puma(shp_puma, get_count_origins_per_puma(df_trips_taxi, 5), '','',\
 plt.cm.Greens, spatial_result_path + 'taxi_origin_puma.png')
 plot_puma(shp_puma, get_count_destinations_per_puma(df_trips_taxi, 5), '','',\
 plt.cm.Reds, spatial_result_path + 'taxi_destination_puma.png')
