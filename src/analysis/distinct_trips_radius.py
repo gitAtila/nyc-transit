@@ -16,34 +16,28 @@ from statsmodels.distributions.empirical_distribution import ECDF
 temporal_spatial_1000_path = argv[1]
 cost_1000_path = argv[2]
 max_benefit_1000_path = argv[3]
-max_benefit_1000_prop_path = argv[4]
 
-temporal_spatial_2000_path = argv[5]
-cost_2000_path = argv[6]
-max_benefit_2000_path = argv[7]
-max_benefit_2000_prop_path = argv[8]
+temporal_spatial_2000_path = argv[4]
+cost_2000_path = argv[5]
+max_benefit_2000_path = argv[6]
 
-temporal_spatial_3000_path = argv[9]
-cost_3000_path = argv[10]
-max_benefit_3000_path = argv[11]
-max_benefit_3000_prop_path = argv[12]
+temporal_spatial_3000_path = argv[7]
+cost_3000_path = argv[8]
+max_benefit_3000_path = argv[9]
 
-temporal_spatial_4000_path = argv[13]
-cost_4000_path = argv[14]
-max_benefit_4000_path = argv[15]
-max_benefit_4000_prop_path = argv[16]
+temporal_spatial_4000_path = argv[10]
+cost_4000_path = argv[11]
+max_benefit_4000_path = argv[12]
 
-temporal_spatial_5000_path = argv[17]
-cost_5000_path = argv[18]
-max_benefit_5000_path = argv[19]
-max_benefit_5000_prop_path = argv[20]
+temporal_spatial_5000_path = argv[13]
+cost_5000_path = argv[14]
+max_benefit_5000_path = argv[15]
 
-temporal_spatial_inf_path = argv[21]
-cost_inf_path = argv[22]
-max_benefit_inf_path = argv[23]
-max_benefit_inf_prop_path = argv[24]
+temporal_spatial_inf_path = argv[16]
+cost_inf_path = argv[17]
+max_benefit_inf_path = argv[18]
 #
-result_path = argv[25]
+result_path = argv[19]
 
 def distinct_taxi_transit_pair(dict_counts, temporal_spatial_path, cost_path, max_benefit_path):
     df_temporal_spatial = pd.read_csv(temporal_spatial_path)
