@@ -13,7 +13,7 @@ temporal_spatial_match_path = argv[3]
 # transit_shared_cost_parcel = float(argv[6])
 # result_path = argv[4]
 # detour_factor_path = argv[4]
-integration_costs_path = argv[5]
+integration_costs_path = argv[4]
 
 
 def nyc_taxi_cost(date_time_origin, trip_distance_meters, stopped_duration_sec):
