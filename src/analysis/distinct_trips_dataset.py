@@ -16,29 +16,24 @@ from statsmodels.distributions.empirical_distribution import ECDF
 temporal_spatial_real_path = argv[1]
 cost_real_path = argv[2]
 max_benefit_real_path = argv[3]
-max_benefit_real_prop_path = argv[4]
 
-temporal_spatial_10min_5x_path = argv[5]
-cost_10min_5x_path = argv[6]
-max_benefit_10min_5x_path = argv[7]
-max_benefit_10min_5x_prop_path = argv[8]
+temporal_spatial_10min_5x_path = argv[4]
+cost_10min_5x_path = argv[5]
+max_benefit_10min_5x_path = argv[6]
 
-temporal_spatial_20min_5x_path = argv[9]
-cost_20min_5x_path = argv[10]
-max_benefit_20min_5x_path = argv[11]
-max_benefit_20min_5x_prop_path = argv[12]
+temporal_spatial_20min_5x_path = argv[7]
+cost_20min_5x_path = argv[8]
+max_benefit_20min_5x_path = argv[9]
 
-temporal_spatial_10min_10x_path = argv[13]
-cost_10min_10x_path = argv[14]
-max_benefit_10min_10x_path = argv[15]
-max_benefit_10min_10x_prop_path = argv[16]
+temporal_spatial_10min_10x_path = argv[10]
+cost_10min_10x_path = argv[11]
+max_benefit_10min_10x_path = argv[12]
 
-temporal_spatial_20min_10x_path = argv[17]
-cost_20min_10x_path = argv[18]
-max_benefit_20min_10x_path = argv[19]
-max_benefit_20min_10x_prop_path = argv[20]
+temporal_spatial_20min_10x_path = argv[13]
+cost_20min_10x_path = argv[14]
+max_benefit_20min_10x_path = argv[15]
 #
-result_path = argv[21]
+result_path = argv[16]
 
 def distinct_taxi_transit_pair(dict_counts, temporal_spatial_path, cost_path, max_benefit_path):
     df_temporal_spatial = pd.read_csv(temporal_spatial_path)
