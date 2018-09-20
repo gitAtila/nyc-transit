@@ -31,8 +31,8 @@ max_benefit_20min_10x_prop_path = argv[10]
 result_path = argv[11]
 
 def distinct_taxi_transit_pair(dict_counts, max_benefit_seg_path, max_benefit_prop_path):
-    df_max_benefit = pd.read_csv(max_benefit_seg_path)
-    df_max_benefit = pd.read_csv(max_benefit_prop_path)
+    df_max_benefit_seg = pd.read_csv(max_benefit_seg_path)
+    df_max_benefit_prop = pd.read_csv(max_benefit_prop_path)
 
     dict_counts['max_benefit_seg'].append(len(df_max_benefit_seg.groupby(['taxi_id','transit_id']).count()))
     dict_counts['max_benefit_prop'].append(len(df_max_benefit_prop.groupby(['taxi_id','transit_id']).count()))
