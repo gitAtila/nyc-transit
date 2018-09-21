@@ -53,8 +53,8 @@ df_counts = df_counts[['max_benefit_seg', 'max_benefit_prop']]
 # df_counts = df_counts[['max_benefit']]
 print df_counts
 ax = df_counts.plot(kind='line')
-# ax = df_counts.plot()
-# ax.xaxis.set_major_locator(ticker.MultipleLocator(1)) # set x sticks interal
+ax = df_counts.plot()
+ax.xaxis.set_major_locator(ticker.MultipleLocator(1)) # set x sticks interal
 ax.xaxis.set_ticklabels(['real', '5x_10min', '5x_20min', '10x_10min', '10x_20min'])
 fig = ax.get_figure()
 fig.savefig(result_path, bbox_inches='tight')
