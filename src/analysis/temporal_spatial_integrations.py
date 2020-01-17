@@ -11,6 +11,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from statsmodels.distributions.empirical_distribution import ECDF
+plt.rcParams.update({'font.size': 16})
 
 temporal_spatial_path = argv[1]
 result_path = argv[2]
@@ -27,7 +28,6 @@ def plot_cdf_two_curves(list_curve_1, list_curve_2, label_curve_1, label_curve_2
     plt.plot(ecdf_curve_2.x, ecdf_curve_2.y, label=label_curve_2)
 
     ax.xaxis.set_major_locator(ticker.MultipleLocator(5)) # set x sticks interal
-    plt.grid()
     plt.legend(loc=4)
     # ax.set_title('saturday')
     ax.set_xlabel(x_label)
@@ -43,8 +43,8 @@ list_transit_per_taxi = df_temporal_spatial.groupby('taxi_id')['transit_id'].nun
 list_transit_stop_options = df_temporal_spatial.groupby('transit_id')['stop_id'].nunique().tolist()
 list_taxi_position_options = df_temporal_spatial.groupby('taxi_id')['taxi_pos_sequence'].nunique().tolist()
 
-plot_cdf_two_curves(list_taxi_per_transit, list_transit_per_taxi, 'Taxi per Transit',\
-'Transit per Taxi', '# of Integration Options', result_path + 'cdf_integration_options_trips.pdf')
+plot_cdf_two_curves(list_transit_per_taxi, list_taxi_per_transit, 'Transit per Taxi',\
+'Taxi per Transit', '# of Integration Options', result_path + 'cdf_integration_options_trips.pdf')
 
-plot_cdf_two_curves(list_transit_stop_options, list_taxi_position_options, 'Transit Stops',\
+plot_cdf_two_curves(list_transit_stop_options, list_taxi_position_options, 'Transit Stops',
 'Taxi Positions', '# of Integration Options', result_path + 'cdf_integration_options_positions.pdf')

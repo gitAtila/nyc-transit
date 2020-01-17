@@ -12,6 +12,8 @@ import matplotlib.ticker as ticker
 
 from statsmodels.distributions.empirical_distribution import ECDF
 
+plt.rcParams.update({'font.size': 16})
+
 travel_survey_file_wkdy = argv[1]
 travel_survey_file_sat = argv[2]
 travel_survey_file_sun = argv[3]
@@ -50,14 +52,17 @@ def demand_time(df_trips, chart_name):
 	print df_total_grouped_hour
 	ax = df_total_grouped_hour.plot()
 	ax.xaxis.set_major_locator(ticker.MultipleLocator(3)) # set x sticks interal
-	ax.set_xlabel('Hour')
-	ax.set_ylabel('% of Trips')
+	ax.set_xlabel('Hour', fontsize=16)
+	ax.set_ylabel('% of Trips', fontsize=16)
+	plt.xticks([0,6,12,18,23])
 	plt.tight_layout()
+	plt.legend(loc=4, fontsize=14)
 	fig = ax.get_figure()
 	fig.savefig(chart_name)
 
 def get_travel_time(s_trip):
 	try:
+
 		departure_time = datetime.strptime(s_trip['trip_sdate'].split(' ')[0] + ' ' + s_trip['dtime'], '%m/%d/%y %H:%M')
 		arrival_time = datetime.strptime(s_trip['trip_edate'].split(' ')[0] + ' ' + s_trip['atime'], '%m/%d/%y %H:%M')
 		travel_time = (arrival_time - departure_time).seconds/60 # travel time in minutes
@@ -92,6 +97,7 @@ def travel_duration_per_mode(df_trips, chart_name):
 	dict_commute_time_mode = dict()
 
 	for index, s_trip in df_trips.iterrows():
+		#print s_trip['sampn'], s_trip['trip_sdate'], s_trip['tripno']
 		dict_commute_time_mode.setdefault(s_trip['MODE_G8'], list()).append(get_travel_time(s_trip))
 		#break
 
@@ -111,11 +117,10 @@ def travel_duration_per_mode(df_trips, chart_name):
 	print ''
 
 	ax.xaxis.set_major_locator(ticker.MultipleLocator(60)) # set x ticks as multiple of sixty
-	plt.grid()
-	plt.legend(loc=4)
+	plt.legend(fontsize=16)
 	# ax.set_title('')
-	ax.set_xlabel('Informed Duration (minutes)')
-	ax.set_ylabel('CDF')
+	ax.set_xlabel('Informed Duration (minutes)', fontsize=16)
+	ax.set_ylabel('CDF', fontsize=16)
 	plt.tight_layout()
 	fig.savefig(chart_name)
 

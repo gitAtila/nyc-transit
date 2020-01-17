@@ -9,6 +9,7 @@ matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+plt.rcParams.update({'font.size': 16})
 
 from geopy.distance import vincenty
 
@@ -123,11 +124,10 @@ ecdf_taxi = ECDF(list_taxi_durations)
 plt.plot(ecdf_taxi.x, ecdf_taxi.y, label='Taxi, Car, and Van Services')
 
 ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x ticks as multiple of sixty
-plt.grid()
-plt.legend(loc=4)
+plt.legend(fontsize=15, loc=4)
 # ax.set_title('')
-ax.set_xlabel('Computed Duration (minutes)')
-ax.set_ylabel('CDF')
+ax.set_xlabel('Computed Duration (minutes)', fontsize=16)
+ax.set_ylabel('CDF', fontsize=16)
 plt.tight_layout()
 fig.savefig(temporal_result_path + 'computed_duration_per_modal.pdf')
 
@@ -152,11 +152,10 @@ ecdf_bus = ECDF(list_bus_walk_distance)
 plt.plot(ecdf_bus.x, ecdf_bus.y, label='Bus')
 
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x ticks as multiple of sixty
-plt.grid()
-plt.legend(loc=4)
+plt.legend(fontsize=16, loc=4)
 # ax.set_title('')
-ax.set_xlabel('Walking Distaces (km)')
-ax.set_ylabel('CDF')
+ax.set_xlabel('Walking Distaces (km)', fontsize=16)
+ax.set_ylabel('CDF', fontsize=16)
 plt.tight_layout()
 fig.savefig(spatial_result_path + 'walking_distances.pdf')
 
@@ -186,7 +185,6 @@ ecdf_taxi = ECDF(list_taxi_distances)
 plt.plot(ecdf_taxi.x, ecdf_taxi.y, label='Taxi, Car, and Van Services')
 
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x ticks as multiple of sixty
-plt.grid()
 plt.legend(loc=4)
 # ax.set_title('')
 ax.set_xlabel('Straight Line Distances (km)')

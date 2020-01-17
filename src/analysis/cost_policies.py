@@ -11,6 +11,7 @@ matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
 from statsmodels.distributions.empirical_distribution import ECDF
+plt.rcParams.update({'font.size': 16})
 
 cost_05_05_05_path = argv[1]
 cost_1_05_05_path = argv[2]
@@ -53,7 +54,7 @@ ax = df_counts.plot(kind='bar')
 # ax.xaxis.set_ticklabels(['.5 .5 .5', '1 .5 .5', '.5 1 .5', '.5 .5 1',\
 # '1 1 .5', '1 .5 1', '.5 1 1', '1 1 1'])
 ax.xaxis.set_ticklabels(['.5 .5 .5', '1 .5 .5', '.5 1 .5', '1 1 .5', '1 1 1'])
-ax.set_xlabel('Pricing Policies (Initial Costs, Integragion, Sharing)')
-ax.set_ylabel('# of Distinct Trips')
+ax.set_xlabel('Pricing Policies (s_initial, s_detour, s_shared)')
+ax.set_ylabel('Number of Distinct Trips')
 fig = ax.get_figure()
 fig.savefig(result_path + 'distinct_trips.pdf', bbox_inches='tight')
