@@ -12,6 +12,7 @@ matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
 from statsmodels.distributions.empirical_distribution import ECDF
+plt.rcParams.update({'font.size': 16})
 
 transit_private_trips_path = argv[1]
 
@@ -21,8 +22,7 @@ max_benefit_05_path = argv[4]
 max_benefit_075_path = argv[5]
 max_benefit_1_path = argv[6]
 
-saving_money_chart_path = argv[7]
-saving_time_chart_path = argv[8]
+result_path = argv[7]
 
 # colormap = plt.cm.nipy_spectral
 
@@ -107,13 +107,12 @@ plt.plot(ecdf_saving_money_075.x, ecdf_saving_money_075.y, label='factor= 0.75')
 plt.plot(ecdf_saving_money_1.x, ecdf_saving_money_1.y, label='factor = 1')
 
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x sticks interal
-plt.grid()
 plt.legend(loc=4)
 # ax.set_title('saturday')
 ax.set_xlabel('Saving Money (orig - new)/orig')
 ax.set_ylabel('CDF')
 plt.tight_layout()
-fig.savefig(saving_money_chart_path)
+fig.savefig(result_path + 'max_benefit_prop_factor_money.pdf')
 
 '''
     Saving time
@@ -135,10 +134,9 @@ plt.plot(ecdf_saving_time_1.x, ecdf_saving_time_1.y, label='factor = 1.0')
 
 
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x sticks interal
-plt.grid()
-plt.legend(loc=2)
+plt.legend(loc=4)
 # ax.set_title('saturday')
 ax.set_xlabel('Saving Time (orig - new)/orig')
 ax.set_ylabel('CDF')
 plt.tight_layout()
-fig.savefig(saving_time_chart_path)
+fig.savefig(result_path + 'max_benefit_prop_factor_time.pdf')

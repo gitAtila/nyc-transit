@@ -7,6 +7,7 @@ import pandas as pd
 
 import matplotlib.pyplot as plt
 from statsmodels.distributions.empirical_distribution import ECDF
+plt.rcParams.update({'font.size': 16})
 
 taxi_private_real_path = argv[1]
 taxi_private_10min_5x_path = argv[2]
@@ -20,9 +21,7 @@ max_benefit_10min_10x_path = argv[8]
 max_benefit_20min_5x_path = argv[9]
 max_benefit_20min_10x_path = argv[10]
 
-tp_extra_time_chart_path = argv[11]
-td_extra_time_chart_path = argv[12]
-bp_saving_time_chart_path = argv[13]
+result_path = argv[11]
 
 def saving_extra_time(taxi_private_trips_path, df_max_benefit_trip):
 
@@ -124,13 +123,13 @@ plt.plot(ecdf_tp_extra_time_20min_5x.x, ecdf_tp_extra_time_20min_5x.y, label='20
 plt.plot(ecdf_tp_extra_time_20min_10x.x, ecdf_tp_extra_time_20min_10x.y, label='20min_10x')
 
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x sticks interal
-plt.grid()
+#plt.grid()
 plt.legend(loc=4)
 # ax.set_title('saturday')
 ax.set_xlabel('taxi passenger extra time (minutes)')
 ax.set_ylabel('ECDF')
 plt.tight_layout()
-fig.savefig(tp_extra_time_chart_path)
+fig.savefig(result_path + 'max_benefit_tp_extra_time.pdf')
 
 '''
     Taxi driver extra time
@@ -156,13 +155,13 @@ plt.plot(ecdf_td_extra_time_20min_5x.x, ecdf_td_extra_time_20min_5x.y, label='20
 plt.plot(ecdf_td_extra_time_20min_10x.x, ecdf_td_extra_time_20min_10x.y, label='20min_10x')
 
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x sticks interal
-plt.grid()
+#plt.grid()
 plt.legend(loc=4)
 # ax.set_title('saturday')
 ax.set_xlabel('taxi driver extra time (minutes)')
 ax.set_ylabel('ECDF')
 plt.tight_layout()
-fig.savefig(td_extra_time_chart_path)
+fig.savefig(result_path + 'max_benefit_td_extra_time.pdf')
 
 '''
     Transit Passenger Saving time
@@ -188,10 +187,10 @@ plt.plot(ecdf_bp_saving_time_20min_5x.x, ecdf_bp_saving_time_20min_5x.y, label='
 plt.plot(ecdf_bp_saving_time_20min_10x.x, ecdf_bp_saving_time_20min_10x.y, label='20min_10x')
 
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x sticks interal
-plt.grid()
+#plt.grid()
 plt.legend(loc=4)
 # ax.set_title('saturday')
 ax.set_xlabel('transit passenger saving time (minutes)')
 ax.set_ylabel('ECDF')
 plt.tight_layout()
-fig.savefig(bp_saving_time_chart_path)
+fig.savefig(result_path + 'max_benefit_bp_extra_time.pdf')

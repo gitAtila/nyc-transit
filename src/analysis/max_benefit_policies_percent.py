@@ -12,6 +12,7 @@ matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
 from statsmodels.distributions.empirical_distribution import ECDF
+plt.rcParams.update({'font.size': 16})
 
 transit_private_trips_path = argv[1]
 
@@ -109,23 +110,23 @@ ecdf_saving_money_1_1_1 = ECDF(list_saving_money[7])
 
 fig, ax = plt.subplots()
 # ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,len(list_saving_money))])
-plt.plot(ecdf_saving_money_05_05_05.x, ecdf_saving_money_05_05_05.y, label='a=0.5 b=0.5 c=0.5')
-plt.plot(ecdf_saving_money_1_05_05.x, ecdf_saving_money_1_05_05.y, label='a=1.0 b=0.5 c=0.5')
-plt.plot(ecdf_saving_money_05_1_05.x, ecdf_saving_money_05_1_05.y, label='a=0.5 b=1.0 c=0.5')
+plt.plot(ecdf_saving_money_05_05_05.x, ecdf_saving_money_05_05_05.y, label='(0.5, 0.5, 0.5)')
+plt.plot(ecdf_saving_money_1_05_05.x, ecdf_saving_money_1_05_05.y, label='(1.0, 0.5, 0.5)')
+plt.plot(ecdf_saving_money_05_1_05.x, ecdf_saving_money_05_1_05.y, label='(0.5, 1.0, 0.5)')
 # plt.plot(ecdf_saving_money_05_05_1.x, ecdf_saving_money_05_05_1.y, label='a=0.5 b=0.5 c=1.0')
-plt.plot(ecdf_saving_money_1_1_05.x, ecdf_saving_money_1_1_05.y, label='a=1.0 b=1.0 c=0.5')
+plt.plot(ecdf_saving_money_1_1_05.x, ecdf_saving_money_1_1_05.y, label='(1.0, 1.0, 0.5)')
 # plt.plot(ecdf_saving_money_1_05_1.x, ecdf_saving_money_1_05_1.y, label='a=1.0 b=0.5 c=1.0')
 # plt.plot(ecdf_saving_money_05_1_1.x, ecdf_saving_money_05_1_1.y, label='a=0.5 b=1.0 c=1.0')
-plt.plot(ecdf_saving_money_1_1_1.x, ecdf_saving_money_1_1_1.y, label='a=1.0 b=1.0 c=1.0')
+plt.plot(ecdf_saving_money_1_1_1.x, ecdf_saving_money_1_1_1.y, label='(1.0, 1.0, 1.0)')
 
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x sticks interal
-plt.grid()
-plt.legend(loc=4)
+#plt.grid()
+plt.legend(fontsize=15, loc=4)
 # ax.set_title('saturday')
 ax.set_xlabel('Money Saving (orig - new)/orig')
 ax.set_ylabel('CDF')
 plt.tight_layout()
-fig.savefig(saving_money_chart_path)
+fig.savefig(saving_money_chart_path + 'max_benefit_saving_money.pdf')
 
 '''
     Saving time
@@ -142,20 +143,20 @@ ecdf_saving_time_1_1_1 = ECDF(list_saving_time[7])
 
 fig, ax = plt.subplots()
 # ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,len(list_saving_time))])
-plt.plot(ecdf_saving_time_05_05_05.x, ecdf_saving_time_05_05_05.y, label='a=0.5 b=0.5 c=0.5')
-plt.plot(ecdf_saving_time_1_05_05.x, ecdf_saving_time_1_05_05.y, label='a=1.0 b=0.5 c=0.5')
-plt.plot(ecdf_saving_time_05_1_05.x, ecdf_saving_time_05_1_05.y, label='a=0.5 b=1.0 c=0.5')
+plt.plot(ecdf_saving_time_05_05_05.x, ecdf_saving_time_05_05_05.y, label='(0.5, 0.5, 0.5)')
+plt.plot(ecdf_saving_time_1_05_05.x, ecdf_saving_time_1_05_05.y, label='(1.0, 0.5, 0.5)')
+plt.plot(ecdf_saving_time_05_1_05.x, ecdf_saving_time_05_1_05.y, label='(0.5, 1.0, 0.5)')
 # plt.plot(ecdf_saving_time_05_05_1.x, ecdf_saving_time_05_05_1.y, label='a=0.5 b=0.5 c=1.0')
-plt.plot(ecdf_saving_time_1_1_05.x, ecdf_saving_time_1_1_05.y, label='a=1.0 b=1.0 c=0.5')
+plt.plot(ecdf_saving_time_1_1_05.x, ecdf_saving_time_1_1_05.y, label='(1.0, 1.0, 0.5)')
 # plt.plot(ecdf_saving_time_1_05_1.x, ecdf_saving_time_1_05_1.y, label='a=1.0 b=0.5 c=1.0')
 # plt.plot(ecdf_saving_time_05_1_1.x, ecdf_saving_time_05_1_1.y, label='a=0.5 b=1.0 c=1.0')
-plt.plot(ecdf_saving_time_1_1_1.x, ecdf_saving_time_1_1_1.y, label='a=1.0 b=1.0 c=1.0')
+plt.plot(ecdf_saving_time_1_1_1.x, ecdf_saving_time_1_1_1.y, label='(1.0, 1.0, 1.0)')
 
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x sticks interal
-plt.grid()
-plt.legend(loc=2)
+# plt.grid()
+plt.legend(fontsize=15, loc=4)
 # ax.set_title('saturday')
 ax.set_xlabel('Time Saving (orig - new)/orig')
 ax.set_ylabel('CDF')
 plt.tight_layout()
-fig.savefig(saving_time_chart_path)
+fig.savefig(saving_time_chart_path + 'max_benefit_saving_time.pdf')

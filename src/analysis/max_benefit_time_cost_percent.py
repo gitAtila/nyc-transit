@@ -10,6 +10,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
+plt.rcParams.update({'font.size': 16})
 
 from statsmodels.distributions.empirical_distribution import ECDF
 

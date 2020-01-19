@@ -12,6 +12,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from statsmodels.distributions.empirical_distribution import ECDF
+plt.rcParams.update({'font.size': 16})
 
 max_benefit_real_seg_path = argv[1]
 max_benefit_real_prop_path = argv[2]
@@ -52,9 +53,11 @@ df_counts = pd.DataFrame(dict_counts, index=['real', '5x_10min', '5x_20min', '10
 df_counts = df_counts[['max_benefit_seg', 'max_benefit_prop']]
 # df_counts = df_counts[['max_benefit']]
 print df_counts
-ax = df_counts.plot(kind='line', grid=True)
-ax = df_counts.plot()
+ax = df_counts.plot(style=['*-','o-'])
+ax.legend(['Segment pricing policy','Propotional pricing policy'], loc=4)
 ax.xaxis.set_major_locator(ticker.MultipleLocator(1)) # set x sticks interal
-ax.xaxis.set_ticklabels(['','real', '5x_10min', '5x_20min', '10x_10min', '10x_20min'])
+ax.xaxis.set_ticklabels(['','real', '5x_10min', '5x_20min', '10x_10min', '10x_20min'], rotation=30)
+ax.set_xlabel('Real and synthetic datasets')
+ax.set_ylabel('Number of distinct integrations')
 fig = ax.get_figure()
-fig.savefig(result_path, bbox_inches='tight')
+fig.savefig(result_path + 'max_benefit_dataset_II.pdf', bbox_inches='tight')

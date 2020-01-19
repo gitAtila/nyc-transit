@@ -12,6 +12,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from statsmodels.distributions.empirical_distribution import ECDF
+plt.rcParams.update({'font.size': 16})
 
 temporal_spatial_1000_path = argv[1]
 cost_1000_path = argv[2]
@@ -64,7 +65,8 @@ dict_counts = distinct_taxi_transit_pair(dict_counts, temporal_spatial_inf_path,
 df_counts = pd.DataFrame(dict_counts, index=['1000', '2000', '3000', '4000', '5000', 'inf'])
 df_counts = df_counts[['temporal_spatial', 'cost', 'max_benefit']]
 print df_counts
-ax = df_counts.plot(kind='line')
+ax = df_counts.plot(style=['*-','o-','H', '^', 'v', 's'])
+ax.legend(['Number of distinct trips','Acceptance radius (meters)'], loc=4)
 # ax = df_counts.plot()
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(1)) # set x sticks interal
 # ax.xaxis.set_ticklabels(['1000', '5x_10min', '5x_20min', '10x_10min', '10x_20min'])
