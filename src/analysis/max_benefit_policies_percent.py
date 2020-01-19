@@ -1,5 +1,6 @@
 '''
     Vary cost policies and evaluate matchings
+    python max_benefit_policies_percent.py ~/Documents/Projeto_2020/passenger_trips/all_modes.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_05_05_05_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_1_05_05_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_05_1_05_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_05_05_1_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_1_1_05_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_1_05_1_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_05_1_1_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_1_1_1_inf.csv ~/Dropbox/Projeto_2020/resultados/ ~/Dropbox/Projeto_2020/resultados/
 '''
 
 from sys import argv

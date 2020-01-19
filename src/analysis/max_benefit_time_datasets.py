@@ -1,5 +1,6 @@
 '''
     Evaluate matchings for different datasets
+    python max_benefit_time_datasets.py ~/Documents/Projeto_2020/passenger_trips/all_modes.csv ~/Documents/Projeto_2020/passenger_trips/taxi_10min_5x.csv ~/Documents/Projeto_2020/passenger_trips/taxi_10min_10x.csv ~/Documents/Projeto_2020/passenger_trips/taxi_20min_5x.csv ~/Documents/Projeto_2020/passenger_trips/taxi_20min_10x.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_3000.csv ~/Documents/Projeto_2020/matching/transit_taxi/synthetic/max_benefit_10min_5x_3000.csv ~/Documents/Projeto_2020/matching/transit_taxi/synthetic/max_benefit_10min_10x_3000.csv ~/Documents/Projeto_2020/matching/transit_taxi/synthetic/max_benefit_20min_5x_3000.csv ~/Documents/Projeto_2020/matching/transit_taxi/synthetic/max_benefit_20min_10x_3000.csv ~/Dropbox/Projeto_2020/resultados/
 '''
 
 from sys import argv

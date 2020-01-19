@@ -1,5 +1,8 @@
 '''
     Read results provided by transit_taxi_max_benefit and analyse them
+    python max_benefit_time_cost.py ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_1_05_05_inf.csv ~/Documents/Projeto_2020/passenger_trips/all_modes.csv ~/Dropbox/Projeto_2020/resultados/max_benefit_p1_times.pdf ~/Dropbox/Projeto_2020/resultados/max_benefit_p1_costs.pdf ~/Dropbox/Projeto_2020/resultados/resultados/max_benefit_p1_transit.pdf ~/Dropbox/Projeto_2020/resultados/max_benefit_p1_taxi.pdf
+    
+    python max_benefit_time_cost.py ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_prop_inf_05.csv ~/Documents/Projeto_2020/passenger_trips/all_modes.csv ~/Dropbox/Projeto_2020/resultados/max_benefit_p2_times.pdf ~/Dropbox/Projeto_2020/resultados/max_benefit_p2_costs.pdf ~/Dropbox/Projeto_2020/resultados/max_benefit_p2_transit.pdf ~/Dropbox/Projeto_2020/resultados/max_benefit_p2_taxi.pdf
 '''
 
 from sys import argv

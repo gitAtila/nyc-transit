@@ -1,5 +1,6 @@
 '''
     Plot computed durations and distances
+    python computed_durations_distances.py ~/Documents/Projeto_2020/passenger_trips/all_modes.csv ~/Dropbox/Projeto_2020/resultados/ ~/Dropbox/Projeto_2020/resultados/
 '''
 from sys import argv
 import pandas as pd

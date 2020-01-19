@@ -1,5 +1,6 @@
 '''
     Datasets and distinct trips
+    python distinct_trips_radius.py ~/Documents/Projeto_2020/matching/transit_taxi/survey/temporal_spatial_real_1000.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/costs_real_1000.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_1000.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/temporal_spatial_real_2000.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/costs_real_2000.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_2000.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/temporal_spatial_real_3000.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/costs_real_3000.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_3000.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/temporal_spatial_real_4000.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/costs_real_4000.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_4000.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/temporal_spatial_real_5000.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/costs_real_5000.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_5000.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/temporal_spatial_real_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/costs_real_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_inf.csv ~/Dropbox/Projeto_2020/resultados/
 '''
 
 from sys import argv
@@ -65,10 +66,12 @@ dict_counts = distinct_taxi_transit_pair(dict_counts, temporal_spatial_inf_path,
 df_counts = pd.DataFrame(dict_counts, index=['1000', '2000', '3000', '4000', '5000', 'inf'])
 df_counts = df_counts[['temporal_spatial', 'cost', 'max_benefit']]
 print df_counts
-ax = df_counts.plot(style=['*-','o-','H', '^', 'v', 's'])
-ax.legend(['Number of distinct trips','Acceptance radius (meters)'], loc=4)
+ax = df_counts.plot(style=['*-','o-','H-'])
+ax.set_xlabel('Radius (meters)')
+ax.set_ylabel('Number of integrations')
+# ax.legend(['Number of distinct trips','Acceptance radius (meters)'], loc=4)
 # ax = df_counts.plot()
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(1)) # set x sticks interal
 # ax.xaxis.set_ticklabels(['1000', '5x_10min', '5x_20min', '10x_10min', '10x_20min'])
 fig = ax.get_figure()
-fig.savefig(result_path, bbox_inches='tight')
+fig.savefig(result_path + 'acceptance_radius.eps', bbox_inches='tight')

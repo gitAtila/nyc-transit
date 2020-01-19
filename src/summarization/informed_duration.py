@@ -1,4 +1,7 @@
-# read and processing bus data survey
+'''
+	read and processing bus data survey
+	python informed_duration.py ~/Documents/Projeto_2020/od_survey/ltrips_short_exp123_wkdy_final_noXYcoord.csv ~/Documents/Projeto_2020/od_survey/ltrips_short_exp13_sat_final_noXYcoord.csv ~/Documents/Projeto_2020/od_survey/ltrips_short_exp13_sun_final_noXYcoord.csv ~/Dropbox/Projeto_2020/resultados/
+'''
 from sys import argv
 import pandas as pd
 from datetime import datetime

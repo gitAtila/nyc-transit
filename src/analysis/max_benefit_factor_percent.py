@@ -1,5 +1,6 @@
 '''
     Vary factor and evaluate matchings
+python max_benefit_factor_percent.py ~/Documents/Projeto_2020/passenger_trips/all_modes.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_inf_0.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_inf_025.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_inf_05.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_inf_075.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_inf_1.csv ~/Dropbox/Projeto_2020/resultados/
 '''
 
 from sys import argv
@@ -100,11 +101,11 @@ ecdf_saving_money_1 = ECDF(list_saving_money[4])
 
 fig, ax = plt.subplots()
 # ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,len(list_saving_money))])
-plt.plot(ecdf_saving_money_0.x, ecdf_saving_money_0.y, label='factor = 0')
-plt.plot(ecdf_saving_money_025.x, ecdf_saving_money_025.y, label='factor = 0.25')
-plt.plot(ecdf_saving_money_05.x, ecdf_saving_money_05.y, label='factor = 0.5')
-plt.plot(ecdf_saving_money_075.x, ecdf_saving_money_075.y, label='factor= 0.75')
-plt.plot(ecdf_saving_money_1.x, ecdf_saving_money_1.y, label='factor = 1')
+plt.plot(ecdf_saving_money_0.x, ecdf_saving_money_0.y, label='f = 0')
+plt.plot(ecdf_saving_money_025.x, ecdf_saving_money_025.y, label='f = 0.25')
+plt.plot(ecdf_saving_money_05.x, ecdf_saving_money_05.y, label='f = 0.5')
+plt.plot(ecdf_saving_money_075.x, ecdf_saving_money_075.y, label='f = 0.75')
+plt.plot(ecdf_saving_money_1.x, ecdf_saving_money_1.y, label='f = 1')
 
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x sticks interal
 plt.legend(loc=4)
@@ -126,11 +127,11 @@ ecdf_saving_time_1 = ECDF(list_saving_time[4])
 
 fig, ax = plt.subplots()
 # ax.set_color_cycle([colormap(i) for i in np.linspace(0,1,len(list_saving_time))])
-plt.plot(ecdf_saving_time_0.x, ecdf_saving_time_0.y, label='factor = 0')
-plt.plot(ecdf_saving_time_025.x, ecdf_saving_time_025.y, label='factor = 0.25')
-plt.plot(ecdf_saving_time_05.x, ecdf_saving_time_05.y, label='factor = 0.5')
-plt.plot(ecdf_saving_time_075.x, ecdf_saving_time_075.y, label='factor = 0.75')
-plt.plot(ecdf_saving_time_1.x, ecdf_saving_time_1.y, label='factor = 1.0')
+plt.plot(ecdf_saving_time_0.x, ecdf_saving_time_0.y, label='f = 0')
+plt.plot(ecdf_saving_time_025.x, ecdf_saving_time_025.y, label='f = 0.25')
+plt.plot(ecdf_saving_time_05.x, ecdf_saving_time_05.y, label='f = 0.5')
+plt.plot(ecdf_saving_time_075.x, ecdf_saving_time_075.y, label='f = 0.75')
+plt.plot(ecdf_saving_time_1.x, ecdf_saving_time_1.y, label='f = 1.0')
 
 
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(20)) # set x sticks interal

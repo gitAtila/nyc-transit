@@ -1,5 +1,7 @@
 '''
     Evaluate pricing policies
+
+    python cost_policies.py ~/Documents/Projeto_2020/matching/transit_taxi/survey/costs_real_05_05_05_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/costs_real_1_05_05_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/costs_real_05_1_05_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/costs_real_05_05_1_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/costs_real_1_1_05_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/costs_real_1_05_1_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/costs_real_05_1_1_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/costs_real_1_1_1_inf.csv ~/Dropbox/Projeto_2020/resultados/
 '''
 
 from sys import argv

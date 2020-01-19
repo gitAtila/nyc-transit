@@ -27,7 +27,7 @@ def avg_match_time(search_time_path, temporal_spatial_match_path):
     print 'std', df_matched_time['elapsed'].std()
     print 'mean', df_matched_time['elapsed'].mean()
 
-    df_unmatched_time = df_search_time[~df_search_time['transit_id'].isin(df_temporal_spatial_match['transit_id'].tolist())]
+    df_unmatched_time = df_search_time[df_search_time['transit_id'].isin(df_temporal_spatial_match['transit_id'].tolist())]
     print '=> unmatched'
     print 'len', len(df_unmatched_time)
     print 'std', df_unmatched_time['elapsed'].std()

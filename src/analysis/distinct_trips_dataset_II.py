@@ -1,5 +1,6 @@
 '''
     Datasets and distinct trips
+    python distinct_trips_dataset_II.py ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_3000.csv  ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_prop_3000_05.csv ~/Documents/Projeto_2020/matching/transit_taxi/synthetic/max_benefit_10min_5x_3000.csv ~/Documents/Projeto_2020/matching/transit_taxi/synthetic/max_benefit_10min_5x_3000_05_prop.csv ~/Documents/Projeto_2020/matching/transit_taxi/synthetic/max_benefit_20min_5x_3000.csv ~/Documents/Projeto_2020/matching/transit_taxi/synthetic/max_benefit_20min_5x_3000_05_prop.csv ~/Documents/Projeto_2020/matching/transit_taxi/synthetic/max_benefit_10min_10x_3000.csv ~/Documents/Projeto_2020/matching/transit_taxi/synthetic/max_benefit_10min_10x_3000_05_prop.csv ~/Documents/Projeto_2020/matching/transit_taxi/synthetic/max_benefit_20min_10x_3000.csv ~/Documents/Projeto_2020/matching/transit_taxi/synthetic/max_benefit_20min_10x_3000_05_prop.csv ~/Dropbox/Projeto_2020/resultados/
 '''
 
 from sys import argv
