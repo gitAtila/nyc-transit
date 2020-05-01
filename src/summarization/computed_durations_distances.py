@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 plt.rcParams.update({'font.size': 16})
 
-from geopy.distance import vincenty
+from geopy.distance import geodesic
 
 from statsmodels.distributions.empirical_distribution import ECDF
 
@@ -34,7 +34,7 @@ def split_modals(dict_trips):
     dict_subway_trips = dict()
     dict_bus_subway_trips = dict()
 
-    for sampn_perno_tripno, list_trip in dict_trips.iteritems():
+    for sampn_perno_tripno, list_trip in dict_trips.items():
         df_trip = pd.DataFrame(list_trip)
         list_modes = list(df_trip['mode'].unique())
         if len(list_modes) == 1:
@@ -59,7 +59,7 @@ def split_modals(dict_trips):
 
 def trips_duration(dict_trips):
     list_durations = []
-    for sampn_perno_tripno, list_trip in dict_trips.iteritems():
+    for sampn_perno_tripno, list_trip in dict_trips.items():
         time_delta = (list_trip[-1]['date_time'] - list_trip[0]['date_time']).total_seconds()/60
         if time_delta > 0:
             list_durations.append(time_delta)
@@ -67,15 +67,15 @@ def trips_duration(dict_trips):
 
 def straight_line_distances(dict_trips):
     list_distances = []
-    for sampn_perno_tripno, list_trip in dict_trips.iteritems():
-        distance = vincenty((list_trip[-1]['longitude'], list_trip[-1]['latitude']),\
+    for sampn_perno_tripno, list_trip in dict_trips.items():
+        distance = geodesic((list_trip[-1]['longitude'], list_trip[-1]['latitude']),\
         (list_trip[0]['longitude'], list_trip[0]['latitude'])).meters/1000
         list_distances.append(distance)
     return list_distances
 
 def walking_distances(dict_transit_trips):
     list_distances = []
-    for sampn_perno_tripno, list_trip in dict_transit_trips.iteritems():
+    for sampn_perno_tripno, list_trip in dict_transit_trips.items():
         df_trip = pd.DataFrame(list_trip)
         # sum the maximum walk distance for each trip sequence
         df_walking = df_trip[df_trip['mode'] == 'WALK']
@@ -88,14 +88,14 @@ def walking_distances(dict_transit_trips):
 df_computed_trips = pd.read_csv(computed_trips_path)
 df_computed_trips['date_time'] =  pd.to_datetime(df_computed_trips['date_time'])
 dict_trips = group_df_rows(df_computed_trips, 'sampn_perno_tripno')
-print len(dict_trips)
+print(len(dict_trips))
 
 # group trips by mode
 dict_bus_trips, dict_taxi_trips, dict_subway_trips, dict_bus_subway_trips = split_modals(dict_trips)
-print 'dict_bus_trips', len(dict_bus_trips)
-print 'dict_taxi_trips', len(dict_taxi_trips)
-print 'dict_subway_trips', len(dict_subway_trips)
-print 'dict_bus_subway_trips', len(dict_bus_subway_trips)
+print('dict_bus_trips', len(dict_bus_trips))
+print('dict_taxi_trips', len(dict_taxi_trips))
+print('dict_subway_trips', len(dict_subway_trips))
+print('dict_bus_subway_trips', len(dict_bus_subway_trips))
 
 # walking_distances(dict_bus_trips)
 

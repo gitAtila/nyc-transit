@@ -42,7 +42,7 @@ def get_count_origins_per_puma(df_trips, origin_type):
 		# count homes per puma
 		dict_puma_count = dict()
 		for puma in dict_puma_origin_type[origin_type]:
-			if puma in dict_puma_count.keys():
+			if puma in list(dict_puma_count.keys()):
 				dict_puma_count[puma] = dict_puma_count[puma] + 1
 			else:
 				dict_puma_count[puma] = 1
@@ -51,13 +51,13 @@ def get_count_origins_per_puma(df_trips, origin_type):
 		# count homes per puma
 		for index in s_origin_type.index.values.tolist():
 			for puma in dict_puma_origin_type[index]:
-				if puma in dict_puma_count.keys():
+				if puma in list(dict_puma_count.keys()):
 					dict_puma_count[puma] = dict_puma_count[puma] + 1
 				else:
 					dict_puma_count[puma] = 1
 
-	for puma, count in dict_puma_count.iteritems():
-		print puma, count
+	for puma, count in dict_puma_count.items():
+		print(puma, count)
 
 	return dict_puma_count
 
@@ -73,7 +73,7 @@ def get_count_destinations_per_puma(df_trips, destination_type):
 		# count homes per puma
 		dict_puma_count = dict()
 		for puma in dict_puma_destination_type[destination_type]:
-			if puma in dict_puma_count.keys():
+			if puma in list(dict_puma_count.keys()):
 				dict_puma_count[puma] = dict_puma_count[puma] + 1
 			else:
 				dict_puma_count[puma] = 1
@@ -83,13 +83,13 @@ def get_count_destinations_per_puma(df_trips, destination_type):
 		# count homes per puma
 		for index in s_destination_type.index.values.tolist():
 			for puma in dict_puma_destination_type[index]:
-				if puma in dict_puma_count.keys():
+				if puma in list(dict_puma_count.keys()):
 					dict_puma_count[puma] = dict_puma_count[puma] + 1
 				else:
 					dict_puma_count[puma] = 1
 
-	for puma, count in dict_puma_count.iteritems():
-		print puma, count
+	for puma, count in dict_puma_count.items():
+		print(puma, count)
 
 	return dict_puma_count
 
@@ -115,7 +115,7 @@ def plot_puma(shapefile_base_path, dict_puma_count, map_title, y_label, range_co
 	# 	colors[key] = mapper.to_rgba(count)
 
 	for puma in list_nyc_pumas:
-		if puma in dict_puma_count.keys():
+		if puma in list(dict_puma_count.keys()):
 			colors[puma] = mapper.to_rgba(dict_puma_count[puma])
 		else:
 			colors[puma] = (1.0,1.0,1.0)
@@ -129,8 +129,8 @@ def plot_puma(shapefile_base_path, dict_puma_count, map_title, y_label, range_co
 	field_names = [field[0] for field in fields]
 
 	for record, shape in zip(shapefile_puma.iterRecords(), shapefile_puma.iterShapes()):
-		attributes = dict(zip(field_names, record))
-		print attributes, shape
+		attributes = dict(list(zip(field_names, record)))
+		print(attributes, shape)
 
 		# check number of parts (could use MultiPolygon class of shapely?)
 		nparts = len(shape.parts) # total parts

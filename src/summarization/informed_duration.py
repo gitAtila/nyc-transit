@@ -49,10 +49,10 @@ def demand_time(df_trips, chart_name):
 
 	df_total_grouped_hour = df_total_grouped_hour.drop(99)
 
-	print df_total_grouped_hour
+	print(df_total_grouped_hour)
 	df_total_grouped_hour = df_normaliser(df_total_grouped_hour)
 	df_total_grouped_hour *= 100
-	print df_total_grouped_hour
+	print(df_total_grouped_hour)
 	ax = df_total_grouped_hour.plot()
 	ax.xaxis.set_major_locator(ticker.MultipleLocator(3)) # set x sticks interal
 	ax.set_xlabel('Hour', fontsize=16)
@@ -111,13 +111,13 @@ def travel_duration_per_mode(df_trips, chart_name):
 	del dict_commute_time_mode[8]
 
 	fig, ax = plt.subplots()
-	for key, list_time in dict_commute_time_mode.iteritems():
+	for key, list_time in list(dict_commute_time_mode.items()):
 		list_time = cut_borders(list_time, 0, 360)
 		list_time.sort()
 		ecdf = ECDF(list_time)
 		plt.plot(ecdf.x, ecdf.y, label=s_mode_name_8[key])
-		print key, ':', len(list_time)
-	print ''
+		print((key, ':', len(list_time)))
+	print('')
 
 	ax.xaxis.set_major_locator(ticker.MultipleLocator(60)) # set x ticks as multiple of sixty
 	plt.legend(fontsize=16)
