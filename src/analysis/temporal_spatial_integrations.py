@@ -44,11 +44,11 @@ list_transit_per_taxi = df_temporal_spatial.groupby('taxi_id')['transit_id'].nun
 list_transit_stop_options = df_temporal_spatial.groupby('transit_id')['stop_id'].nunique().tolist()
 list_taxi_position_options = df_temporal_spatial.groupby('taxi_id')['taxi_pos_sequence'].nunique().tolist()
 
-plot_cdf_two_curves(list_transit_per_taxi, list_taxi_per_transit, 'Mass transit per taxi',\
-'Taxi per mass transit', 'Number of trip options', result_path + 'cdf_integration_options_trips.eps')
-
-plot_cdf_two_curves(list_transit_stop_options, list_taxi_position_options, 'Mass transit stops',
-'Taxi positions', 'Number of position options', result_path + 'cdf_integration_options_positions.eps')
+# plot_cdf_two_curves(list_transit_per_taxi, list_taxi_per_transit, 'Mass transit per taxi',\
+# 'Taxi per mass transit', 'Number of trip options', result_path + 'cdf_integration_options_trips.eps')
+#
+# plot_cdf_two_curves(list_transit_stop_options, list_taxi_position_options, 'Mass transit stops',
+# 'Taxi positions', 'Number of position options', result_path + 'cdf_integration_options_positions.eps')
 
 plot_cdf_two_curves(list_transit_per_taxi, list_taxi_per_transit, 'Mass transit per taxi',\
 'Taxi per mass transit', 'Number of trip options', result_path + 'cdf_integration_options_trips.pdf')
