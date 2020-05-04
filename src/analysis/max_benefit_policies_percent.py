@@ -1,6 +1,6 @@
 '''
     Vary cost policies and evaluate matchings
-    python max_benefit_policies_percent.py ~/Documents/Projeto_2020/passenger_trips/all_modes.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_05_05_05_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_1_05_05_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_05_1_05_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_05_05_1_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_1_1_05_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_1_05_1_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_05_1_1_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_1_1_1_inf.csv ~/Dropbox/Projeto_2020/resultados/ ~/Dropbox/Projeto_2020/resultados/
+    python max_benefit_policies_percent.py ~/Documents/Projeto_2020/passenger_trips/all_modes.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_05_05_05_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_1_05_05_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_05_1_05_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_05_05_1_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_1_1_05_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_1_05_1_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_05_1_1_inf.csv ~/Documents/Projeto_2020/matching/transit_taxi/survey/max_benefit_real_1_1_1_inf.csv ~/Dropbox/Projeto_2020/resultados/
 '''
 
 from sys import argv
@@ -26,8 +26,7 @@ max_benefit_1_05_1_path = argv[7]
 max_benefit_05_1_1_path = argv[8]
 max_benefit_1_1_1_path = argv[9]
 
-saving_money_chart_path = argv[10]
-saving_time_chart_path = argv[11]
+result_path = argv[10]
 
 # colormap = plt.cm.nipy_spectral
 
@@ -94,7 +93,7 @@ for index in range(len(list_saving_money)):
     list_saving_money[index].sort()
     list_saving_time[index].sort()
 
-print list_saving_time[0][0], list_saving_time[0][-1]
+#print(list_saving_time[0][0], list_saving_time[0][-1])
 
 '''
     Saving money
@@ -127,7 +126,7 @@ plt.legend(fontsize=15, loc=4)
 ax.set_xlabel('Money Saving (orig - new)/orig')
 ax.set_ylabel('CDF')
 plt.tight_layout()
-fig.savefig(saving_money_chart_path + 'max_benefit_saving_money.pdf')
+fig.savefig(result_path + 'max_benefit_saving_money.pdf')
 
 '''
     Saving time
@@ -160,4 +159,4 @@ plt.legend(fontsize=15, loc=4)
 ax.set_xlabel('Time Saving (orig - new)/orig')
 ax.set_ylabel('CDF')
 plt.tight_layout()
-fig.savefig(saving_time_chart_path + 'max_benefit_saving_time.pdf')
+fig.savefig(result_path + 'max_benefit_saving_time.pdf')
