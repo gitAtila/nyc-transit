@@ -1,3 +1,7 @@
+'''
+	plot the spatial distribution of origins and destinations
+	python spatial_distribution.py ~/Documents/Projeto_2020/od_survey/ltrips_short_exp123_wkdy_final_noXYcoord.csv ~/Documents/Projeto_2020/od_survey/ltrips_short_exp13_sat_final_noXYcoord.csv ~/Documents/Projeto_2020/od_survey/ltrips_short_exp13_sun_final_noXYcoord.csv ~/Dropbox/Projeto_2020/resultados/ nycpuma.shp ~/Documents/Projeto_2020/resultados/
+'''
 # read and processing bus data survey
 from sys import argv
 import pandas as pd
