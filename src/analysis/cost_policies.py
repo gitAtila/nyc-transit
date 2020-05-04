@@ -51,7 +51,7 @@ df_counts = pd.DataFrame(dict_counts)
 df_counts = df_counts[['taxi', 'transit', 'pair']]
 df_counts.rename(columns={'taxi': 'Taxi', 'transit': 'Transit', 'pair': 'Pair'},\
 inplace=True)
-print df_counts
+print(df_counts)
 ax = df_counts.plot(kind='bar')
 # ax.xaxis.set_ticklabels(['.5 .5 .5', '1 .5 .5', '.5 1 .5', '.5 .5 1',\
 # '1 1 .5', '1 .5 1', '.5 1 1', '1 1 1'])
