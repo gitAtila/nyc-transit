@@ -98,7 +98,7 @@ plt.legend(loc=4)
 ax.set_xlabel('Saving Money (orig - new)/orig')
 ax.set_ylabel('CDF')
 plt.tight_layout()
-fig.savefig(result_path + 'max_benefit_seg_prop_money.eps')
+fig.savefig(result_path + 'max_benefit_seg_prop_money.pdf')
 
 '''
     Saving time
@@ -119,4 +119,4 @@ plt.legend(loc=4)
 ax.set_xlabel('Saving Time (orig - new)/orig')
 ax.set_ylabel('CDF')
 plt.tight_layout()
-fig.savefig(result_path + 'max_benefit_seg_prop_time.eps')
+fig.savefig(result_path + 'max_benefit_seg_prop_time.pdf')
